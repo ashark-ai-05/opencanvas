@@ -1,0 +1,23 @@
+{
+  "name": "llm-wiki-spikes",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "spike": "tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=24" },
+  "dependencies": {
+    "@sourcegraph/amp-sdk": "*",
+    "onnxruntime-node": "*",
+    "@huggingface/transformers": "*",
+    "ajv": "*",
+    "ajv-formats": "*"
+  },
+  "devDependencies": {
+    "tsx": "*",
+    "typescript": "*",
+    "@types/node": "*"
+  }
+}
