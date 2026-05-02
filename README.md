@@ -292,3 +292,56 @@ pnpm cli --call-tool workspace-fs read_file '{"path": "/Users/me/code/README.md"
 - v2 (this plan): connect/list/call. Raw tool surface.
 - v3 (Plan 3): typed `Capability` verbs (`search` / `fetch` / `list` / `subscribe`) mapped onto MCP tools, with optional `source-manifest.json` hints.
 - v3+ (Plan 5): MCP results materialised as typed `Result<K>` and routed through the agent loop.
+
+---
+
+## Running the backend
+
+The backend exposes our LLM provider, embedder, and MCP source registry over HTTP so space-agent's customware can route through them.
+
+### Ports and env
+
+- Default port: `3457`. Override with `LLM_WIKI_BACKEND_PORT=3458 pnpm backend`.
+- Default URL for customware: `http://127.0.0.1:3457`. Override with `LLM_WIKI_BACKEND_URL=...` when launching space-agent.
+
+### Smoke check
+
+```bash
+pnpm backend:check
+```
+
+Boots, hits `/v1/health`, exits 0 on success. Used by CI.
+
+### Endpoints
+
+| Method | Path | Body | Returns |
+| --- | --- | --- | --- |
+| GET | `/v1/health` | — | `{ ok, profile, llm, embedder }` |
+| POST | `/v1/query` | `{ prompt, systemPrompt? }` | SSE stream of provider events |
+| POST | `/v1/embed` | `{ texts: [...] }` | `{ embedder, dims, vectors: [...] }` |
+| GET | `/v1/sources` | — | `{ sources: [{ id, name, transport }] }` |
+| GET | `/v1/sources/probe` | — | `{ ok: [...], failed: [...] }` |
+| GET | `/v1/sources/:id/tools` | — | `{ id, name, tools }` |
+| POST | `/v1/sources/:id/tools/:tool` | `{ args }` | `{ ok, result }` |
+
+### curl examples
+
+```bash
+curl http://127.0.0.1:3457/v1/health
+
+curl http://127.0.0.1:3457/v1/embed \
+  -H 'content-type: application/json' \
+  -d '{"texts":["hello world"]}'
+
+curl -N http://127.0.0.1:3457/v1/query \
+  -H 'content-type: application/json' \
+  -d '{"prompt":"What is 2+2?"}'
+```
+
+## Running everything
+
+```bash
+pnpm dev:full
+```
+
+Starts the backend AND space-agent concurrently. Open http://127.0.0.1:3456 to log in. The login hook (`customware/.../any_login/llm-wiki-init.js`) calls the backend `/v1/health`, then fires a fire-and-forget `/v1/embed` call to pre-warm the ONNX model — by the time you start chatting, the embedder is hot.
