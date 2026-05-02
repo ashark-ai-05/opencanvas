@@ -1,7 +1,10 @@
 import Database from 'better-sqlite3';
 import * as sqliteVec from 'sqlite-vec';
 import { existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import type { Migration } from './migrations.js';
 
 export type Store = {
   db: Database.Database;
@@ -40,4 +43,12 @@ export async function openStore(options: OpenStoreOptions): Promise<Store> {
     db,
     close: () => db.close(),
   };
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export async function loadInitialMigrations(): Promise<Migration[]> {
+  const sql = await readFile(join(__dirname, 'migrations', '001_initial.sql'), 'utf8');
+  return [{ id: '001_initial', sql }];
 }
