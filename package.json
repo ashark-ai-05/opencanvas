@@ -19,6 +19,7 @@
     "@anthropic-ai/claude-agent-sdk": "*",
     "@anthropic-ai/sdk": "*",
     "@huggingface/transformers": "^4.0.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "better-sqlite3": "^11.0.0",
     "ollama": "*",
     "onnxruntime-node": "^1.20.0",
@@ -28,6 +29,7 @@
     "zod": "*"
   },
   "devDependencies": {
+    "@modelcontextprotocol/server-filesystem": "*",
     "@types/better-sqlite3": "^7.6.0",
     "@types/node": "*",
     "tsx": "*",
