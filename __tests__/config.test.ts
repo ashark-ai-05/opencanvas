@@ -247,6 +247,73 @@ describe('Profile.embed', () => {
   });
 });
 
+describe('Profile.sources', () => {
+  it('defaults sources to an empty array', () => {
+    const profile = ProfileSchema.parse({
+      name: 'test',
+      llm: { provider: 'claude-agent-sdk' },
+    });
+    expect(profile.sources).toEqual([]);
+  });
+
+  it('accepts a stdio-transport MCP source', () => {
+    const profile = ProfileSchema.parse({
+      name: 'test',
+      llm: { provider: 'claude-agent-sdk' },
+      sources: [
+        {
+          id: 'fs',
+          name: 'Filesystem',
+          transport: 'stdio',
+          command: 'npx',
+          args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+        },
+      ],
+    });
+    expect(profile.sources).toHaveLength(1);
+    expect(profile.sources[0].id).toBe('fs');
+  });
+
+  it('accepts an http-transport MCP source', () => {
+    const profile = ProfileSchema.parse({
+      name: 'test',
+      llm: { provider: 'claude-agent-sdk' },
+      sources: [
+        {
+          id: 'remote',
+          name: 'Remote MCP',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+        },
+      ],
+    });
+    expect(profile.sources[0].transport).toBe('http');
+  });
+
+  it('rejects a source with duplicated ids', () => {
+    expect(() =>
+      ProfileSchema.parse({
+        name: 'test',
+        llm: { provider: 'claude-agent-sdk' },
+        sources: [
+          { id: 'a', name: 'A', transport: 'stdio', command: 'echo', args: [] },
+          { id: 'a', name: 'B', transport: 'stdio', command: 'echo', args: [] },
+        ],
+      })
+    ).toThrow(/duplicate.+id/i);
+  });
+
+  it('rejects an unknown transport', () => {
+    expect(() =>
+      ProfileSchema.parse({
+        name: 'test',
+        llm: { provider: 'claude-agent-sdk' },
+        sources: [{ id: 'x', name: 'X', transport: 'carrier-pigeon' }],
+      })
+    ).toThrow();
+  });
+});
+
 import { probeProfile } from '../src/config/probe.js';
 
 describe('probeProfile', () => {

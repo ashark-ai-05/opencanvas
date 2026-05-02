@@ -26,6 +26,33 @@ export const EmbedProviderSchema = z.discriminatedUnion('provider', [
   }),
 ]);
 
+export const SourceConfigSchema = z.discriminatedUnion('transport', [
+  z.object({
+    id: z.string().regex(/^[a-z0-9_-]+$/, 'id must be kebab/snake-case ASCII'),
+    name: z.string(),
+    transport: z.literal('stdio'),
+    command: z.string(),
+    args: z.array(z.string()).default([]),
+    env: z.record(z.string(), z.string()).default({}),
+  }),
+  z.object({
+    id: z.string().regex(/^[a-z0-9_-]+$/),
+    name: z.string(),
+    transport: z.literal('sse'),
+    url: z.string().url(),
+    headers: z.record(z.string(), z.string()).default({}),
+  }),
+  z.object({
+    id: z.string().regex(/^[a-z0-9_-]+$/),
+    name: z.string(),
+    transport: z.literal('http'),
+    url: z.string().url(),
+    headers: z.record(z.string(), z.string()).default({}),
+  }),
+]);
+
+export type SourceConfig = z.infer<typeof SourceConfigSchema>;
+
 export const ProfileSchema = z.object({
   name: z.string(),
   llm: z.discriminatedUnion('provider', [
@@ -56,6 +83,22 @@ export const ProfileSchema = z.object({
     }),
   ]),
   embed: EmbedProviderSchema.default({ provider: 'onnx-bundled', model: 'BAAI/bge-small-en-v1.5' }),
+  sources: z
+    .array(SourceConfigSchema)
+    .default([])
+    .superRefine((sources, ctx) => {
+      const seen = new Set<string>();
+      for (const s of sources) {
+        if (seen.has(s.id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `duplicate source id: ${s.id}`,
+            path: [sources.findIndex((x) => x.id === s.id), 'id'],
+          });
+        }
+        seen.add(s.id);
+      }
+    }),
 });
 
 export const ConfigFileSchema = z.object({
@@ -74,6 +117,7 @@ export const DEFAULT_CONFIG: ConfigFile = {
       name: 'claude-sdk',
       llm: { provider: 'claude-agent-sdk' },
       embed: { provider: 'onnx-bundled', model: 'BAAI/bge-small-en-v1.5' },
+      sources: [],
     },
   ],
 };
