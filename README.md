@@ -346,6 +346,20 @@ pnpm dev:full
 
 Starts the backend AND space-agent concurrently. Open http://127.0.0.1:3456 to log in. The login hook (`customware/.../any_login/llm-wiki-init.js`) calls the backend `/v1/health`, then fires a fire-and-forget `/v1/embed` call to pre-warm the ONNX model — by the time you start chatting, the embedder is hot.
 
+### Chat actually flows through llm-wiki
+
+After Plan 1.7, the chat in space-agent's UI routes through our backend's `/v1/query/openai` endpoint, which calls whatever `LLMProvider` is configured in the active llm-wiki profile.
+
+**Flow:**
+1. Browser POSTs to `http://127.0.0.1:3456/...` (space-agent's chat endpoint)
+2. Space-agent's `prepareOnscreenAgentApiRequest/end/llm-wiki.js` hook redirects the request URL to `http://127.0.0.1:3457/v1/query/openai`
+3. Our backend extracts the user prompt + system message, calls `LLMProvider.query()`, and streams back as OpenAI chat-completions SSE
+4. Space-agent's existing streaming consumer renders the response
+
+To verify it's actually llm-wiki and not space-agent's default: open browser DevTools → Network → filter for `:3457`. You should see one or more POSTs to `/v1/query/openai` per chat turn.
+
+**To bypass llm-wiki and use space-agent's default provider:** stop the backend (`pnpm dev:full` would need to be restarted with backend disabled, or set `LLM_WIKI_BACKEND_URL=http://invalid:0` so the health check fails and the hook falls through). The fall-through is intentional — if our backend is down, space-agent still functions.
+
 ---
 
 ## Indexing and search
