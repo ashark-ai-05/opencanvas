@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #09090b;
+  --color-fg: #fafafa;
+  --color-muted: #71717a;
+  --color-accent: #f59e0b;
+  --color-ok: #22c55e;
+  --color-fail: #ef4444;
+}
+
+@layer base {
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    color: var(--color-fg);
+    background: var(--color-bg);
+  }
+
+  code, pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+}
