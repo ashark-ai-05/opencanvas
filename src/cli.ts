@@ -48,6 +48,8 @@ async function main(): Promise<void> {
       'probe-sources': { type: 'boolean' },
       'list-tools': { type: 'string' },
       'call-tool': { type: 'string' },
+      index: { type: 'string' },
+      search: { type: 'string' },
       help: { type: 'boolean', short: 'h' },
     },
     allowPositionals: true,
@@ -153,6 +155,74 @@ async function main(): Promise<void> {
     } finally {
       await source.close();
     }
+    return;
+  }
+
+  // --index <path>: index a directory of markdown/text files
+  if (values['index']) {
+    const path = values['index'] as string;
+    if (!path) {
+      console.error('Usage: pnpm cli --index <path>');
+      process.exit(1);
+    }
+
+    const config = loadConfig(profileOverride);
+    const { openDefaultStore } = await import('./storage/store.js');
+    const { DocumentIndexer } = await import('./indexer/document-indexer.js');
+
+    const store = await openDefaultStore();
+    const embedder = createEmbedder(config.activeProfile);
+    const indexer = new DocumentIndexer({ store, embedder });
+
+    const sourceId = `local:${path}`;
+    console.log(`Indexing ${path} (source: ${sourceId})…`);
+    const t0 = performance.now();
+    const result = await indexer.run({ rootPath: path, sourceId });
+    const ms = Math.round(performance.now() - t0);
+
+    console.log(`indexed:  ${result.indexedFiles} files`);
+    console.log(`chunks:   ${result.chunks}`);
+    console.log(`time:     ${ms} ms`);
+    if (result.errors.length > 0) {
+      console.log(`errors:   ${result.errors.length}`);
+      for (const err of result.errors.slice(0, 5)) {
+        console.log(`  - ${err.path}: ${err.error}`);
+      }
+    }
+    store.close();
+    return;
+  }
+
+  // --search "<query>": hybrid BM25 + vector search
+  if (values['search']) {
+    const query = values['search'] as string;
+    if (!query) {
+      console.error('Usage: pnpm cli --search "<query>"');
+      process.exit(1);
+    }
+
+    const config = loadConfig(profileOverride);
+    const { openDefaultStore } = await import('./storage/store.js');
+    const { SearchService } = await import('./search/service.js');
+
+    const store = await openDefaultStore();
+    const embedder = createEmbedder(config.activeProfile);
+    const service = new SearchService({ store, embedder });
+
+    const t0 = performance.now();
+    const results = await service.search(query, { limit: 10 });
+    const ms = Math.round(performance.now() - t0);
+
+    console.log(`query:    ${query}`);
+    console.log(`results:  ${results.length} (${ms} ms)`);
+    console.log('');
+    for (const r of results) {
+      const snippet = r.body.length > 200 ? `${r.body.slice(0, 200)}…` : r.body;
+      console.log(`[score ${r.score.toFixed(4)}] ${r.uri}`);
+      console.log(`  ${snippet.replace(/\n/g, ' ')}`);
+      console.log('');
+    }
+    store.close();
     return;
   }
 
