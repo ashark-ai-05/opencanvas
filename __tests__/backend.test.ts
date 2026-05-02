@@ -94,3 +94,48 @@ describe('POST /v1/query', () => {
     expect(res.headers.get('content-type')).toMatch(/text\/event-stream/);
   });
 });
+
+describe('POST /v1/query/openai', () => {
+  it('returns 400 when messages array is missing or empty', async () => {
+    const r1 = await app.request('/v1/query/openai', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(r1.status).toBe(400);
+
+    const r2 = await app.request('/v1/query/openai', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ messages: [] }),
+    });
+    expect(r2.status).toBe(400);
+  });
+
+  it('returns 400 when no user message is present', async () => {
+    const res = await app.request('/v1/query/openai', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'system', content: 'be helpful' }],
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 200 with text/event-stream when a user message is present', async () => {
+    const res = await app.request('/v1/query/openai', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: 'You are a calculator.' },
+          { role: 'user', content: 'What is 2+2?' },
+        ],
+        stream: true,
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toMatch(/text\/event-stream/);
+  });
+});

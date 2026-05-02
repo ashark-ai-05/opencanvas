@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { BackendState } from './state.js';
 import { healthRoute } from './routes/health.js';
+import { queryOpenAIRoute } from './routes/query-openai.js';
 
 /**
  * The Hono app. Tests can hit `app.request(path)` directly without
@@ -158,6 +159,19 @@ app.post('/v1/query', async (c) => {
     }
   });
 });
+
+// Query (OpenAI chat-completions format) — accepts OpenAI-shaped request, streams OpenAI SSE
+// The queryOpenAIRoute factory needs a BackendState; we create one eagerly and mount.
+// We use a lazy-resolved sub-app to avoid blocking module import.
+{
+  const lazyApp = new Hono();
+  lazyApp.post('/v1/query/openai', async (c) => {
+    const state = await getState();
+    const sub = queryOpenAIRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  app.route('/', lazyApp);
+}
 
 export async function start(port: number): Promise<void> {
   const { serve } = await import('@hono/node-server');
