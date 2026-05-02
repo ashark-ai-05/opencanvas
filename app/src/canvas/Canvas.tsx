@@ -11,6 +11,7 @@ import {
   loadCanvasSnapshot,
   saveCanvasSnapshot,
 } from './persistence';
+import { DebugToolbar } from '../components/DebugToolbar';
 
 const customShapeUtils = [
   // Plan 4b — proof-of-wire (kept for backwards compat with saved canvases)
@@ -55,7 +56,9 @@ export function Canvas() {
         onMount={handleMount}
         // Hide tldraw's branding to keep the surface ours.
         hideUi={false}
-      />
+      >
+        <DebugToolbar />
+      </Tldraw>
     </div>
   );
 }
