@@ -16,5 +16,5 @@
     "noUncheckedIndexedAccess": false
   },
   "include": ["src/**/*", "__tests__/**/*"],
-  "exclude": ["node_modules", "dist", "spikes"]
+  "exclude": ["node_modules", "dist", "spikes", "app", "__tests__/app"]
 }
