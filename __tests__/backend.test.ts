@@ -39,6 +39,15 @@ describe('GET /v1/health', () => {
   });
 });
 
+describe('GET /v1/sources', () => {
+  it('returns the configured source list (possibly empty)', async () => {
+    const res = await app.request('/v1/sources');
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { sources: { id: string; name: string }[] };
+    expect(Array.isArray(json.sources)).toBe(true);
+  });
+});
+
 describe('POST /v1/embed', () => {
   it('returns 400 when texts is missing or empty', async () => {
     const r1 = await app.request('/v1/embed', {
