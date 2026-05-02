@@ -188,3 +188,55 @@ pnpm cli --probe
 ### Cold-start mitigation
 
 The bundled ONNX embedder takes ~4.5s on first call (M-series CPU; spike 03 measurements). Per design amendment 3, future Plan 1.5 will pre-warm the embedder on app launch so users never see this latency interactively.
+
+---
+
+## Running the desktop app shell
+
+The desktop app is built on a vendored copy of [space-agent](https://github.com/agent0ai/space-agent), pinned to commit `9c26f9f`. It is cloned into `vendor/space-agent/` (gitignored) on first setup, with our extensions mounted from `customware/`.
+
+### First-time setup
+
+```bash
+pnpm setup
+```
+
+This clones space-agent (~150 packages, ~30s), pins it to the recorded SHA, runs `npm install` inside it, and creates a default admin user (username `admin`, password `change-me-now`).
+
+The script is idempotent — re-running is safe.
+
+### Boot
+
+```bash
+pnpm dev
+```
+
+This starts space-agent on http://127.0.0.1:3456 with `CUSTOMWARE_PATH` pointing at our `customware/` directory. Override the port with `PORT=3457 pnpm dev`.
+
+Log in as `admin` / `change-me-now`. You should see a yellow banner at the bottom of the main dashboard view confirming our extension layer is loaded. The banner is injected via the `_core/dashboard/content_end` seam.
+
+### Smoke check (no UI)
+
+```bash
+pnpm dev:check
+```
+
+Boots the server, makes one HTTP request, and exits 0 on success. Used by CI.
+
+### What's wired in v1.5
+
+- Vendored space-agent at a pinned upstream commit (`9c26f9f`)
+- `customware/` directory mounted via `CUSTOMWARE_PATH`
+- One proof-of-wire HTML extension (dashboard banner at `_core/dashboard/content_end`)
+
+### What's NOT wired yet (Plan 1.6 and later)
+
+- LLM provider integration — chat currently uses space-agent's defaults, not our `LLMProvider` adapter
+- Embedder pre-warm on launch
+- Profile config bridge (our `~/.llm-wiki/config.json` does not yet flow into space-agent's chat surface)
+- MCP source connectors (Plan 2)
+- Widgets and canvas templates (Plans 5–7)
+
+### Updating the pinned commit
+
+Edit `PINNED_SHA` in `scripts/setup-space-agent.sh`, run `pnpm setup`, then `pnpm dev:check` to verify boot still works. Per Spike 05, upstream churn is concentrated in areas we don't extend (Electron host, login UI, agent chat), so pin updates should be low-friction. Commit the pin update with the SHA in the message.
