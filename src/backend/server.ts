@@ -32,6 +32,24 @@ app.get('/v1/health', async (c) => {
   });
 });
 
+// Embed
+app.post('/v1/embed', async (c) => {
+  const state = await getState();
+  const body = (await c.req.json().catch(() => ({}))) as {
+    texts?: string[];
+  };
+  if (!Array.isArray(body.texts) || body.texts.length === 0) {
+    return c.json({ error: 'texts must be a non-empty array' }, 400);
+  }
+  const embedder = state.getEmbedder();
+  const vectors = await embedder.embed(body.texts);
+  return c.json({
+    embedder: embedder.id,
+    dims: embedder.dims,
+    vectors: vectors.map((v) => Array.from(v)),
+  });
+});
+
 // Query — streams text deltas via SSE
 app.post('/v1/query', async (c) => {
   const state = await getState();

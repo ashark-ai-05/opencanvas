@@ -39,6 +39,29 @@ describe('GET /v1/health', () => {
   });
 });
 
+describe('POST /v1/embed', () => {
+  it('returns 400 when texts is missing or empty', async () => {
+    const r1 = await app.request('/v1/embed', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(r1.status).toBe(400);
+
+    const r2 = await app.request('/v1/embed', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ texts: [] }),
+    });
+    expect(r2.status).toBe(400);
+  });
+
+  // The actual embedding call hits the model; we don't run it here
+  // (would slow tests and require model download). Coverage of the
+  // happy path comes via the live `pnpm cli --embed` smoke from Plan 1
+  // and the curl example in the README.
+});
+
 describe('POST /v1/query', () => {
   it('returns 400 when prompt is missing', async () => {
     const res = await app.request('/v1/query', {
