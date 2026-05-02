@@ -386,5 +386,28 @@ The first index of a directory pays the ONNX embedder cold-start (~4.5s). Subseq
 
 - Plain markdown / text files only. PDF and HTML support arrives in Plan 3b.
 - Local filesystem source only. MCP-driven indexing arrives in Plan 3f.
-- No code-aware chunking; that's Plan 3c.
 - No cross-source link enrichment; that's Plan 3e.
+
+---
+
+### Code indexing (Plan 3c)
+
+`pnpm cli --index-code <path>` walks `.ts` / `.tsx` / `.js` / `.jsx` files, runs tree-sitter to extract top-level symbols (functions, classes, methods, interfaces, type aliases, arrow-function constants), AST-aware-chunks the source so symbol bodies stay intact, embeds each chunk via the active profile's embedder, and stores everything in `chunks` + `symbols` tables.
+
+```bash
+# Index this repo's source
+pnpm cli --index-code src/
+
+# List symbols by name
+pnpm cli --search-symbols MCPSource
+#   class       MCPSource                       /Users/.../src/mcp/source.ts
+
+# Hybrid search across code AND docs (Plan 3a + 3c share the same chunks/embeddings tables)
+pnpm cli --search "createMcpClient"
+```
+
+**Languages supported in v1:** TypeScript, TSX, JavaScript, JSX (one adapter handles all four — `tree-sitter-typescript` covers the JS subset).
+
+**Adding a language** (Plan 3c.1+): write a new `LanguageAdapter` (~50 LOC) that extracts symbols via tree-sitter, register it in `CodeIndexer.adapterFor()`. Python, Go, Java, Ruby, etc. follow this pattern.
+
+**Symbol storage:** the `symbols` table records `(name, kind, lang, file, refs_json)`. `refs_json` is an array of identifier names referenced from inside that symbol's body — basis for the intra-file call graph (full graph in Plan 3c.4).
