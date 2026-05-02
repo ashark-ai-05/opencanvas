@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Source, SourceTool, ResultKind } from '../src/core/source.js';
 import { MCPSource } from '../src/mcp/source.js';
+import { SourceRegistry } from '../src/mcp/registry.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 class FakeClient {
@@ -85,5 +86,42 @@ describe('MCPSource', () => {
     const source = new MCPSource('fs', 'Filesystem', new FakeClient() as unknown as Client);
     await source.close();
     expect(source.health).toBe('disconnected');
+  });
+});
+
+describe('SourceRegistry', () => {
+  it('starts empty', () => {
+    const r = new SourceRegistry();
+    expect(r.list()).toEqual([]);
+  });
+
+  it('add() / get() / list() / remove()', () => {
+    const r = new SourceRegistry();
+    const fakeSource = new MCPSource('fs', 'FS', new FakeClient() as unknown as Client);
+    r.add(fakeSource);
+    expect(r.list()).toHaveLength(1);
+    expect(r.get('fs')).toBe(fakeSource);
+    r.remove('fs');
+    expect(r.list()).toEqual([]);
+  });
+
+  it('add() rejects duplicate ids', () => {
+    const r = new SourceRegistry();
+    r.add(new MCPSource('fs', 'FS', new FakeClient() as unknown as Client));
+    expect(() =>
+      r.add(new MCPSource('fs', 'Other', new FakeClient() as unknown as Client))
+    ).toThrow(/already registered/);
+  });
+
+  it('closeAll() closes every registered source', async () => {
+    const r = new SourceRegistry();
+    const a = new MCPSource('a', 'A', new FakeClient() as unknown as Client);
+    const b = new MCPSource('b', 'B', new FakeClient() as unknown as Client);
+    r.add(a);
+    r.add(b);
+    await r.closeAll();
+    expect(a.health).toBe('disconnected');
+    expect(b.health).toBe('disconnected');
+    expect(r.list()).toEqual([]);
   });
 });
