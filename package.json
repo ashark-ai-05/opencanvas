@@ -18,9 +18,11 @@
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "*",
     "@anthropic-ai/sdk": "*",
+    "@hono/node-server": "^1.10.0",
     "@huggingface/transformers": "^4.0.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "better-sqlite3": "^11.0.0",
+    "hono": "^4.0.0",
     "ollama": "*",
     "onnxruntime-node": "^1.20.0",
     "openai": "*",
@@ -32,6 +34,7 @@
     "@modelcontextprotocol/server-filesystem": "*",
     "@types/better-sqlite3": "^7.6.0",
     "@types/node": "*",
+    "concurrently": "^9.0.0",
     "tsx": "*",
     "typescript": "*",
     "vitest": "*"
