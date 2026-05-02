@@ -7,3 +7,7 @@ dist
 
 # spikes have their own node_modules
 spikes/node_modules
+
+# Vendored space-agent runtime (cloned by scripts/setup-space-agent.sh).
+# Pinned commit lives in the setup script; do not commit the working tree.
+vendor/

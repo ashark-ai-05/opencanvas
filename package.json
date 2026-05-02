@@ -7,7 +7,10 @@
     "cli": "tsx src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "setup": "bash scripts/setup-space-agent.sh",
+    "dev": "bash scripts/dev-space-agent.sh",
+    "dev:check": "bash scripts/dev-space-agent.sh --smoke"
   },
   "engines": { "node": ">=24" },
   "dependencies": {
