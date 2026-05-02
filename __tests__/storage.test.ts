@@ -85,3 +85,55 @@ describe('initial migration', () => {
     store.close();
   });
 });
+
+describe('chunks + embeddings smoke', () => {
+  it('inserts a chunk and round-trips an embedding via sqlite-vec', async () => {
+    const store = await openStore({ path: ':memory:' });
+    await migrate(store, await loadInitialMigrations());
+
+    const insertChunk = store.db.prepare(
+      `INSERT INTO chunks (source_id, kind, uri, body, embedder_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    );
+    const result = insertChunk.run(
+      'test-source',
+      'text-document',
+      'file:///example.md',
+      'Hello world',
+      'onnx-bundled-bge-small',
+      Date.now()
+    );
+    const chunkId = Number(result.lastInsertRowid);
+    expect(chunkId).toBeGreaterThan(0);
+
+    // Sanity-check the FTS trigger fired
+    const ftsHit = store.db
+      .prepare(`SELECT rowid FROM fts WHERE fts MATCH 'hello'`)
+      .all() as { rowid: number }[];
+    expect(ftsHit.map((r) => r.rowid)).toContain(chunkId);
+
+    // Insert a 384-dim vector. sqlite-vec requires BigInt for PRIMARY KEY binding.
+    const vec = new Float32Array(384);
+    for (let i = 0; i < 384; i++) vec[i] = (i % 16) / 16;
+    store.db
+      .prepare(`INSERT INTO embeddings (chunk_id, embedding) VALUES (?, ?)`)
+      .run(BigInt(chunkId), Buffer.from(vec.buffer));
+
+    // Vector similarity query against itself
+    const nearest = store.db
+      .prepare(
+        `SELECT chunk_id, distance
+         FROM embeddings
+         WHERE embedding MATCH ?
+         ORDER BY distance
+         LIMIT 1`
+      )
+      .all(Buffer.from(vec.buffer)) as { chunk_id: number; distance: number }[];
+
+    expect(nearest).toHaveLength(1);
+    expect(nearest[0].chunk_id).toBe(chunkId);
+    expect(nearest[0].distance).toBeLessThan(0.001);
+
+    store.close();
+  });
+});
