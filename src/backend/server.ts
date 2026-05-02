@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
+import { cors } from 'hono/cors';
 import { BackendState } from './state.js';
 import { healthRoute } from './routes/health.js';
 import { queryOpenAIRoute } from './routes/query-openai.js';
@@ -14,6 +15,10 @@ import { queryOpenAIRoute } from './routes/query-openai.js';
  * keeping the route structure static (required by Hono's router).
  */
 export const app = new Hono();
+
+// CORS: allow the space-agent frontend (default :3456) to call our backend (:3457).
+// Mirror the request origin — safe for localhost-only deployments.
+app.use('/*', cors({ origin: (o) => o, allowMethods: ['GET', 'POST', 'OPTIONS'] }));
 
 let statePromise: Promise<BackendState> | null = null;
 
