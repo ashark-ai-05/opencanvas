@@ -11,3 +11,14 @@ spikes/node_modules
 # Vendored space-agent runtime (cloned by scripts/setup-space-agent.sh).
 # Pinned commit lives in the setup script; do not commit the working tree.
 vendor/
+
+# Space-agent runtime state under customware/. The L2/<user> directories
+# are auto-managed by space-agent (user accounts, sessions, password
+# verifiers); the _admin/_all writable L1 group dirs likewise. Carve out
+# customware/L2/<user>/conf/ as an exception — those are intentional
+# config files (e.g. onscreen-agent.yaml) we DO want to version.
+customware/L1/_admin/
+customware/L1/_all/mod/_admin/
+customware/L2/*/
+!customware/L2/*/conf/
+!customware/L2/*/conf/**
