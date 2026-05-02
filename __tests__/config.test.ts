@@ -246,3 +246,21 @@ describe('Profile.embed', () => {
     expect(p.embed.provider).toBe('onnx-bundled');
   });
 });
+
+import { probeProfile } from '../src/config/probe.js';
+
+describe('probeProfile', () => {
+  it('returns separate llm and embed probe results', async () => {
+    const profile = ProfileSchema.parse({
+      name: 't',
+      llm: { provider: 'amp' }, // stub; doesn't hit network
+      embed: { provider: 'voyage', model: 'voyage-3' }, // probe will fail (no key)
+    });
+
+    const result = await probeProfile(profile);
+    expect(result.llm).toBeDefined();
+    expect(result.embed).toBeDefined();
+    expect(result.embed.ok).toBe(false);
+    expect(result.embed.error).toMatch(/VOYAGE_API_KEY/);
+  });
+});
