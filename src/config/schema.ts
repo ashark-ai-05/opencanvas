@@ -6,6 +6,26 @@
  */
 import { z } from 'zod';
 
+export const EmbedProviderSchema = z.discriminatedUnion('provider', [
+  z.object({
+    provider: z.literal('onnx-bundled'),
+    model: z.string().default('BAAI/bge-small-en-v1.5'),
+  }),
+  z.object({
+    provider: z.literal('openai'),
+    model: z.string().default('text-embedding-3-small'),
+  }),
+  z.object({
+    provider: z.literal('voyage'),
+    model: z.string().default('voyage-3'),
+  }),
+  z.object({
+    provider: z.literal('ollama'),
+    model: z.string().default('nomic-embed-text'),
+    baseUrl: z.string().url().default('http://localhost:11434'),
+  }),
+]);
+
 export const ProfileSchema = z.object({
   name: z.string(),
   llm: z.discriminatedUnion('provider', [
@@ -35,6 +55,7 @@ export const ProfileSchema = z.object({
       baseUrl: z.string().url().default('http://localhost:11434'),
     }),
   ]),
+  embed: EmbedProviderSchema.default({ provider: 'onnx-bundled', model: 'BAAI/bge-small-en-v1.5' }),
 });
 
 export const ConfigFileSchema = z.object({
@@ -52,6 +73,7 @@ export const DEFAULT_CONFIG: ConfigFile = {
     {
       name: 'claude-sdk',
       llm: { provider: 'claude-agent-sdk' },
+      embed: { provider: 'onnx-bundled', model: 'BAAI/bge-small-en-v1.5' },
     },
   ],
 };

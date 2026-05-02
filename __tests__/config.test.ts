@@ -193,3 +193,56 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow(/config validation failed/);
   });
 });
+
+describe('Profile.embed', () => {
+  it('accepts a profile with onnx-bundled embedder', () => {
+    const profile = ProfileSchema.parse({
+      name: 'test',
+      llm: { provider: 'claude-agent-sdk' },
+      embed: { provider: 'onnx-bundled' },
+    });
+    expect(profile.embed.provider).toBe('onnx-bundled');
+  });
+
+  it('defaults onnx-bundled model to bge-small-en-v1.5', () => {
+    const profile = ProfileSchema.parse({
+      name: 'test',
+      llm: { provider: 'claude-agent-sdk' },
+      embed: { provider: 'onnx-bundled' },
+    });
+    expect((profile.embed as { model: string }).model).toBe('BAAI/bge-small-en-v1.5');
+  });
+
+  it('accepts openai, voyage, ollama variants', () => {
+    for (const variant of [
+      { provider: 'openai' as const, model: 'text-embedding-3-small' },
+      { provider: 'voyage' as const, model: 'voyage-3' },
+      { provider: 'ollama' as const, model: 'nomic-embed-text' },
+    ]) {
+      const p = ProfileSchema.parse({
+        name: 't',
+        llm: { provider: 'claude-agent-sdk' },
+        embed: variant,
+      });
+      expect(p.embed.provider).toBe(variant.provider);
+    }
+  });
+
+  it('rejects an unknown embed provider', () => {
+    expect(() =>
+      ProfileSchema.parse({
+        name: 't',
+        llm: { provider: 'claude-agent-sdk' },
+        embed: { provider: 'totally-fake' },
+      })
+    ).toThrow();
+  });
+
+  it('defaults embed to onnx-bundled when omitted', () => {
+    const p = ProfileSchema.parse({
+      name: 't',
+      llm: { provider: 'claude-agent-sdk' },
+    });
+    expect(p.embed.provider).toBe('onnx-bundled');
+  });
+});
