@@ -7,6 +7,7 @@ export default defineConfig({
   root: __dirname,
   plugins: [react(), tailwindcss()],
   server: {
+    host: '0.0.0.0',
     port: 3458,
     strictPort: true,
     // Proxy /v1/* requests to the backend on :3457 so the SPA can
