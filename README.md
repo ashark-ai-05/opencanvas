@@ -143,3 +143,48 @@ This is the LLM provider vertical slice (Plan 1'). The full Plan 1 (Foundation) 
 - Amp real wiring (post spike 01+02)
 
 See the [design spec](docs/superpowers/specs/2026-05-02-llm-wiki-design.md) for the full roadmap.
+
+---
+
+## Storage
+
+Local index lives at `~/.llm-wiki/index.sqlite` (single file, WAL mode, sqlite-vec extension loaded). Tables created from `src/storage/migrations/001_initial.sql` cover: `chunks`, `embeddings` (sqlite-vec), `fts` (FTS5), `symbols`, `links`, `prompt_cache`, `result_cache`, `sync_state`.
+
+Inspect status:
+
+```bash
+pnpm cli --storage-status
+```
+
+The store is created on first invocation; subsequent runs reuse it.
+
+---
+
+## Embedders
+
+Default: bundled ONNX (`bge-small-en-v1.5`, 384-dim). First run downloads ~130MB to the HuggingFace cache (`~/.cache/huggingface/`); subsequent runs are offline.
+
+Available providers (set in `~/.llm-wiki/config.json` under `profiles[].embed`):
+
+| Provider | Auth | Default model | Dims |
+| --- | --- | --- | --- |
+| `onnx-bundled` | none (offline) | `BAAI/bge-small-en-v1.5` | 384 |
+| `openai` | `OPENAI_API_KEY` | `text-embedding-3-small` | 1536 |
+| `voyage` | `VOYAGE_API_KEY` | `voyage-3` | 1024 |
+| `ollama` | none (local Ollama) | `nomic-embed-text` | 768 |
+
+Test the active embedder:
+
+```bash
+pnpm cli --embed "the quick brown fox"
+```
+
+Probe both LLM and embed in one command:
+
+```bash
+pnpm cli --probe
+```
+
+### Cold-start mitigation
+
+The bundled ONNX embedder takes ~4.5s on first call (M-series CPU; spike 03 measurements). Per design amendment 3, future Plan 1.5 will pre-warm the embedder on app launch so users never see this latency interactively.
