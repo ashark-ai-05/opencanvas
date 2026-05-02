@@ -411,3 +411,62 @@ pnpm cli --search "createMcpClient"
 **Adding a language** (Plan 3c.1+): write a new `LanguageAdapter` (~50 LOC) that extracts symbols via tree-sitter, register it in `CodeIndexer.adapterFor()`. Python, Go, Java, Ruby, etc. follow this pattern.
 
 **Symbol storage:** the `symbols` table records `(name, kind, lang, file, refs_json)`. `refs_json` is an array of identifier names referenced from inside that symbol's body — basis for the intra-file call graph (full graph in Plan 3c.4).
+
+---
+
+## Running the app
+
+The native React + Vite UI lives at `app/`. Talks to the Hono backend on `:3457` via a Vite proxy on `:3458`.
+
+### Dev mode
+
+```bash
+# Start backend + app together (recommended)
+pnpm dev:app
+# → backend on :3457, app on :3458
+
+# Open http://localhost:3458
+```
+
+The chat input streams from `/v1/query/openai` (proxied to the backend) using `@ai-sdk/react`'s `useChat` — same OpenAI chat-completions SSE format we already serve.
+
+### Build for production
+
+```bash
+pnpm app:build
+# → app/dist/
+
+# Preview the built app:
+pnpm app:preview
+```
+
+In production you can serve `app/dist/` from the backend on `:3457` (single port). That wiring lands in Plan 4b alongside canvas persistence.
+
+### Tests
+
+```bash
+# Run all tests (Node + app)
+pnpm test
+
+# App tests only
+pnpm exec vitest run --config app/vite.config.ts
+```
+
+The app's component tests use `@testing-library/react` + `jsdom`. Existing Node-side tests are unchanged.
+
+### Stack
+
+- Vite 6, React 19, TypeScript 5, Tailwind 4
+- Vercel AI SDK (`ai` + `@ai-sdk/react`) for chat streaming
+- Zustand 5 for app-level state
+- lucide-react for icons
+- Vitest + @testing-library/react + jsdom for tests
+
+### What's next (Plan 4b+)
+
+Plan 4a (this) ships the chat shell. Future plans layer on:
+
+- **4b**: tldraw infinite canvas + Widget abstraction + canvas persistence
+- **4c**: Widget catalog (Markdown, CodeBlock, TicketCard, SearchResults, SourceProbe)
+- **4d**: Result dispatcher — agent output materialises as widgets on the canvas
+- **4e**: Canvas templates (AskAnything, TellMeAboutX, WhatsNewSinceY, TraceXEverywhere)
