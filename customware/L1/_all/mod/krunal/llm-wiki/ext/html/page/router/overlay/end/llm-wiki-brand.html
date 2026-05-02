@@ -1,0 +1,86 @@
+<!--
+  llm-wiki branding override.
+  Loaded into every page via the global page/router/overlay/end seam.
+  Hides the space-agent astronaut + branding strings; restyles the
+  chat composer to read as our own surface.
+-->
+<style>
+  /* Hide the chat composer astronaut + its orbit/flip wrapper. */
+  .onscreen-agent-avatar-button,
+  .onscreen-agent-avatar-orbit,
+  .onscreen-agent-avatar-image {
+    display: none !important;
+  }
+
+  /* Hide the avatar button's reserved space so the composer sits flush. */
+  .onscreen-agent-shell.has-avatar .onscreen-agent-body,
+  .onscreen-agent-shell .onscreen-agent-body {
+    margin-left: 0 !important;
+  }
+
+  /* If any other astronaut images appear elsewhere (chat history, admin
+     header), hide them too. */
+  img[src*="/visual/res/chat/"][src*="astronaut"],
+  img[src*="/visual/res/engineer/"][src*="astronaut"],
+  img[src*="/visual/res/chat/admin/"][src*="astronaut"] {
+    display: none !important;
+  }
+
+  /* Hide any explicit "Space Agent" branding. The strings below appear in
+     a small number of admin templates per `grep -rn "Space Agent"`. */
+  .space-agent-brand,
+  [data-brand="space-agent"] {
+    display: none !important;
+  }
+</style>
+
+<script>
+  // Replace any visible "Space Agent" text nodes with "llm-wiki".
+  // Runs once on load + observes future DOM mutations to catch dynamic content.
+  (function () {
+    const REPLACEMENTS = new Map([
+      [/\bSpace Agent\b/g, 'llm-wiki'],
+      [/\bspace-agent\b/g, 'llm-wiki'],
+    ]);
+
+    function rewriteTextNodes(root) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const targets = [];
+      let n;
+      while ((n = walker.nextNode())) {
+        const text = n.nodeValue;
+        let next = text;
+        for (const [pattern, value] of REPLACEMENTS) {
+          next = next.replace(pattern, value);
+        }
+        if (next !== text) targets.push([n, next]);
+      }
+      for (const [node, value] of targets) node.nodeValue = value;
+    }
+
+    function init() {
+      rewriteTextNodes(document.body);
+      const obs = new MutationObserver((muts) => {
+        for (const m of muts) {
+          for (const node of m.addedNodes) {
+            if (node.nodeType === 1 || node.nodeType === 11) {
+              rewriteTextNodes(node);
+            } else if (node.nodeType === 3) {
+              const replaced = node.nodeValue
+                .replace(/\bSpace Agent\b/g, 'llm-wiki')
+                .replace(/\bspace-agent\b/g, 'llm-wiki');
+              if (replaced !== node.nodeValue) node.nodeValue = replaced;
+            }
+          }
+        }
+      });
+      obs.observe(document.body, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
