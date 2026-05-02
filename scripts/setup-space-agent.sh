@@ -30,20 +30,19 @@ else
   echo "==> space-agent node_modules already present (skipping npm install)"
 fi
 
-# Create a default admin user if one does not already exist.
-# Space-agent stores users under CUSTOMWARE_PATH/L2/<username>/ (when CUSTOMWARE_PATH is set)
-# or app/L2/<username>/ otherwise. Check the app-relative path as a fallback.
-CUSTOMWARE_PATH="${CUSTOMWARE_PATH:-}"
-if [ -n "$CUSTOMWARE_PATH" ]; then
-  ADMIN_DIR="$CUSTOMWARE_PATH/L2/admin"
-else
-  ADMIN_DIR="$SPACE_AGENT_DIR/app/L2/admin"
-fi
+# Create a default admin user under CUSTOMWARE_PATH/L2 (where serve mode looks).
+# Default to $PROJECT_ROOT/customware so the user lands in the same L2 tree
+# that `pnpm dev` mounts via CUSTOMWARE_PATH. If we don't pass this through,
+# the user lands in space-agent's bundled L2 and serve-time login 401s.
+export CUSTOMWARE_PATH="${CUSTOMWARE_PATH:-$PROJECT_ROOT/customware}"
+mkdir -p "$CUSTOMWARE_PATH/L2"
+ADMIN_DIR="$CUSTOMWARE_PATH/L2/admin"
 
 if [ -d "$ADMIN_DIR" ]; then
-  echo "==> Admin user already exists"
+  echo "==> Admin user already exists at $ADMIN_DIR"
 else
   echo "==> Creating default admin user (password: change-me-now)"
+  echo "    Location: $ADMIN_DIR"
   node space user create admin \
     --password "change-me-now" \
     --full-name "Admin (llm-wiki dev)" \
