@@ -57,6 +57,11 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       // SDK programmatically with our own config; user/project/local
       // settings would inject extra system prompt fragments we don't want.
       settingSources: [],
+      // Disable all built-in tools (Bash, Read, Edit, Grep, etc.). For pure
+      // chat we don't need them, and their definitions can include empty
+      // cache_control text blocks the Anthropic API rejects. Plan 5+ wires
+      // tool calling for the agent loop; this stays empty until then.
+      tools: [],
     };
     if (this.config.model) options.model = this.config.model;
 
