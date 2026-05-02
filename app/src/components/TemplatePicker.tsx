@@ -9,7 +9,7 @@ export function TemplatePicker() {
     <div
       style={{
         position: 'absolute',
-        top: 12,
+        top: 60,
         right: 320, // sit to the left of SearchBar (which is at right: 12 with min-width 280 + padding)
         zIndex: 200,
         display: 'flex',

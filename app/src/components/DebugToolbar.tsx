@@ -113,7 +113,7 @@ export function DebugToolbar() {
     <div
       style={{
         position: 'absolute',
-        top: 12,
+        top: 60,
         left: 12,
         zIndex: 200,
         display: 'flex',
