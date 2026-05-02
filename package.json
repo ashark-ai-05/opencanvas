@@ -8,6 +8,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "backend": "bash scripts/backend.sh",
+    "backend:check": "bash scripts/backend.sh --smoke",
+    "dev:full": "concurrently --names 'backend,space-agent' --kill-others --kill-others-on-fail 'pnpm backend' 'pnpm dev'",
     "setup": "bash scripts/setup-space-agent.sh",
     "dev": "bash scripts/dev-space-agent.sh",
     "dev:check": "bash scripts/dev-space-agent.sh --smoke"

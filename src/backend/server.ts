@@ -69,9 +69,7 @@ app.get('/v1/sources/:id/tools', async (c) => {
   const config = state.profile.sources.find((s) => s.id === id);
   if (!config) return c.json({ error: `unknown source: ${id}` }, 404);
 
-  const { createMcpClient } = await import('./routes/sources.js').then(() =>
-    import('../mcp/transport.js')
-  );
+  const { createMcpClient } = await import('../mcp/transport.js');
   const { MCPSource } = await import('../mcp/source.js');
   const client = await createMcpClient(config);
   const source = new MCPSource(config.id, config.name, client);
@@ -169,4 +167,19 @@ export async function start(port: number): Promise<void> {
   console.log(`[llm-wiki backend] profile: ${s.profileName}`);
   console.log(`[llm-wiki backend] llm:     ${s.getLLMProvider().id}`);
   console.log(`[llm-wiki backend] embed:   ${s.getEmbedder().id}`);
+}
+
+// Run via `pnpm tsx src/backend/server.ts` or `pnpm backend`.
+// We detect this by checking process.argv[1] against the resolved module URL.
+import { fileURLToPath } from 'node:url';
+const isMainModule =
+  typeof process !== 'undefined' &&
+  process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  const port = Number(process.env['LLM_WIKI_BACKEND_PORT'] ?? 3457);
+  start(port).catch((e) => {
+    console.error('[llm-wiki backend] fatal:', e);
+    process.exit(1);
+  });
 }
