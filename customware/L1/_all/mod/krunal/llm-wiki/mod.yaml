@@ -1,0 +1,7 @@
+name: llm-wiki
+owner: krunal
+description: |
+  llm-wiki extensions for space-agent. Provides config-driven LLM
+  provider routing, embedder integration, and MCP source connectors.
+  See https://github.com/<owner>/llm-wiki for the host repository.
+version: 0.1.0

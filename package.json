@@ -12,24 +12,27 @@
     "dev": "bash scripts/dev-space-agent.sh",
     "dev:check": "bash scripts/dev-space-agent.sh --smoke"
   },
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "*",
     "@anthropic-ai/sdk": "*",
-    "openai": "*",
-    "ollama": "*",
-    "zod": "*",
-    "better-sqlite3": "^11.0.0",
-    "sqlite-vec": "^0.1.6",
     "@huggingface/transformers": "^4.0.0",
-    "onnxruntime-node": "^1.20.0"
+    "better-sqlite3": "^11.0.0",
+    "ollama": "*",
+    "onnxruntime-node": "^1.20.0",
+    "openai": "*",
+    "sqlite-vec": "^0.1.6",
+    "yaml": "^2.8.3",
+    "zod": "*"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "*",
     "tsx": "*",
     "typescript": "*",
-    "vitest": "*",
-    "@types/node": "*",
-    "@types/better-sqlite3": "^7.6.0"
+    "vitest": "*"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
