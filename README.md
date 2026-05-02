@@ -486,8 +486,32 @@ Adding a new widget:
 
 The TextNoteShape (`llm-wiki:text-note`) is the proof-of-wire example — Plan 4c replaces it with a real widget catalog.
 
-### What's next (Plan 4c–4e)
+### Widget catalog (Plan 4c)
 
-- **4c**: Built-in widget catalog (Markdown, CodeBlock, TicketCard, SearchResults, SourceProbe)
-- **4d**: Result dispatcher — agent output materialises as widgets on the canvas
+Five built-in widgets ship in v1, mirroring spec §3:
+
+| Shape type | ResultKind(s) accepted | Renders |
+| --- | --- | --- |
+| `llm-wiki:markdown` | `text-document`, `wiki-page` | GFM markdown via react-markdown |
+| `llm-wiki:code-block` | `code-symbol`, `code-file` | Monospace block with file/symbol metadata (no syntax highlighting in v1) |
+| `llm-wiki:ticket` | `ticket` | Jira-style card: id + title + status pill + assignee + description |
+| `llm-wiki:web-embed` | `web-page` | Sandboxed iframe (`sandbox="allow-scripts"`, no same-origin) |
+| `llm-wiki:key-value-card` | (fallback for unmapped kinds) | Title + key/value pairs |
+
+The registry at `src/core/widget-registry.ts` maps every `ResultKind` from spec §3 to a widget. Unmapped kinds fall back to `KeyValueCardWidget`.
+
+#### Debug toolbar
+
+A small debug toolbar in the top-left of the canvas creates one example of each widget per click. Useful for visual smoke testing without driving the full result-dispatcher (Plan 4d).
+
+#### Adding a new widget
+
+1. Create `app/src/canvas/shapes/<name>.tsx` exporting a `ShapeUtil` (use any of the existing widgets as a template — they share `app/src/canvas/shapes/shared.tsx` for the card frame style)
+2. Register the `ShapeUtil` in `customShapeUtils` in `app/src/canvas/Canvas.tsx`
+3. Add a `Widget` entry in `src/core/widget-registry.ts` mapping the `ResultKind` to the new `shapeType`
+4. (Plan 4d) The dispatcher will pick up the new mapping automatically
+
+### What's next (Plan 4d–4e)
+
+- **4d**: Result dispatcher — agent's `ResultEnvelope` outputs are routed to widgets on the canvas
 - **4e**: Canvas templates (AskAnything, TellMeAboutX, WhatsNewSinceY, TraceXEverywhere)
