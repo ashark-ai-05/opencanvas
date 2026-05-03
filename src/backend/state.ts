@@ -5,10 +5,11 @@ import { SourceRegistry } from '../mcp/registry.js';
 import { openDefaultStore, type Store } from '../storage/store.js';
 import { SearchService } from '../search/service.js';
 import { createWebSearchProvider } from '../web/tavily.js';
-import type { Profile } from '../config/schema.js';
+import type { Profile, SourceConfig } from '../config/schema.js';
 import type { LLMProvider } from '../core/provider.js';
 import type { EmbeddingProvider } from '../core/embedding-provider.js';
 import type { AgentToolDeps } from '../agent/tools/index.js';
+import type { ExternalMcpSource } from '../providers/claude-agent-sdk.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -46,9 +47,28 @@ export class BackendState {
       this.llmProvider = createProvider(this.profile, {
         search: this.getSearchService(),
         webSearch: this.getWebSearchProvider(),
+        getExternalMcpSources: () => this.getExternalMcpSources(),
       });
     }
     return this.llmProvider;
+  }
+
+  /**
+   * Connects + introspects every configured source so its tools become
+   * available to the agent. Cached after first call. Returns SDK-shaped
+   * MCP server configs paired with introspected tool names. Failed sources
+   * are silently dropped from the result (the CLI's --probe-sources is the
+   * place to surface failures, not the chat path).
+   */
+  async getExternalMcpSources(): Promise<ExternalMcpSource[]> {
+    await this.ensureSourcesConnected();
+    return this.sourceRegistry.list().map((s) => ({
+      name: s.id,
+      config: sourceConfigToSdkConfig(
+        this.profile.sources.find((c) => c.id === s.id)!,
+      ),
+      toolNames: s.tools.map((t) => t.name),
+    }));
   }
 
   /**
@@ -120,5 +140,24 @@ export class BackendState {
 
   async shutdown(): Promise<void> {
     await this.sourceRegistry.closeAll();
+  }
+}
+
+/**
+ * Convert our `SourceConfig` (configured via ~/.strata/config.json) into the
+ * shape the Claude Agent SDK's `mcpServers` option expects. The fields are
+ * mostly identical; we reshape transport/url/command for the SDK's union.
+ */
+function sourceConfigToSdkConfig(s: SourceConfig): ExternalMcpSource['config'] {
+  // alwaysLoad: true bakes the source's tool schemas into the prompt so the
+  // SDK doesn't burn a `ToolSearch` round-trip discovering them every turn.
+  // Cost is small (a few hundred prompt tokens per source) — well worth it.
+  switch (s.transport) {
+    case 'stdio':
+      return { type: 'stdio', command: s.command, args: s.args, env: s.env, alwaysLoad: true };
+    case 'sse':
+      return { type: 'sse', url: s.url, headers: s.headers, alwaysLoad: true };
+    case 'http':
+      return { type: 'http', url: s.url, headers: s.headers, alwaysLoad: true };
   }
 }

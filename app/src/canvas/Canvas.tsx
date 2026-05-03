@@ -45,6 +45,9 @@ export function Canvas() {
       // Tldraw editor scope) can apply tool directives via getEditor().
       setEditor(editor);
 
+      // Force dark color scheme — Strata is dark-only by design.
+      editor.user.updateUserPreferences({ colorScheme: 'dark' });
+
       editor.store.listen(
         () => {
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current);

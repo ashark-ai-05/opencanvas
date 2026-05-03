@@ -140,19 +140,19 @@ export function Chat() {
         )}
       </AnimatePresence>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-5">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mt-12 px-6"
           >
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full strata-glass">
+            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full strata-glass">
               <Sparkles className="size-3 text-violet-400" />
-              <span className="text-xs text-zinc-400">Strata · agent-driven canvas</span>
+              <span className="text-[11px] tracking-wide text-zinc-400">Strata · agent-driven canvas</span>
             </div>
-            <p className="text-base text-zinc-200 font-medium">Ask anything about your knowledge.</p>
-            <p className="text-sm text-zinc-500 mt-1">
+            <p className="text-[15px] text-zinc-200 font-medium tracking-tight">Ask anything about your knowledge.</p>
+            <p className="text-[13px] text-zinc-500 mt-1.5">
               Search, drill in, place widgets. The canvas reshapes around your question.
             </p>
           </motion.div>
@@ -168,14 +168,14 @@ export function Chat() {
               transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
               className="flex flex-col gap-1.5"
             >
-              <div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500 font-medium">
+              <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
                 {m.role === 'user' ? 'you' : 'strata'}
               </div>
               <div
                 className={
                   m.role === 'user'
-                    ? 'whitespace-pre-wrap text-zinc-100 leading-relaxed strata-glass rounded-xl px-4 py-3'
-                    : 'whitespace-pre-wrap text-zinc-100 leading-relaxed'
+                    ? 'whitespace-pre-wrap text-zinc-50 leading-relaxed text-[14px] strata-glass rounded-xl px-4 py-3'
+                    : 'whitespace-pre-wrap text-zinc-100 leading-relaxed text-[14px]'
                 }
               >
                 {(m.parts as Array<{ type: string }>).map((p, i) => {
@@ -188,17 +188,18 @@ export function Chat() {
                       return (
                         <span
                           key={i}
-                          className="block text-xs text-zinc-400 italic mt-1.5"
+                          className="block text-[12px] text-zinc-400 mt-2"
                         >
                           <span className="strata-tool-spinner" />
-                          calling {toolPartName(tp)}…
+                          <span className="font-mono text-violet-300/80">{toolPartName(tp)}</span>
+                          <span className="text-zinc-500">…</span>
                         </span>
                       );
                     }
                     if (tp.state === 'output-error') {
                       return (
-                        <span key={i} className="block text-xs text-red-400 mt-1.5">
-                          tool error ({toolPartName(tp)}): {tp.errorText ?? 'unknown'}
+                        <span key={i} className="block text-[12px] text-red-400 mt-2">
+                          <span className="font-mono">{toolPartName(tp)}</span>: {tp.errorText ?? 'error'}
                         </span>
                       );
                     }
@@ -218,7 +219,7 @@ export function Chat() {
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 text-zinc-500 text-xs"
+            className="flex items-center gap-2.5 text-zinc-500 text-[12px]"
           >
             <span className="strata-streaming-pulse" />
             thinking…
@@ -228,22 +229,22 @@ export function Chat() {
 
       <form
         onSubmit={handleSubmit}
-        className="border-t border-zinc-800/80 p-3 flex gap-2 strata-glass"
+        className="px-3 py-3 flex gap-2 border-t border-white/5 bg-[var(--color-bg)]/95"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything…"
+          placeholder="Ask Strata anything…"
           disabled={isStreaming}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all disabled:opacity-50"
+          className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-zinc-100 placeholder-zinc-500 text-[14px] focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/15 transition-all disabled:opacity-50"
         />
         {isStreaming ? (
           <button
             type="button"
             onClick={() => stop()}
             aria-label="Stop"
-            className="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 transition-colors flex items-center justify-center"
+            className="px-3.5 py-2.5 rounded-xl bg-[var(--color-bg-3)] hover:bg-zinc-800 text-zinc-100 border border-white/8 transition-colors flex items-center justify-center"
             title="Stop generating"
           >
             <Square className="size-4" fill="currentColor" />

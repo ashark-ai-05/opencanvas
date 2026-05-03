@@ -5,24 +5,29 @@ import { HealthBadge } from './components/HealthBadge';
 
 export function App() {
   return (
-    <div className="flex h-full flex-col relative">
-      <header className="flex items-center justify-between border-b border-zinc-800/80 px-6 py-3 shrink-0 strata-glass relative z-10">
-        <div className="flex items-center gap-2.5">
-          {/* Wordmark with a gradient accent on the S — unobtrusive brand moment */}
-          <h1 className="text-lg font-semibold tracking-tight bg-gradient-to-r from-violet-300 via-fuchsia-300 to-violet-300 bg-clip-text text-transparent">
+    <div className="flex h-full flex-col relative bg-[var(--color-bg)]">
+      <header className="flex items-center justify-between px-5 h-12 shrink-0 strata-glass relative z-10 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          {/* Mark — small square with the gradient, then wordmark */}
+          <div
+            aria-hidden
+            className="size-5 rounded-md bg-gradient-to-br from-violet-400 to-fuchsia-400"
+            style={{
+              boxShadow:
+                '0 0 0 1px rgba(255,255,255,0.06) inset, 0 4px 14px -4px rgba(167,139,250,0.6)',
+            }}
+          />
+          <h1 className="text-[15px] font-semibold tracking-tight text-zinc-100">
             Strata
           </h1>
-          <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-medium hidden sm:inline">
-            knowledge surface
-          </span>
         </div>
         <HealthBadge />
       </header>
-      <main className="flex-1 min-h-0 grid grid-rows-[1fr_minmax(180px,32%)]">
-        <section className="min-h-0 overflow-hidden border-b border-zinc-800/80 relative">
+      <main className="flex-1 min-h-0 grid grid-rows-[1fr_minmax(200px,34%)]">
+        <section className="min-h-0 overflow-hidden border-b border-white/5 relative bg-[var(--color-bg)]">
           <Canvas />
         </section>
-        <section className="min-h-0 overflow-hidden">
+        <section className="min-h-0 overflow-hidden bg-[var(--color-bg)]">
           <Chat />
         </section>
       </main>
@@ -31,10 +36,10 @@ export function App() {
         position="top-right"
         toastOptions={{
           style: {
-            background: 'rgba(24, 24, 27, 0.92)',
-            color: '#fafafa',
-            border: '1px solid rgba(63, 63, 70, 0.6)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(10, 10, 13, 0.85)',
+            color: '#f4f4f5',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(14px)',
           },
         }}
       />

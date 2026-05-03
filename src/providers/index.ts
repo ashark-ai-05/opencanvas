@@ -4,6 +4,7 @@
 import type { LLMProvider } from '../core/provider.js';
 import type { Profile } from '../config/schema.js';
 import type { AgentToolDeps } from '../agent/tools/index.js';
+import type { ExternalMcpSource } from './claude-agent-sdk.js';
 
 import { ClaudeAgentSdkAdapter } from './claude-agent-sdk.js';
 import { AnthropicDirectAdapter } from './anthropic-direct.js';
@@ -20,6 +21,7 @@ import { AmpAdapter } from './amp.js';
 export type ProviderDeps = {
   search?: AgentToolDeps['search'];
   webSearch?: AgentToolDeps['webSearch'];
+  getExternalMcpSources?: () => Promise<ExternalMcpSource[]>;
 };
 
 export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMProvider {
@@ -29,7 +31,11 @@ export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMPr
     case 'claude-agent-sdk':
       return new ClaudeAgentSdkAdapter(
         { model: llm.model },
-        { search: deps.search, webSearch: deps.webSearch },
+        {
+          search: deps.search,
+          webSearch: deps.webSearch,
+          getExternalMcpSources: deps.getExternalMcpSources,
+        },
       );
 
     case 'anthropic-direct':

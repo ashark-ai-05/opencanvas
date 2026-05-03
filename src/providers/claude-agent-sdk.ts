@@ -28,9 +28,38 @@ export type ClaudeAgentSdkConfig = {
   systemPrompt?: string;
 };
 
+/**
+ * Configured external MCP server (filesystem, Confluence, Jira, etc.) the
+ * agent should be able to call. We pass `config` straight through to the
+ * SDK's `mcpServers` option; `toolNames` is the introspected list of tools
+ * exposed by that server (used to widen `allowedTools` so they're permitted).
+ */
+export type ExternalMcpSource = {
+  /** Logical name for the SDK; tool calls become `mcp__<name>__<tool>`. */
+  name: string;
+  /** SDK-shaped server config (stdio/sse/http). */
+  config: {
+    type?: 'stdio' | 'sse' | 'http';
+    command?: string;
+    args?: string[];
+    env?: Record<string, string>;
+    url?: string;
+    headers?: Record<string, string>;
+    /** Eagerly inject tool schemas — saves a ToolSearch round-trip per turn. */
+    alwaysLoad?: boolean;
+  };
+  toolNames: string[];
+};
+
 export type ClaudeAgentSdkDeps = {
   search?: AgentToolDeps['search'];
   webSearch?: AgentToolDeps['webSearch'];
+  /**
+   * Async getter so the adapter can pull the latest source list per chat turn
+   * without forcing source connection at construction time. Returns whatever
+   * sources have been connected + introspected so far; never throws.
+   */
+  getExternalMcpSources?: () => Promise<ExternalMcpSource[]>;
 };
 
 /**
@@ -99,6 +128,19 @@ function buildLazyWebSearch(): AgentToolDeps['webSearch'] {
   };
 }
 
+/**
+ * Render a system-prompt section listing the user's externally configured MCP
+ * sources and their tool names. Without this the model only knows about
+ * strata's built-in tools and won't attempt mcp__<source>__<tool> calls.
+ */
+function renderExternalToolsBlock(sources: ExternalMcpSource[]): string {
+  const lines = sources.map((s) => {
+    const tools = s.toolNames.join(', ');
+    return `- **${s.name}** (call as \`mcp__${s.name}__<tool>\`): ${tools}`;
+  });
+  return `External tools available (the user has configured these MCP sources — call them when the question maps to one):\n${lines.join('\n')}\n\nFor filesystem-style sources, prefer reading specific files (\`read_text_file\`, \`list_directory\`) over recursive walks. Cite paths only when verified.`;
+}
+
 export class ClaudeAgentSdkAdapter implements LLMProvider {
   readonly id = 'claude-agent-sdk';
   readonly name = 'Claude Agent SDK';
@@ -118,18 +160,25 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     // also skips the default Claude Code preset, which loads dynamic
     // sections (cwd, memory, git status) that can produce empty cache_control
     // text blocks the Anthropic API now rejects.
-    const systemPrompt =
+    // Resolve external MCP sources up front so we can append them to the
+    // system prompt — without that block the model assumes only strata tools
+    // exist and never attempts mcp__<source-name>__<tool> calls.
+    const externalSources = this.deps.getExternalMcpSources
+      ? await this.deps.getExternalMcpSources().catch((e) => {
+          console.error('[claude-agent-sdk] failed to load external MCP sources:', e);
+          return [];
+        })
+      : [];
+
+    const baseSystemPrompt =
       request.systemPrompt ??
       this.config.systemPrompt ??
       DEFAULT_SYSTEM_PROMPT;
 
-    // Clean working directory — process.cwd() includes a git repo + lots of
-    // files which the SDK can use to produce dynamic context blocks. A
-    // freshly-created tempdir gives the SDK nothing to introspect.
-    const { mkdtempSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
-    const cleanCwd = mkdtempSync(join(tmpdir(), 'strata-sdk-'));
+    const systemPrompt =
+      externalSources.length > 0
+        ? `${baseSystemPrompt}\n\n${renderExternalToolsBlock(externalSources)}`
+        : baseSystemPrompt;
 
     // Mirror the caller's abort signal into a fresh AbortController owned by
     // this turn. The SDK accepts an `abortController` (not a signal) so we
@@ -150,6 +199,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
 
     const search = this.deps.search ?? buildLazySearchAdapter();
     const webSearch = this.deps.webSearch ?? buildLazyWebSearch();
+    // externalSources resolved earlier to feed the system prompt.
     const snapshot =
       request.canvasSnapshot ?? {
         activeTemplateId: 'ask-anything' as const,
@@ -180,19 +230,35 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       systemPrompt,
       // Don't load .claude/settings.json from the filesystem.
       settingSources: [],
-      // Run the SDK from an empty tempdir so it has no project files,
-      // no git status, no CLAUDE.md, no AGENTS.md to inject as context.
-      cwd: cleanCwd,
+      // NOTE: deliberately NOT setting `cwd: cleanCwd` here — the SDK
+      // announces its cwd as an MCP "root" to spawned MCP servers, which
+      // OVERRIDES the allowed-paths args we pass them. Letting cwd default
+      // to the backend process's cwd means filesystem MCP servers honor
+      // their args (e.g. `/Users/foo/Development`) instead of being pinned
+      // to a fresh tempdir. The cache_control bug that motivated the
+      // tempdir is gone now that we use a string systemPrompt (not the
+      // 'claude_code' preset that loads CLAUDE.md/AGENTS.md/etc.).
       // No file-checkpointing context blocks.
       enableFileCheckpointing: false,
       // No session forking artifacts.
       forkSession: false,
       // No custom agents.
       agents: {},
-      // In-process MCP server hosting our 10 agent tools. The SDK invokes
-      // them by `mcp__<server>__<tool>` — we name the server `strata`.
-      mcpServers: { 'strata': mcp },
-      allowedTools: tools.map((t) => `mcp__strata__${t.name}`),
+      // MCP servers exposed to the agent.
+      //   - `strata`: in-process server hosting our 10 agent tools.
+      //   - one entry per externally-configured source (filesystem, Confluence,
+      //     Jira, etc.) so the agent can call user-defined tools by
+      //     `mcp__<source.name>__<tool>`. The SDK manages the process.
+      mcpServers: {
+        strata: mcp,
+        ...Object.fromEntries(externalSources.map((s) => [s.name, s.config])),
+      },
+      allowedTools: [
+        ...tools.map((t) => `mcp__strata__${t.name}`),
+        ...externalSources.flatMap((s) =>
+          s.toolNames.map((t) => `mcp__${s.name}__${t}`),
+        ),
+      ],
       // Disallow every SDK built-in tool (Bash/Read/Edit/WebSearch/etc.) so
       // the model can't fall back to them when our MCP tools return empty.
       // Without this, the SDK's WebSearch fires when our `web_search` returns
@@ -202,7 +268,10 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       // a non-interactive backend that just yields permission errors.
       // 'dontAsk' = deny instead of prompt for anything not allow-listed.
       permissionMode: 'dontAsk' as const,
-      maxTurns: 10,
+      // 20 covers most real research queries (KB search + 2-3 fetches +
+      // 2-4 widget placements + occasional web/MCP fan-out + final reply).
+      // Original 10 was too conservative once tool variety grew.
+      maxTurns: 20,
       maxOutputTokens: 8192,
       effort: 'medium',
       thinking: { type: 'adaptive', display: 'summarized' },

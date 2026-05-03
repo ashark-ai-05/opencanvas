@@ -53,7 +53,7 @@ describe('claude-agent-sdk options', () => {
     const opts = (
       mockedQuery.mock.calls[0]![0] as { options: Record<string, unknown> }
     ).options;
-    expect(opts.maxTurns).toBe(10);
+    expect(opts.maxTurns).toBe(20);
     expect(opts.maxOutputTokens).toBe(8192);
     expect(opts.effort).toBe('medium');
     expect((opts.thinking as { display?: string }).display).toBe('summarized');
