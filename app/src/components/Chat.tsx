@@ -13,6 +13,7 @@ import { suggestCommands, tryRunCommand } from './slash-commands';
 import { TeamProgress, TeamHandoff } from './TeamProgress';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
+import { useKbStats } from '../state/kb-stats-store';
 import type { ToolDirective } from '../../../src/agent/types';
 
 /**
@@ -90,9 +91,16 @@ async function indexConversation(
       body: JSON.stringify({ conversationId, messages }),
     });
     if (!res.ok) return;
-    const data = (await res.json()) as { indexed?: number };
-    if (data.indexed && data.indexed > 0) {
-      toast(`KB grew · ${data.indexed} new ${data.indexed === 1 ? 'turn' : 'turns'} indexed`, {
+    const data = (await res.json()) as { indexed?: number; delta?: number };
+    const indexed = data.indexed ?? 0;
+    const delta = Math.max(0, data.delta ?? indexed);
+    if (delta > 0) {
+      // Drive the header KB badge animation. `delta` is the net change
+      // vs prior state — re-indexing a conversation that grew from 3 to
+      // 5 turns bumps by 2, not 5. Toast as a secondary confirmation
+      // in case the user isn't looking at the header.
+      useKbStats.getState().bump(delta);
+      toast(`KB grew · ${delta} new ${delta === 1 ? 'turn' : 'turns'} indexed`, {
         duration: 2400,
       });
     }

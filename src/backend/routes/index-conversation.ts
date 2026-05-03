@@ -78,8 +78,16 @@ export function indexConversationRoute(state: BackendState): Hono {
     const embedderId = embedder.id;
     const now = Date.now();
 
-    // Idempotent replace: nuke any existing chunks for this conversation
-    // before inserting fresh ones.
+    // Idempotent replace: count prior chunks for this conversation before
+    // we nuke them, so we can return an accurate delta (new chunks - old
+    // chunks) instead of the raw insertion count. The frontend KB badge
+    // bumps by `delta` so re-indexing a 3-turn → 5-turn conversation
+    // increments the header by 2, not 5.
+    const priorCountRow = store.db
+      .prepare(`SELECT COUNT(*) AS c FROM chunks WHERE source_id = ?`)
+      .get(sourceId) as { c: number } | undefined;
+    const priorCount = priorCountRow?.c ?? 0;
+
     store.db
       .prepare(`DELETE FROM chunks WHERE source_id = ?`)
       .run(sourceId);
@@ -121,6 +129,11 @@ export function indexConversationRoute(state: BackendState): Hono {
     return c.json({
       ok: true,
       indexed: pairs.length,
+      // Net delta vs prior state. Drives the header KB badge animation.
+      // Negative when a conversation gets shorter (rare — likely never
+      // happens given we only append assistant turns); the frontend
+      // clamps to >=0.
+      delta: pairs.length - priorCount,
       sourceId,
     });
   });
