@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { BackendState } from '../state.js';
 import { SearchService } from '../../search/service.js';
+import { titleFromUri } from '../../search/title.js';
 import type { ResultKind } from '../../core/source.js';
 
 type Result = {
@@ -31,25 +32,29 @@ export function searchRoute(state: BackendState): Hono {
     const service = new SearchService({ store, embedder });
     const limit = Math.max(1, Math.min(50, Number(body.limit ?? 10)));
 
-    const hits = await service.search(query, { limit });
+    const hits = await service.search(query, limit);
 
-    // Hydrate each hit with its chunk meta + map to the Result envelope.
-    const results: Result[] = hits.map((h) => {
-      const row = store.db
-        .prepare('SELECT meta_json, kind FROM chunks WHERE id = ?')
-        .get(h.chunkId) as { meta_json: string | null; kind: string } | undefined;
-      const meta = row?.meta_json ? JSON.parse(row.meta_json) : {};
-      const kind = (row?.kind ?? 'text-document') as ResultKind;
-      return {
-        id: String(h.chunkId),
-        sourceId: h.sourceId,
+    // The agent-shape hits already include kind, source, title, snippet, score.
+    // For shape we still need the full payload (body + meta) so we hydrate via
+    // fetchById per hit. Cheap by-id lookup; no caching needed at this scale.
+    const results: Result[] = [];
+    for (const h of hits) {
+      const full = await service.fetchById(h.id);
+      if (!full) continue;
+      const payload = full.payload as { body?: string; uri?: string } & Record<string, unknown>;
+      const body = typeof payload.body === 'string' ? payload.body : '';
+      const uri = typeof payload.uri === 'string' ? payload.uri : '';
+      const kind = h.kind as ResultKind;
+      results.push({
+        id: h.id,
+        sourceId: h.source,
         kind,
-        shape: shapeForKind(kind, h.body, h.uri, meta),
-        provenance: { uri: h.uri, fetchedAt: Date.now() },
+        shape: shapeForKind(kind, body, uri, payload),
+        provenance: { uri, fetchedAt: Date.now() },
         freshness: {},
         links: [],
-      };
-    });
+      });
+    }
 
     return c.json({ results });
   });
@@ -89,15 +94,4 @@ function shapeForKind(
       { key: 'body', value: body.slice(0, 200) + (body.length > 200 ? '…' : '') },
     ],
   };
-}
-
-function titleFromUri(uri: string): string {
-  if (!uri) return 'Untitled';
-  try {
-    const u = new URL(uri);
-    const parts = u.pathname.split('/').filter(Boolean);
-    return parts[parts.length - 1] || u.host || uri;
-  } catch {
-    return uri.split('/').pop() || uri;
-  }
 }

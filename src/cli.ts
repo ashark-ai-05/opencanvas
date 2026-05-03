@@ -212,16 +212,15 @@ async function main(): Promise<void> {
     const service = new SearchService({ store, embedder });
 
     const t0 = performance.now();
-    const results = await service.search(query, { limit: 10 });
+    const results = await service.search(query, 10);
     const ms = Math.round(performance.now() - t0);
 
     console.log(`query:    ${query}`);
     console.log(`results:  ${results.length} (${ms} ms)`);
     console.log('');
     for (const r of results) {
-      const snippet = r.body.length > 200 ? `${r.body.slice(0, 200)}…` : r.body;
-      console.log(`[score ${r.score.toFixed(4)}] ${r.uri}`);
-      console.log(`  ${snippet.replace(/\n/g, ' ')}`);
+      console.log(`[score ${r.score.toFixed(4)}] (${r.kind}) ${r.title}  [id=${r.id} src=${r.source}]`);
+      console.log(`  ${r.snippet.replace(/\n/g, ' ')}`);
       console.log('');
     }
     store.close();

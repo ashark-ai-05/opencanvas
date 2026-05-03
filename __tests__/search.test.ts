@@ -58,9 +58,14 @@ describe('SearchService', () => {
     });
 
     const service = new SearchService({ store, embedder });
-    const results = await service.search('apples', { limit: 3 });
+    const results = await service.search('apples', 3);
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0].body.toLowerCase()).toContain('apple');
+    expect(typeof results[0].id).toBe('string');
+    expect(results[0].kind).toBe('text-document');
+    expect(results[0].source).toBe('fruits');
+    expect(typeof results[0].title).toBe('string');
+    expect(typeof results[0].score).toBe('number');
+    expect(results[0].snippet.toLowerCase()).toContain('apple');
     store.close();
   });
 
@@ -74,7 +79,7 @@ describe('SearchService', () => {
     });
 
     const service = new SearchService({ store, embedder });
-    const results = await service.search('fruit', { limit: 1 });
+    const results = await service.search('fruit', 1);
     expect(results.length).toBeLessThanOrEqual(1);
     store.close();
   });
@@ -89,8 +94,8 @@ describe('SearchService', () => {
     });
 
     const service = new SearchService({ store, embedder });
-    const results = await service.search('citrus orange', { limit: 3 });
-    expect(results[0].body.toLowerCase()).toContain('orange');
+    const results = await service.search('citrus orange', 3);
+    expect(results[0].snippet.toLowerCase()).toContain('orange');
     store.close();
   });
 });
