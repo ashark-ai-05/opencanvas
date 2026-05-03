@@ -66,8 +66,20 @@ export function applyToolDirective(
       } as never);
       return;
     }
+    case 'clear': {
+      const ids = editor
+        .getCurrentPageShapes()
+        .filter((s) => s.type.startsWith('llm-wiki:'))
+        .map((s) => s.id);
+      if (ids.length > 0) editor.deleteShapes(ids as never[]);
+      return;
+    }
+    case 'switchTemplate': {
+      useTemplateStore.getState().setActiveTemplateId(directive.id);
+      return;
+    }
     default:
-      // Other directive types (clear/switchTemplate/focus/link) added in T24-T26.
+      // Remaining directive types (focus/link) added in T25-T26.
       throw new Error(
         `applyToolDirective: directive type "${(directive as { type: string }).type}" not implemented yet`,
       );
