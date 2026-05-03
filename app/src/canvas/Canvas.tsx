@@ -11,6 +11,9 @@ import {
   loadCanvasSnapshot,
   saveCanvasSnapshot,
 } from './persistence';
+import { computeCanvasSnapshot } from './snapshot';
+import { setLatestSnapshot } from '../state/snapshot-ref';
+import { useTemplateStore } from '../state/template-store';
 import { DebugToolbar } from '../components/DebugToolbar';
 import { SearchBar } from '../components/SearchBar';
 import { TemplatePicker } from '../components/TemplatePicker';
@@ -46,6 +49,19 @@ export function Canvas() {
         },
         { source: 'user' }
       );
+
+      // Publish a canvas snapshot into the singleton ref so Chat (rendered
+      // outside the Tldraw editor) can read live editor state on submit.
+      // No source filter — fire on agent-initiated changes (place_widget) too.
+      const publishSnapshot = () => {
+        const tplId = useTemplateStore.getState().activeTemplateId;
+        setLatestSnapshot(computeCanvasSnapshot(editor, tplId));
+      };
+
+      // Initial publish so the very first chat turn sees current canvas state.
+      publishSnapshot();
+
+      editor.store.listen(publishSnapshot);
     },
     []
   );

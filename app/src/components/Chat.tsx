@@ -2,10 +2,14 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { Send } from 'lucide-react';
 import { useState } from 'react';
+import { getLatestSnapshot } from '../state/snapshot-ref';
 
 export function Chat() {
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({ api: '/v1/chat' }),
+    transport: new DefaultChatTransport({
+      api: '/v1/chat',
+      body: () => ({ canvasSnapshot: getLatestSnapshot() }),
+    }),
   });
   const [input, setInput] = useState('');
   const isStreaming = status === 'streaming';
