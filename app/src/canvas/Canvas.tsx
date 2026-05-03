@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Tldraw, type Editor, type TLEditorSnapshot } from 'tldraw';
+import { Tldraw, type Editor } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { TextNoteShapeUtil } from './shapes/text-note';
 import { MarkdownShapeUtil } from './shapes/markdown';
@@ -10,15 +10,12 @@ import { KeyValueCardShapeUtil } from './shapes/key-value-card';
 import { TableShapeUtil } from './shapes/table';
 import { TimelineShapeUtil } from './shapes/timeline';
 import { FileTreeShapeUtil } from './shapes/file-tree';
-import {
-  loadCanvasSnapshot,
-  saveCanvasSnapshot,
-} from './persistence';
 import { computeCanvasSnapshot } from './snapshot';
 import { setLatestSnapshot } from '../state/snapshot-ref';
 import { setEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
 import { useCanvasStats } from '../state/canvas-stats-store';
+import { useConversationsStore } from '../state/conversations-store';
 import { DebugToolbar } from '../components/DebugToolbar';
 import { SearchBar } from '../components/SearchBar';
 import { TemplatePicker } from '../components/TemplatePicker';
@@ -41,9 +38,11 @@ const customShapeUtils = [
 const SAVE_DEBOUNCE_MS = 500;
 
 export function Canvas() {
-  const initialSnapshot = useMemo<TLEditorSnapshot | undefined>(() => {
-    const loaded = loadCanvasSnapshot();
-    return loaded ?? undefined;
+  // Bind to the active conversation. App.tsx re-mounts Canvas via key
+  // when activeId changes, so we read once at mount.
+  const { activeId, initialSnapshot } = useMemo(() => {
+    const conv = useConversationsStore.getState().getActive();
+    return { activeId: conv.id, initialSnapshot: conv.canvasSnapshot };
   }, []);
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,19 +56,20 @@ export function Canvas() {
       // Force dark color scheme — Strata is dark-only by design.
       editor.user.updateUserPreferences({ colorScheme: 'dark' });
 
-      editor.store.listen(
-        () => {
-          if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-          saveTimerRef.current = setTimeout(() => {
-            saveCanvasSnapshot(editor.getSnapshot());
-          }, SAVE_DEBOUNCE_MS);
-        },
-        { source: 'user' }
-      );
+      // Persist tldraw snapshot back into the active conversation. Source
+      // filter is dropped — agent-initiated changes (place_widget) need to
+      // save too. Debounce so rapid drag/resize events don't thrash.
+      editor.store.listen(() => {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(() => {
+          useConversationsStore
+            .getState()
+            .saveCanvasSnapshot(activeId, editor.getSnapshot());
+        }, SAVE_DEBOUNCE_MS);
+      });
 
       // Publish a canvas snapshot into the singleton ref so Chat (rendered
       // outside the Tldraw editor) can read live editor state on submit.
-      // No source filter — fire on agent-initiated changes (place_widget) too.
       const publishSnapshot = () => {
         const tplId = useTemplateStore.getState().activeTemplateId;
         const snap = computeCanvasSnapshot(editor, tplId);
@@ -82,7 +82,7 @@ export function Canvas() {
 
       editor.store.listen(publishSnapshot);
     },
-    []
+    [activeId]
   );
 
   return (

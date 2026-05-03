@@ -8,13 +8,10 @@ import { applyToolDirective } from '../canvas/dispatcher';
 import { getLatestSnapshot } from '../state/snapshot-ref';
 import { getEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
-import {
-  collectAppliedToolCallIds,
-  loadChatHistory,
-  saveChatHistory,
-} from './chat-persistence';
+import { collectAppliedToolCallIds } from './chat-persistence';
 import { suggestCommands, tryRunCommand } from './slash-commands';
 import { useChatActions } from '../state/chat-actions-store';
+import { useConversationsStore } from '../state/conversations-store';
 import type { ToolDirective } from '../../../src/agent/types';
 
 /**
@@ -95,12 +92,16 @@ function parseToolOutput(
 }
 
 export function Chat() {
-  // Load any prior conversation from localStorage on mount. The messages prop
-  // on useChat (ChatInit) accepts an initial array; useChat replaces it as
-  // soon as new chunks arrive, so this is purely a hydration step.
-  const initialMessages = useMemo(() => loadChatHistory(), []);
+  // Active-conversation-driven hydration. App.tsx re-mounts <Chat /> via
+  // `key={activeId}` when the user switches threads, so it's safe to read
+  // the active conversation once at mount and never look back.
+  const { activeId, initialMessages } = useMemo(() => {
+    const s = useConversationsStore.getState();
+    const conv = s.getActive();
+    return { activeId: conv.id, initialMessages: conv.messages };
+  }, []);
 
-  const { messages, sendMessage, setMessages, status, stop, error } = useChat({
+  const { messages, sendMessage, status, stop, error } = useChat({
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: '/v1/chat',
@@ -117,11 +118,11 @@ export function Chat() {
   const errorShownRef = useRef<unknown>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Persist chat history on every messages change. Cheap (single localStorage
-  // write per render); no debounce needed at the volume a single chat sees.
+  // Persist chat history into the active conversation on every change.
+  // Cheap; no debounce needed at chat volume.
   useEffect(() => {
-    saveChatHistory(messages);
-  }, [messages]);
+    useConversationsStore.getState().saveMessages(activeId, messages);
+  }, [messages, activeId]);
 
   // Surface chat-level errors as a toast (network failure, 5xx, etc.) and
   // dedupe so the same Error doesn't fire repeatedly across re-renders.
@@ -193,27 +194,19 @@ export function Chat() {
     return suggestCommands(t.slice(1));
   }, [input]);
 
-  // Register a "new chat" callback the header button can invoke. Clears
-  // chat messages + appliedRef + the editor's strata widgets in one shot.
-  // Setting setNewChat in a useEffect guarantees it picks up the latest
-  // setMessages closure if useChat re-creates it.
+  // Register a "new chat" callback the header button + /clear command can
+  // invoke. Now: spins up a fresh conversation in the store; <App> sees the
+  // activeId change and re-mounts both Chat and Canvas with empty state.
+  // (Previously this cleared messages in-place — but with multi-conversation
+  //  state we want each "New" to be its own thread, not a wipe.)
   const setNewChat = useChatActions((s) => s.setNewChat);
   useEffect(() => {
     setNewChat(() => {
-      setMessages([]);
-      appliedRef.current = new Set();
-      const editor = getEditor();
-      if (editor) {
-        const ids = editor
-          .getCurrentPageShapes()
-          .filter((s) => s.type.startsWith('strata:'))
-          .map((s) => s.id);
-        if (ids.length > 0) editor.deleteShapes(ids);
-      }
+      useConversationsStore.getState().createNew();
       toast('New chat started');
     });
     return () => setNewChat(null);
-  }, [setMessages, setNewChat]);
+  }, [setNewChat]);
 
   return (
     <div className="flex h-full flex-col relative">
