@@ -6,20 +6,25 @@ const fakeSearch = {
   search: async () => [],
   fetchById: async () => null,
 };
+const fakeWebSearch = {
+  search: async () => [],
+};
 const emptySnap: CanvasSnapshot = {
   activeTemplateId: 'ask-anything',
   widgets: [],
 };
 
 describe('buildAgentTools', () => {
-  it('returns the 9 tools in declared order', () => {
+  it('returns the 10 tools in declared order', () => {
     const tools = buildAgentTools({
       search: fakeSearch,
+      webSearch: fakeWebSearch,
       getSnapshot: () => emptySnap,
     });
     expect(tools.map((t) => t.name)).toEqual([
       'search_kb',
       'fetch_result',
+      'web_search',
       'place_widget',
       'read_canvas',
       'read_widget',
@@ -33,6 +38,7 @@ describe('buildAgentTools', () => {
   it('every tool has a description and inputSchema', () => {
     const tools = buildAgentTools({
       search: fakeSearch,
+      webSearch: fakeWebSearch,
       getSnapshot: () => emptySnap,
     });
     for (const t of tools) {

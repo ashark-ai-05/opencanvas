@@ -30,6 +30,7 @@ export type ClaudeAgentSdkConfig = {
 
 export type ClaudeAgentSdkDeps = {
   search?: AgentToolDeps['search'];
+  webSearch?: AgentToolDeps['webSearch'];
 };
 
 const DEFAULT_SYSTEM_PROMPT = `You are Strata, a knowledge assistant. The user has a canvas where you can place widgets to visualize answers spatially.
@@ -41,7 +42,12 @@ Reply with text only when the question is pure chitchat ("hi", "thanks") or a fo
 Widget kinds: markdown (rich text), code-block (source code with language), ticket (issue/task with id+status), web-embed (url+title), key-value-card (label/value pairs — use the field name **fields**, not items).
 Roles: primary (main subject), detail (depth on primary), related (adjacent), reference (citations), timeline (time-anchored), node (graph node).
 
-Never invent ids, urls, or quotes — only cite what \`search_kb\` and \`fetch_result\` returned.`;
+Tool selection:
+- \`search_kb\` first for anything plausibly in the user's local index (their docs, code, tickets, prior conversations).
+- \`web_search\` when the answer needs current public information — recent news, library docs, prices, or anything time-sensitive — OR after \`search_kb\` returned no relevant hits and the topic clearly isn't in the user's KB.
+- Place a \`web-embed\` widget for web hits (payload: { title, url, snippet }).
+
+Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_result\`, or \`web_search\` returned.`;
 
 /**
  * Stub search adapter used when the adapter is constructed without `deps.search`
@@ -55,6 +61,14 @@ function buildLazySearchAdapter(): AgentToolDeps['search'] {
     },
     async fetchById() {
       return null;
+    },
+  };
+}
+
+function buildLazyWebSearch(): AgentToolDeps['webSearch'] {
+  return {
+    async search() {
+      return [];
     },
   };
 }
@@ -109,12 +123,17 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     const { createSdkMcpServer } = await import('@anthropic-ai/claude-agent-sdk');
 
     const search = this.deps.search ?? buildLazySearchAdapter();
+    const webSearch = this.deps.webSearch ?? buildLazyWebSearch();
     const snapshot =
       request.canvasSnapshot ?? {
         activeTemplateId: 'ask-anything' as const,
         widgets: [],
       };
-    const tools = buildAgentTools({ search, getSnapshot: () => snapshot });
+    const tools = buildAgentTools({
+      search,
+      webSearch,
+      getSnapshot: () => snapshot,
+    });
 
     const mcp = createSdkMcpServer({
       name: 'strata-tools',
@@ -144,7 +163,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       forkSession: false,
       // No custom agents.
       agents: {},
-      // In-process MCP server hosting our 9 agent tools. The SDK invokes
+      // In-process MCP server hosting our 10 agent tools. The SDK invokes
       // them by `mcp__<server>__<tool>` — we name the server `strata`.
       mcpServers: { 'strata': mcp },
       allowedTools: tools.map((t) => `mcp__strata__${t.name}`),

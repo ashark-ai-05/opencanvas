@@ -14,11 +14,12 @@ import { AmpAdapter } from './amp.js';
 
 /**
  * Optional dependencies passed through to provider adapters.
- * Only `claude-agent-sdk` consumes `search` today; other adapters ignore
+ * Only `claude-agent-sdk` consumes them today; other adapters ignore
  * `deps` entirely.
  */
 export type ProviderDeps = {
   search?: AgentToolDeps['search'];
+  webSearch?: AgentToolDeps['webSearch'];
 };
 
 export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMProvider {
@@ -28,7 +29,7 @@ export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMPr
     case 'claude-agent-sdk':
       return new ClaudeAgentSdkAdapter(
         { model: llm.model },
-        { search: deps.search },
+        { search: deps.search, webSearch: deps.webSearch },
       );
 
     case 'anthropic-direct':

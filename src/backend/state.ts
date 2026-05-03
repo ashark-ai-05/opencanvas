@@ -4,6 +4,7 @@ import { createEmbedder } from '../embedders/index.js';
 import { SourceRegistry } from '../mcp/registry.js';
 import { openDefaultStore, type Store } from '../storage/store.js';
 import { SearchService } from '../search/service.js';
+import { createWebSearchProvider } from '../web/tavily.js';
 import type { Profile } from '../config/schema.js';
 import type { LLMProvider } from '../core/provider.js';
 import type { EmbeddingProvider } from '../core/embedding-provider.js';
@@ -25,6 +26,7 @@ export class BackendState {
   private llmProvider: LLMProvider | null = null;
   private embedder: EmbeddingProvider | null = null;
   private searchAdapter: AgentToolDeps['search'] | null = null;
+  private webSearchAdapter: AgentToolDeps['webSearch'] | null = null;
   private sourceRegistry = new SourceRegistry();
   private sourcesConnectedPromise: Promise<void> | null = null;
   private storePromise: Promise<Store> | null = null;
@@ -43,9 +45,21 @@ export class BackendState {
     if (!this.llmProvider) {
       this.llmProvider = createProvider(this.profile, {
         search: this.getSearchService(),
+        webSearch: this.getWebSearchProvider(),
       });
     }
     return this.llmProvider;
+  }
+
+  /**
+   * Returns the web search provider — Tavily if TAVILY_API_KEY is set,
+   * otherwise an empty-results stub. Cached after first call.
+   */
+  getWebSearchProvider(): AgentToolDeps['webSearch'] {
+    if (!this.webSearchAdapter) {
+      this.webSearchAdapter = createWebSearchProvider();
+    }
+    return this.webSearchAdapter;
   }
 
   getEmbedder(): EmbeddingProvider {

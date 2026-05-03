@@ -7,6 +7,7 @@ import { focusWidgetTool } from './focus-widget.js';
 import { linkWidgetsTool } from './link-widgets.js';
 import { clearCanvasTool } from './clear-canvas.js';
 import { switchTemplateTool } from './switch-template.js';
+import { webSearchTool, type WebSearchProvider } from './web-search.js';
 import type { CanvasSnapshot } from '../canvas-snapshot.js';
 
 export interface AgentToolDeps {
@@ -29,17 +30,19 @@ export interface AgentToolDeps {
       source: string;
     } | null>;
   };
+  webSearch: WebSearchProvider;
   getSnapshot: () => CanvasSnapshot;
 }
 
 /**
- * Build the array of 9 tools for one chat turn.
+ * Build the array of agent tools for one chat turn (10 tools).
  * Called per-turn so closures (search service, snapshot getter) are fresh.
  */
 export function buildAgentTools(deps: AgentToolDeps) {
   return [
     searchKbTool(deps.search),
     fetchResultTool(deps.search),
+    webSearchTool(deps.webSearch),
     placeWidgetTool(),
     readCanvasTool(deps.getSnapshot),
     readWidgetTool(deps.getSnapshot),
