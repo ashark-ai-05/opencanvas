@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { tool, type SdkMcpToolDefinition } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from '@anthropic-ai/claude-agent-sdk';
+import type { WithArgs } from './_shared.js';
 
 interface FetchByIdServiceLike {
   fetchById(id: string): Promise<{
@@ -11,19 +12,11 @@ interface FetchByIdServiceLike {
   } | null>;
 }
 
-/** Narrow result type: this tool always returns text content. */
-interface TextOnlyCallToolResult {
-  content: Array<{ type: 'text'; text: string }>;
-  isError?: boolean;
-}
-
 const inputShape = {
   id: z.string().describe('search result id from search_kb'),
 };
 
-type FetchResultToolDef = Omit<SdkMcpToolDefinition<typeof inputShape>, 'handler'> & {
-  handler: (args: { id: string }, extra: unknown) => Promise<TextOnlyCallToolResult>;
-};
+type FetchResultToolDef = WithArgs<typeof inputShape, { id: string }>;
 
 export function fetchResultTool(service: FetchByIdServiceLike): FetchResultToolDef {
   const def = tool(

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { tool, type SdkMcpToolDefinition } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from '@anthropic-ai/claude-agent-sdk';
+import type { WithArgs } from './_shared.js';
 
 interface SearchServiceLike {
   search(query: string, limit: number): Promise<
@@ -20,12 +21,6 @@ export interface SearchKbArgs {
   limit?: number;
 }
 
-/** Narrow result type: this tool always returns text content. */
-interface TextOnlyCallToolResult {
-  content: Array<{ type: 'text'; text: string }>;
-  isError?: boolean;
-}
-
 const inputShape = {
   query: z.string().describe('search query'),
   limit: z
@@ -37,9 +32,7 @@ const inputShape = {
     .describe('max results, default 10, max 25'),
 };
 
-type SearchKbToolDef = Omit<SdkMcpToolDefinition<typeof inputShape>, 'handler'> & {
-  handler: (args: SearchKbArgs, extra: unknown) => Promise<TextOnlyCallToolResult>;
-};
+type SearchKbToolDef = WithArgs<typeof inputShape, SearchKbArgs>;
 
 /**
  * Factory: builds the search_kb SdkMcpToolDefinition bound to a search service.
