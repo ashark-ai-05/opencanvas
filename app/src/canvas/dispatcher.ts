@@ -62,6 +62,7 @@ export function applyToolDirective(
         type: KIND_TO_SHAPE[directive.kind] as never,
         x: slot.x,
         y: slot.y,
+        meta: { role: directive.role } as never,
         props: { ...directive.payload, w: slot.w, h: slot.h } as never,
       } as never);
       return;
@@ -133,7 +134,13 @@ export function applyToolDirective(
   }
 }
 
-function countByRole(_editor: Editor, _role: string): number {
-  // T28 plumbs role tracking via shape meta; for now everything is occupancy 0.
-  return 0;
+function countByRole(editor: Editor, role: string): number {
+  const shapes = editor.getCurrentPageShapes() as Array<{
+    type: string;
+    meta?: Record<string, unknown>;
+  }>;
+  return shapes.filter(
+    (s) =>
+      s.type.startsWith('llm-wiki:') && (s.meta?.['role'] as string) === role,
+  ).length;
 }

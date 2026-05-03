@@ -3,12 +3,13 @@ import { applyToolDirective } from '../../app/src/canvas/dispatcher';
 import type { ToolDirective, WidgetKind } from '../../src/agent/types';
 
 function makeEditor() {
-  const calls: { type: string; x: number; y: number; props: Record<string, unknown> }[] = [];
+  const calls: { type: string; x: number; y: number; meta?: { role?: string }; props: Record<string, unknown> }[] = [];
   return {
     calls,
+    getCurrentPageShapes: () => [],   // empty by default; T28 stacking test uses its own editor
     getViewportPageBounds: () => ({ x: 0, y: 0, w: 1200, h: 800 }),
-    createShape: (s: { type: string; x: number; y: number; props: Record<string, unknown> }) => {
-      calls.push({ type: s.type, x: s.x, y: s.y, props: s.props });
+    createShape: (s: { type: string; x: number; y: number; meta?: { role?: string }; props: Record<string, unknown> }) => {
+      calls.push({ type: s.type, x: s.x, y: s.y, meta: s.meta, props: s.props });
     },
   } as never;
 }
@@ -79,5 +80,54 @@ describe('applyToolDirective — place', () => {
       const c = (editor as unknown as { calls: { type: string }[] }).calls;
       expect(c[0]!.type).toBe(expected);
     }
+  });
+
+  it('stores role in shape.meta so computeCanvasSnapshot can read it back', () => {
+    const editor = makeEditor();
+    applyToolDirective(
+      editor,
+      {
+        type: 'place',
+        id: 'w-meta',
+        kind: 'markdown',
+        role: 'related',
+        payload: { title: 't', body: 'b' },
+      },
+      'ask-anything',
+    );
+    const calls = (editor as unknown as { calls: { meta?: { role?: string } }[] }).calls;
+    expect(calls[0]!.meta?.role).toBe('related');
+  });
+
+  it('countByRole increments per-role occupancy when stacking', () => {
+    // Place two markdown shapes both at role:related — second one should land below.
+    const shapes: Array<{ id: string; type: string; meta?: { role?: string } }> = [];
+    const calls: { x: number; y: number; meta?: { role?: string } }[] = [];
+    const editor = {
+      getCurrentPageShapes: () => shapes,
+      getViewportPageBounds: () => ({ x: 0, y: 0, w: 1200, h: 800 }),
+      createShape: (s: { id: string; type: string; x: number; y: number; meta?: { role?: string } }) => {
+        shapes.push({ id: s.id, type: s.type, meta: s.meta });
+        calls.push({ x: s.x, y: s.y, meta: s.meta });
+      },
+    } as never;
+
+    applyToolDirective(
+      editor,
+      { type: 'place', id: 'a', kind: 'markdown', role: 'related', payload: { title: 'a', body: '' } },
+      'ask-anything',
+    );
+    applyToolDirective(
+      editor,
+      { type: 'place', id: 'b', kind: 'markdown', role: 'related', payload: { title: 'b', body: '' } },
+      'ask-anything',
+    );
+
+    expect(calls).toHaveLength(2);
+    // ask-anything's slotForRole stacks vertically by occupancy * (h+20):
+    //   first: y = 100 + 0*220 = 100
+    //   second: y = 100 + 1*220 = 320
+    expect(calls[0]!.y).toBe(100);
+    expect(calls[1]!.y).toBe(320);
   });
 });
