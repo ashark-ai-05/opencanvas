@@ -12,6 +12,7 @@ const WidgetEntry = z.object({
 const Snapshot = z.object({
   activeTemplateId: z.enum(TEMPLATE_IDS),
   widgets: z.array(WidgetEntry),
+  selectedIds: z.array(z.string()).optional(),
 });
 
 export type CanvasSnapshot = z.infer<typeof Snapshot>;
@@ -45,5 +46,14 @@ export function parseCanvasSnapshot(raw: unknown): CanvasSnapshot {
   const tplRaw = obj['activeTemplateId'];
   const tpl = TEMPLATE_IDS.find((t) => t === tplRaw) ?? 'ask-anything';
 
-  return { activeTemplateId: tpl, widgets: validWidgets };
+  const selectedIdsRaw = obj['selectedIds'];
+  const selectedIds = Array.isArray(selectedIdsRaw)
+    ? selectedIdsRaw.filter((s): s is string => typeof s === 'string')
+    : undefined;
+
+  return {
+    activeTemplateId: tpl,
+    widgets: validWidgets,
+    ...(selectedIds && selectedIds.length > 0 ? { selectedIds } : {}),
+  };
 }

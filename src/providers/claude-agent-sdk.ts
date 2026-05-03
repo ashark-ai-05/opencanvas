@@ -102,7 +102,15 @@ Tool selection:
 - \`web_search\` when the answer needs current public information — recent news, library docs, prices, or anything time-sensitive — OR after \`search_kb\` returned no relevant hits and the topic clearly isn't in the user's KB.
 - Place a \`web-embed\` widget for web hits (payload: { title, url, snippet }).
 
-Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_result\`, or \`web_search\` returned.`;
+Code widgets — context matters:
+- \`search_kb\` returns ~500-char chunks with file URIs. Those snippets alone are not enough context to read.
+- BEFORE placing a \`code-block\`, fetch the surrounding code: use the filesystem MCP server (\`read_text_file\` if configured) on the chunk's URI path, OR \`fetch_result\` on related chunk ids that hit the same file.
+- The widget's \`code\` field should contain the full function definition (or top-N lines of the file), not just the matched snippet. Aim for enough context that a reader doesn't have to open the file separately.
+
+Sources & attribution:
+- Every payload supports an optional \`source\` field — set it on every widget you place. For KB hits: the chunk's source id (e.g. \`local-code:./src\`). For web hits: the page URL. For MCP hits: the source name. The UI shows it as a footer so users can click through.
+
+Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_result\`, \`web_search\`, or an MCP tool returned.`;
 
 /**
  * Stub search adapter used when the adapter is constructed without `deps.search`
@@ -141,6 +149,25 @@ function renderExternalToolsBlock(sources: ExternalMcpSource[]): string {
   return `External tools available (the user has configured these MCP sources — call them when the question maps to one):\n${lines.join('\n')}\n\nFor filesystem-style sources, prefer reading specific files (\`read_text_file\`, \`list_directory\`) over recursive walks. Cite paths only when verified.`;
 }
 
+/**
+ * If the user has widgets selected on the canvas when they sent the
+ * message, surface those specifically to the model so it can scope
+ * follow-ups to those widgets ("explain this", "compare these two"). The
+ * snapshot's full widgets[] is also visible, but the model needs an
+ * explicit pointer at the user's focus.
+ */
+function renderSelectionBlock(snapshot?: import('../agent/canvas-snapshot.js').CanvasSnapshot): string | null {
+  if (!snapshot?.selectedIds || snapshot.selectedIds.length === 0) return null;
+  const selected = snapshot.widgets.filter((w) =>
+    snapshot.selectedIds!.includes(w.id),
+  );
+  if (selected.length === 0) return null;
+  const lines = selected.map(
+    (w) => `- ${w.kind} (${w.role}) "${w.title}" — id ${w.id}`,
+  );
+  return `Selected widgets — the user has these specifically in focus and likely wants follow-ups about them. If the message says "this", "these", "explain it" without other antecedent, treat the most recent message as referring to these widgets:\n${lines.join('\n')}\n\nUse \`read_widget\` with one of these ids to see the full payload before answering.`;
+}
+
 export class ClaudeAgentSdkAdapter implements LLMProvider {
   readonly id = 'claude-agent-sdk';
   readonly name = 'Claude Agent SDK';
@@ -175,10 +202,13 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       this.config.systemPrompt ??
       DEFAULT_SYSTEM_PROMPT;
 
-    const systemPrompt =
-      externalSources.length > 0
-        ? `${baseSystemPrompt}\n\n${renderExternalToolsBlock(externalSources)}`
-        : baseSystemPrompt;
+    const blocks: string[] = [baseSystemPrompt];
+    if (externalSources.length > 0) {
+      blocks.push(renderExternalToolsBlock(externalSources));
+    }
+    const selectionBlock = renderSelectionBlock(request.canvasSnapshot);
+    if (selectionBlock) blocks.push(selectionBlock);
+    const systemPrompt = blocks.join('\n\n');
 
     // Mirror the caller's abort signal into a fresh AbortController owned by
     // this turn. The SDK accepts an `abortController` (not a signal) so we

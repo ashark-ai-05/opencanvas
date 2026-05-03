@@ -25,6 +25,10 @@ export type CanvasSnapshotShape = {
     title: string;
     payload: Record<string, unknown>;
   }>;
+  /** IDs (without "shape:" prefix) of widgets the user currently has
+   *  selected. The agent uses this to scope follow-up questions to specific
+   *  widgets rather than the whole canvas. */
+  selectedIds?: string[];
 };
 
 /**
@@ -51,5 +55,22 @@ export function computeCanvasSnapshot(
       title: ((s.props['title'] as string) ?? s.id) as string,
       payload: { ...s.props },
     }));
-  return { activeTemplateId, widgets };
+
+  // tldraw exposes selection via editor.getSelectedShapeIds() — strip prefix
+  // and filter to strata:* shapes only (user might have selected a stray
+  // tldraw geo/arrow that isn't a Strata widget).
+  const selectedTldrawIds = (
+    (editor as unknown as { getSelectedShapeIds?: () => string[] })
+      .getSelectedShapeIds?.() ?? []
+  );
+  const widgetIdSet = new Set(widgets.map((w) => `shape:${w.id}`));
+  const selectedIds = selectedTldrawIds
+    .filter((id) => widgetIdSet.has(id))
+    .map((id) => id.replace(/^shape:/, ''));
+
+  return {
+    activeTemplateId,
+    widgets,
+    ...(selectedIds.length > 0 ? { selectedIds } : {}),
+  };
 }

@@ -207,6 +207,37 @@
   border-color: rgba(167, 139, 250, 0.35);
 }
 
+/* Source-attribution footer — rendered by CardFrame when shape.props.source
+   is set. Sits at the bottom of the card; click-through if URL. */
+.strata-card-footer {
+  flex-shrink: 0;
+  padding: 6px 14px 7px;
+  border-top: 1px solid var(--color-line);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--color-muted);
+  background: rgba(0, 0, 0, 0.18);
+}
+.strata-card-footer-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--color-muted-2);
+}
+.strata-card-footer-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.strata-card-footer:hover .strata-card-footer-value {
+  color: #c4b5fd;
+}
+
 /* Collapsed card — only the header is visible, height shrinks to ~44px.
    The toggle handler in shared.tsx also writes `props.h = 44` so tldraw's
    geometry agrees with what we render (no phantom selection space). */

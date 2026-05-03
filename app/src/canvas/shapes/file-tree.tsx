@@ -24,6 +24,7 @@ export type FileTreeShape = TLBaseShape<
     title: string;
     root: FileNode;
     uri?: string;
+    source?: string;
   }
 >;
 
@@ -42,6 +43,7 @@ export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
     title: T.string,
     root: FileNodeRuntime,
     uri: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): FileTreeShape['props'] {

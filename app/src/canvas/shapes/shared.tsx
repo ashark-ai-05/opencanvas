@@ -50,13 +50,18 @@ function readCollapsed(meta: unknown): boolean {
 
 /**
  * Outer card frame. Pass the shape so we can read role from meta and keep
- * the call sites of each ShapeUtil tidy.
+ * the call sites of each ShapeUtil tidy. If `props.source` is set, we
+ * append a small attribution footer so users can see (and click through
+ * to) where the widget content came from.
  */
 export function CardFrame({
   shape,
   children,
 }: {
-  shape: { props: { w: number; h: number }; meta?: unknown };
+  shape: {
+    props: { w: number; h: number; source?: string; url?: string };
+    meta?: unknown;
+  };
   children: ReactNode;
 }) {
   const role = readRole(shape.meta);
@@ -71,6 +76,13 @@ export function CardFrame({
   }, []);
 
   const style: CSSProperties = { width: shape.props.w, height: shape.props.h };
+  // web-embed already shows the URL prominently in its body, so don't
+  // double up. For everything else, surface `source` as a footer.
+  const showSourceFooter =
+    typeof shape.props.source === 'string' &&
+    shape.props.source.length > 0 &&
+    !shape.props.url;
+
   return (
     <div
       className="strata-card"
@@ -80,6 +92,37 @@ export function CardFrame({
       style={style}
     >
       {children}
+      {showSourceFooter && <CardSourceFooter source={shape.props.source!} />}
+    </div>
+  );
+}
+
+/**
+ * Attribution row at the bottom of a card. If the source looks like a URL,
+ * render as an external-open link; otherwise render as plain text. Either
+ * way, hidden when the card is collapsed (the [data-collapsed] CSS does it).
+ */
+function CardSourceFooter({ source }: { source: string }) {
+  const isUrl = /^https?:\/\//.test(source);
+  const handleClick = (e: MouseEvent) => {
+    if (!isUrl) return;
+    e.stopPropagation();
+    window.open(source, '_blank', 'noopener,noreferrer');
+  };
+  return (
+    <div
+      className="strata-card-footer"
+      onClick={handleClick}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      style={{ cursor: isUrl ? 'pointer' : 'default' }}
+      title={isUrl ? `Open ${source}` : `Source: ${source}`}
+    >
+      <span className="strata-card-footer-label">source</span>
+      <span className="strata-card-footer-value">
+        {isUrl ? new URL(source).host + new URL(source).pathname : source}
+      </span>
+      {isUrl && <ExternalLink className="size-3 opacity-60" />}
     </div>
   );
 }

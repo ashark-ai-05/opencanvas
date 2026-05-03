@@ -26,6 +26,7 @@ export type MarkdownShape = TLBaseShape<
     title?: string;
     body: string;
     uri?: string;
+    source?: string;
   }
 >;
 
@@ -38,6 +39,7 @@ export class MarkdownShapeUtil extends ShapeUtil<MarkdownShape> {
     title: T.optional(T.string),
     body: T.string,
     uri: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): MarkdownShape['props'] {

@@ -16,6 +16,7 @@ export type WebEmbedShape = TLBaseShape<
     url: string;
     title?: string;
     snippet?: string;
+    source?: string;
   }
 >;
 
@@ -28,6 +29,7 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
     url: T.string,
     title: T.optional(T.string),
     snippet: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): WebEmbedShape['props'] {

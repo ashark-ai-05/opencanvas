@@ -18,6 +18,7 @@ export type KeyValueCardShape = TLBaseShape<
     title: string;
     fields: KeyValuePair[];
     uri?: string;
+    source?: string;
   }
 >;
 
@@ -30,6 +31,7 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
     title: T.string,
     fields: T.arrayOf(T.object({ key: T.string, value: T.string })),
     uri: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): KeyValueCardShape['props'] {

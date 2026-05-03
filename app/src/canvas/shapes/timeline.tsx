@@ -26,6 +26,7 @@ export type TimelineShape = TLBaseShape<
     title: string;
     events: Event[];
     uri?: string;
+    source?: string;
   }
 >;
 
@@ -53,6 +54,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
       }),
     ),
     uri: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): TimelineShape['props'] {

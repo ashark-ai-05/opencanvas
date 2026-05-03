@@ -25,6 +25,7 @@ export type TableShape = TLBaseShape<
     columns: Column[];
     rows: string[][];
     uri?: string;
+    source?: string;
   }
 >;
 
@@ -45,6 +46,7 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
     ),
     rows: T.arrayOf(T.arrayOf(T.string)),
     uri: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): TableShape['props'] {

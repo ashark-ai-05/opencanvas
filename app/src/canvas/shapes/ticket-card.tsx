@@ -20,6 +20,7 @@ export type TicketCardShape = TLBaseShape<
     priority?: string;
     description?: string;
     uri?: string;
+    source?: string;
   }
 >;
 
@@ -43,6 +44,7 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
     priority: T.optional(T.string),
     description: T.optional(T.string),
     uri: T.optional(T.string),
+    source: T.optional(T.string),
   };
 
   override getDefaultProps(): TicketCardShape['props'] {

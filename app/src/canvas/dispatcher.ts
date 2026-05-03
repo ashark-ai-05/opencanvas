@@ -78,11 +78,20 @@ export function applyToolDirective(
       const def = DEFAULT_SIZE[directive.kind] ?? { w: 320, h: 200 };
       const w = Math.max(slot.w, def.w);
       const h = Math.max(slot.h, def.h);
+
+      // Resolve overlap with already-placed strata widgets. Templates are
+      // role-aware but blind to actual canvas state — when the agent fans
+      // out across roles in quick succession, slots calculated from
+      // occupancy can collide with adjacent roles' slots OR with shapes
+      // the user moved manually. Sweep down/right until we find an empty
+      // spot near the template's preferred position.
+      const { x, y } = findFreePosition(editor, slot.x, slot.y, w, h);
+
       editor.createShape({
         id: ('shape:' + directive.id) as never,
         type: KIND_TO_SHAPE[directive.kind] as never,
-        x: slot.x,
-        y: slot.y,
+        x,
+        y,
         meta: { role: directive.role } as never,
         props: { ...directive.payload, w, h } as never,
       } as never);
@@ -164,4 +173,62 @@ function countByRole(editor: Editor, role: string): number {
     (s) =>
       s.type.startsWith('strata:') && (s.meta?.['role'] as string) === role,
   ).length;
+}
+
+/**
+ * Find a placement near (preferX, preferY) that doesn't overlap any
+ * existing strata widget. Walks a coarse grid below + right of the
+ * template's preferred slot. 16px gap between cards.
+ *
+ * The search prefers downward motion (continues the visual reading order)
+ * with a small rightward drift to avoid forming purely vertical stacks
+ * when many widgets share the same role.
+ */
+const GAP = 16;
+function findFreePosition(
+  editor: Editor,
+  preferX: number,
+  preferY: number,
+  w: number,
+  h: number,
+): { x: number; y: number } {
+  const placed = (editor.getCurrentPageShapes() as Array<{
+    type: string;
+    x: number;
+    y: number;
+    props?: { w?: number; h?: number };
+  }>).filter((s) => s.type.startsWith('strata:'));
+
+  const overlaps = (x: number, y: number): boolean => {
+    for (const s of placed) {
+      const sw = s.props?.w ?? 320;
+      const sh = s.props?.h ?? 200;
+      // Treat existing card's bounds with a GAP-sized buffer so cards
+      // don't end up touching pixel-perfect.
+      const sx1 = s.x - GAP;
+      const sy1 = s.y - GAP;
+      const sx2 = s.x + sw + GAP;
+      const sy2 = s.y + sh + GAP;
+      const cx1 = x;
+      const cy1 = y;
+      const cx2 = x + w;
+      const cy2 = y + h;
+      if (cx1 < sx2 && cx2 > sx1 && cy1 < sy2 && cy2 > sy1) return true;
+    }
+    return false;
+  };
+
+  if (!overlaps(preferX, preferY)) return { x: preferX, y: preferY };
+
+  // Walk down in steps of (h + GAP); after each row, drift right by a
+  // half-card width so we don't end up with all collisions stacking
+  // vertically. Cap iterations so a pathological canvas doesn't loop.
+  for (let row = 1; row < 30; row++) {
+    const y = preferY + row * (h + GAP);
+    const x = preferX + Math.floor(row / 4) * (w / 2);
+    if (!overlaps(x, y)) return { x, y };
+  }
+
+  // Last resort — far below the canvas. User can rearrange.
+  return { x: preferX, y: preferY + 30 * (h + GAP) };
 }

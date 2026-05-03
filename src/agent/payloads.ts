@@ -4,6 +4,7 @@ import type { WidgetKind } from './types.js';
 export const MarkdownPayload = z.object({
   title: z.string(),
   body: z.string(),
+  source: z.string().optional(),
 });
 
 export const CodeBlockPayload = z.object({
@@ -20,12 +21,14 @@ export const TicketPayload = z.object({
   assignee: z.string().optional(),
   priority: z.string().optional(),
   description: z.string().optional(),
+  source: z.string().optional(),
 });
 
 export const WebEmbedPayload = z.object({
   title: z.string(),
   url: z.string().url(),
   snippet: z.string().optional(),
+  source: z.string().optional(),
 });
 
 export const KeyValueCardPayload = z.object({
@@ -36,6 +39,7 @@ export const KeyValueCardPayload = z.object({
       value: z.string(),
     }),
   ),
+  source: z.string().optional(),
 });
 
 /**
@@ -54,6 +58,7 @@ export const TablePayload = z.object({
     }),
   ).min(1),
   rows: z.array(z.array(z.string())),
+  source: z.string().optional(),
 });
 
 /**
@@ -71,6 +76,7 @@ export const TimelinePayload = z.object({
       kind: z.enum(['commit', 'deploy', 'incident', 'note', 'release']).optional(),
     }),
   ).min(1),
+  source: z.string().optional(),
 });
 
 /**
@@ -95,6 +101,7 @@ const FileNodeSchema: z.ZodType<FileNode> = z.lazy(() =>
 export const FileTreePayload = z.object({
   title: z.string(),
   root: FileNodeSchema,
+  source: z.string().optional(),
 });
 
 const PAYLOAD_SCHEMAS = {

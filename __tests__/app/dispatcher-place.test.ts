@@ -99,16 +99,26 @@ describe('applyToolDirective — place', () => {
     expect(calls[0]!.meta?.role).toBe('related');
   });
 
-  it('countByRole increments per-role occupancy when stacking', () => {
-    // Place two markdown shapes both at role:related — second one should land below.
-    const shapes: Array<{ id: string; type: string; meta?: { role?: string } }> = [];
-    const calls: { x: number; y: number; meta?: { role?: string } }[] = [];
+  it('countByRole increments per-role occupancy + anti-overlap pass moves second card below first', () => {
+    // Place two markdown shapes both at role:related — second one should
+    // land BELOW the first with at least the configured GAP between them.
+    // Exact Y depends on the template + default size + anti-overlap pass.
+    type Shape = {
+      id: string;
+      type: string;
+      x: number;
+      y: number;
+      meta?: { role?: string };
+      props?: Record<string, unknown>;
+    };
+    const shapes: Shape[] = [];
+    const calls: { x: number; y: number }[] = [];
     const editor = {
       getCurrentPageShapes: () => shapes,
       getViewportPageBounds: () => ({ x: 0, y: 0, w: 1200, h: 800 }),
-      createShape: (s: { id: string; type: string; x: number; y: number; meta?: { role?: string } }) => {
-        shapes.push({ id: s.id, type: s.type, meta: s.meta });
-        calls.push({ x: s.x, y: s.y, meta: s.meta });
+      createShape: (s: Shape) => {
+        shapes.push(s);
+        calls.push({ x: s.x, y: s.y });
       },
     } as never;
 
@@ -124,10 +134,10 @@ describe('applyToolDirective — place', () => {
     );
 
     expect(calls).toHaveLength(2);
-    // ask-anything's slotForRole stacks vertically by occupancy * (h+20):
-    //   first: y = 100 + 0*220 = 100
-    //   second: y = 100 + 1*220 = 320
+    // First lands at the template's preferred slot for occupancy=0.
     expect(calls[0]!.y).toBe(100);
-    expect(calls[1]!.y).toBe(320);
+    // Second is below the first, separated by at least one card height.
+    // We don't assert the exact Y so the anti-overlap algorithm can evolve.
+    expect(calls[1]!.y).toBeGreaterThan(calls[0]!.y + 200);
   });
 });
