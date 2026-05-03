@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Loader } from 'lucide-react';
+import { ArrowRight, Check, Loader } from 'lucide-react';
 
 /**
  * Horizontal team-pipeline indicator that surfaces above the chat
@@ -168,4 +168,88 @@ function computeStatuses(messages: UIMessage[]): Record<string, PhaseStatus> {
     }
   }
   return init;
+}
+
+const ROLE_TINT: Record<string, string> = {
+  research: 'var(--role-primary)',
+  build: 'var(--role-detail)',
+  review: 'var(--role-reference)',
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  research: 'Researcher',
+  build: 'Builder',
+  review: 'Critic',
+  builder: 'Builder',
+  critic: 'Critic',
+  researcher: 'Researcher',
+};
+
+/**
+ * "Baton pass" card rendered between phase blocks in the chat. Shows
+ * the agent who just finished, an arrow, and the agent it's passing to,
+ * plus the inline handoff message. Visible team chemistry — every team
+ * run reads as a literal collaboration rather than three monologues.
+ */
+export function TeamHandoff({
+  from,
+  to,
+  message,
+}: {
+  from: string;
+  to: string;
+  message: string;
+}) {
+  const fromTint = ROLE_TINT[from] ?? 'var(--color-muted)';
+  const toTint = ROLE_TINT[to] ?? 'var(--color-muted)';
+  const fromLabel = ROLE_LABEL[from] ?? from;
+  const toLabel = ROLE_LABEL[to] ?? to;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.94, y: 4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.32, ease: [0.16, 1.2, 0.3, 1] }}
+      className="my-3 strata-handoff"
+      style={{
+        background: `linear-gradient(90deg, color-mix(in oklab, ${fromTint} 14%, transparent), color-mix(in oklab, ${toTint} 14%, transparent))`,
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <PhasePill label={fromLabel} tint={fromTint} done />
+        <ArrowRight className="size-3.5 text-zinc-500 strata-handoff-arrow" />
+        <PhasePill label={toLabel} tint={toTint} />
+        <span className="ml-auto text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
+          handoff
+        </span>
+      </div>
+      <p className="text-[13px] text-zinc-200 leading-relaxed pl-1">
+        {message}
+      </p>
+    </motion.div>
+  );
+}
+
+function PhasePill({
+  label,
+  tint,
+  done,
+}: {
+  label: string;
+  tint: string;
+  done?: boolean;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold tracking-wide"
+      style={{
+        background: `color-mix(in oklab, ${tint} 18%, transparent)`,
+        border: `1px solid color-mix(in oklab, ${tint} 35%, transparent)`,
+        color: tint,
+      }}
+    >
+      {done && <Check className="size-2.5" strokeWidth={3} />}
+      {label}
+    </span>
+  );
 }

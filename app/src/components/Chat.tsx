@@ -10,7 +10,7 @@ import { getEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
 import { collectAppliedToolCallIds } from './chat-persistence';
 import { suggestCommands, tryRunCommand } from './slash-commands';
-import { TeamProgress } from './TeamProgress';
+import { TeamProgress, TeamHandoff } from './TeamProgress';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
 import type { ToolDirective } from '../../../src/agent/types';
@@ -338,6 +338,17 @@ export function Chat() {
                 {(m.parts as Array<{ type: string }>).map((p, i) => {
                   if (p.type === 'text') {
                     return <span key={i}>{(p as unknown as { text: string }).text}</span>;
+                  }
+                  if (p.type === 'data-team-handoff') {
+                    const h = (p as unknown as {
+                      data: { from: string; to: string; message: string };
+                    }).data;
+                    return <TeamHandoff key={i} from={h.from} to={h.to} message={h.message} />;
+                  }
+                  if (p.type === 'data-team-phase') {
+                    // Rendered by the TeamProgress timeline component; suppress
+                    // here so it doesn't leak into the message body.
+                    return null;
                   }
                   if (isToolPart(p)) {
                     const tp = p as ToolPart;
