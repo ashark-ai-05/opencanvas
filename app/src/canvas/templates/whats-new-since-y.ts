@@ -1,7 +1,17 @@
 import { pickWidgetForKind } from '../../../../src/core/widget-registry';
 import type { ResultKind } from '../../../../src/core/source';
+import type { Role } from '../../../../src/agent/types';
 import { DEFAULT_SIZES, shapeProps } from './shape-props';
 import type { CanvasTemplate, ShapePlacement, TemplateLayout } from './types';
+
+const NEW_LANES: Record<Role, number> = {
+  timeline: 0,
+  primary: 1,
+  detail: 2,
+  related: 3,
+  reference: 4,
+  node: 5,
+};
 
 const LANE_HEIGHT = 220;
 const LANE_GAP = 40;
@@ -52,4 +62,15 @@ export const WHATS_NEW_SINCE_Y_TEMPLATE: CanvasTemplate = {
   id: 'whats-new-since-y',
   name: "What's new since Y",
   layout: whatsNewSinceYLayout,
+  slotForRole: (role, occupancy, viewport) => {
+    const w = 280;
+    const h = 160;
+    const lane = NEW_LANES[role];
+    return {
+      x: viewport.x + 80 + occupancy * (w + 30),
+      y: viewport.y + 80 + lane * (h + 24),
+      w,
+      h,
+    };
+  },
 };

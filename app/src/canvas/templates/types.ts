@@ -1,5 +1,6 @@
 import type { Box } from 'tldraw';
 import type { SearchResult } from '../../api/search';
+import type { Role } from '../../../../src/agent/types';
 
 /**
  * Placement produced by a template's layout function. Coordinates are in
@@ -22,8 +23,16 @@ export type TemplateLayout = (
   viewport: Box
 ) => ShapePlacement[];
 
+/**
+ * Coordinates for one widget in a given role.
+ * `occupancy` (passed to `slotForRole`) is the number of widgets *already*
+ * placed in this role — used by templates that stagger or stack repeats.
+ */
+export type Slot = { x: number; y: number; w: number; h: number };
+
 export type CanvasTemplate = {
   id: 'ask-anything' | 'tell-me-about-x' | 'whats-new-since-y' | 'trace-x-everywhere';
   name: string;
   layout: TemplateLayout;
+  slotForRole: (role: Role, occupancy: number, viewport: Box) => Slot;
 };

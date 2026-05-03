@@ -1,8 +1,18 @@
 import { pickWidgetForKind } from '../../../../src/core/widget-registry';
 import type { ResultKind } from '../../../../src/core/source';
+import type { Role } from '../../../../src/agent/types';
 import type { SearchResult } from '../../api/search';
 import { DEFAULT_SIZES, shapeProps } from './shape-props';
 import type { CanvasTemplate, ShapePlacement, TemplateLayout } from './types';
+
+const TELL_ZONES: Record<Role, { col: number; row: number }> = {
+  primary: { col: 1, row: 0 },
+  detail: { col: 1, row: 1 },
+  related: { col: 0, row: 1 },
+  reference: { col: 2, row: 1 },
+  timeline: { col: 2, row: 0 },
+  node: { col: 0, row: 0 },
+};
 
 type ZoneId = 'header' | 'code' | 'docs' | 'activity' | 'related';
 
@@ -86,4 +96,15 @@ export const TELL_ME_ABOUT_X_TEMPLATE: CanvasTemplate = {
   id: 'tell-me-about-x',
   name: 'Tell me about X',
   layout: tellMeAboutXLayout,
+  slotForRole: (role, occupancy, viewport) => {
+    const w = 360;
+    const h = 220;
+    const z = TELL_ZONES[role];
+    return {
+      x: viewport.x + 60 + z.col * (w + 40),
+      y: viewport.y + 80 + z.row * (h + 40) + occupancy * (h + 20),
+      w,
+      h,
+    };
+  },
 };
