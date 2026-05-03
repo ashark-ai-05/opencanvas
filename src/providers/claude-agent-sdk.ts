@@ -96,7 +96,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     }
   }
 
-  private mapMessage(message: SDKMessage): ProviderEvent[] {
+  mapMessage(message: SDKMessage): ProviderEvent[] {
     const events: ProviderEvent[] = [];
 
     if (message.type === 'assistant') {
@@ -148,6 +148,48 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
         events.push({ type: 'error', message: 'Query ended with error result' });
         events.push({ type: 'done' });
       }
+    } else if (message.type === 'user') {
+      // The SDK pipes tool execution results back as user-role messages whose
+      // content array carries `tool_result` blocks correlated to the assistant's
+      // earlier `tool_use` block via `tool_use_id`. We forward them as
+      // `tool-result` ProviderEvents so UIMS can correlate the call/result pair.
+      const content = message.message.content;
+      if (Array.isArray(content)) {
+        for (const block of content) {
+          if (
+            typeof block === 'object' &&
+            block !== null &&
+            (block as { type?: string }).type === 'tool_result'
+          ) {
+            const tr = block as {
+              type: 'tool_result';
+              tool_use_id: string;
+              content?: string | Array<{ type: string; text?: string }>;
+              is_error?: boolean;
+            };
+            const isError = tr.is_error === true;
+            const rawContent = tr.content;
+            const output =
+              typeof rawContent === 'string'
+                ? rawContent
+                : Array.isArray(rawContent)
+                  ? rawContent
+                      .filter((c) => c.type === 'text')
+                      .map((c) => c.text ?? '')
+                      .join('')
+                  : rawContent;
+            events.push({
+              type: 'tool-result',
+              toolCallId: tr.tool_use_id,
+              // SDK doesn't carry the tool name on tool_result blocks; UIMS only
+              // needs toolCallId to correlate with the prior tool-call event.
+              name: '',
+              output,
+              isError,
+            });
+          }
+        }
+      }
     }
 
     return events;
@@ -168,4 +210,12 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       };
     }
   }
+}
+
+/**
+ * Test-only re-export so __tests__ can exercise the mapper without spinning
+ * up the SDK. Not part of the public API.
+ */
+export function mapMessageForTesting(message: SDKMessage): ProviderEvent[] {
+  return new ClaudeAgentSdkAdapter().mapMessage(message);
 }
