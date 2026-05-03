@@ -1,11 +1,14 @@
 import { Toaster } from 'sonner';
+import { Plus } from 'lucide-react';
 import { Canvas } from './canvas/Canvas';
 import { Chat } from './components/Chat';
 import { HealthBadge } from './components/HealthBadge';
 import { useCanvasStats } from './state/canvas-stats-store';
+import { useChatActions } from './state/chat-actions-store';
 
 export function App() {
   const widgetCount = useCanvasStats((s) => s.widgetCount);
+  const newChat = useChatActions((s) => s.newChat);
   return (
     <div className="flex h-full flex-col relative bg-[var(--color-bg)]">
       <header className="flex items-center justify-between px-5 h-12 shrink-0 strata-glass relative z-10 border-b border-white/5">
@@ -32,7 +35,20 @@ export function App() {
             </span>
           )}
         </div>
-        <HealthBadge />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => newChat?.()}
+            disabled={!newChat}
+            title="Clear the chat and canvas — start a new conversation"
+            className="inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-[12px] font-medium text-zinc-300 hover:text-white border border-white/8 hover:border-white/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'rgba(255,255,255,0.03)' }}
+          >
+            <Plus className="size-3" />
+            New
+          </button>
+          <HealthBadge />
+        </div>
       </header>
       <main className="flex-1 min-h-0 grid grid-rows-[1fr_minmax(200px,34%)]">
         <section className="min-h-0 overflow-hidden border-b border-white/5 relative bg-[var(--color-bg)]">

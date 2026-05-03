@@ -1,13 +1,19 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { Send, Square, Sparkles } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { applyToolDirective } from '../canvas/dispatcher';
 import { getLatestSnapshot } from '../state/snapshot-ref';
 import { getEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
+import {
+  collectAppliedToolCallIds,
+  loadChatHistory,
+  saveChatHistory,
+} from './chat-persistence';
+import { useChatActions } from '../state/chat-actions-store';
 import type { ToolDirective } from '../../../src/agent/types';
 
 /**
@@ -88,7 +94,13 @@ function parseToolOutput(
 }
 
 export function Chat() {
-  const { messages, sendMessage, status, stop, error } = useChat({
+  // Load any prior conversation from localStorage on mount. The messages prop
+  // on useChat (ChatInit) accepts an initial array; useChat replaces it as
+  // soon as new chunks arrive, so this is purely a hydration step.
+  const initialMessages = useMemo(() => loadChatHistory(), []);
+
+  const { messages, sendMessage, setMessages, status, stop, error } = useChat({
+    messages: initialMessages,
     transport: new DefaultChatTransport({
       api: '/v1/chat',
       body: () => ({ canvasSnapshot: getLatestSnapshot() }),
@@ -96,9 +108,19 @@ export function Chat() {
   });
   const [input, setInput] = useState('');
   const isStreaming = status === 'streaming' || status === 'submitted';
-  const appliedRef = useRef<Set<string>>(new Set());
+  // Pre-fill with toolCallIds from loaded history so we don't redispatch
+  // directives the canvas already has from the prior session.
+  const appliedRef = useRef<Set<string>>(
+    new Set(collectAppliedToolCallIds(initialMessages)),
+  );
   const errorShownRef = useRef<unknown>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Persist chat history on every messages change. Cheap (single localStorage
+  // write per render); no debounce needed at the volume a single chat sees.
+  useEffect(() => {
+    saveChatHistory(messages);
+  }, [messages]);
 
   // Surface chat-level errors as a toast (network failure, 5xx, etc.) and
   // dedupe so the same Error doesn't fire repeatedly across re-renders.
@@ -152,6 +174,28 @@ export function Chat() {
     sendMessage({ text: input });
     setInput('');
   };
+
+  // Register a "new chat" callback the header button can invoke. Clears
+  // chat messages + appliedRef + the editor's strata widgets in one shot.
+  // Setting setNewChat in a useEffect guarantees it picks up the latest
+  // setMessages closure if useChat re-creates it.
+  const setNewChat = useChatActions((s) => s.setNewChat);
+  useEffect(() => {
+    setNewChat(() => {
+      setMessages([]);
+      appliedRef.current = new Set();
+      const editor = getEditor();
+      if (editor) {
+        const ids = editor
+          .getCurrentPageShapes()
+          .filter((s) => s.type.startsWith('strata:'))
+          .map((s) => s.id);
+        if (ids.length > 0) editor.deleteShapes(ids);
+      }
+      toast('New chat started');
+    });
+    return () => setNewChat(null);
+  }, [setMessages, setNewChat]);
 
   return (
     <div className="flex h-full flex-col relative">
