@@ -7,7 +7,7 @@ import {
   type TLBaseShape,
 } from 'tldraw';
 import { useState } from 'react';
-import { CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import { CardActions, CardFrame, CardHeader, CardTitle, Tag } from './shared';
 
 type FileNode = {
   name: string;
@@ -69,6 +69,7 @@ export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>{fileCount} {fileCount === 1 ? 'file' : 'files'}</Tag>
+            <CardActions shapeId={shape.id} />
           </CardHeader>
           <div className="strata-card-body" style={{ paddingLeft: 8, paddingRight: 8 }}>
             <TreeNode node={shape.props.root} depth={0} initiallyOpen />

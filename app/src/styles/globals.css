@@ -207,6 +207,46 @@
   border-color: rgba(167, 139, 250, 0.35);
 }
 
+/* Hover-action bar in card headers — appears on card hover, fades away
+   otherwise. Clicks are handled with stopPropagation by CardActionButton
+   so tldraw's shape selection doesn't fight the buttons. */
+.strata-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  opacity: 0;
+  transform: translateY(-1px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.strata-card:hover .strata-card-actions,
+.strata-card:focus-within .strata-card-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+.strata-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-line);
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+  pointer-events: all;
+}
+.strata-card-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-line-2);
+  color: #fafafa;
+}
+.strata-card-action:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 /* Freshly-placed pulse — fires once on mount and self-cancels. */
 .strata-card[data-fresh="true"] {
   animation: strata-fresh 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 1;

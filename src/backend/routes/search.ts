@@ -76,7 +76,8 @@ function shapeForKind(
       symbolName: typeof meta['symbolName'] === 'string' ? meta['symbolName'] : undefined,
       filePath: typeof meta['file'] === 'string' ? meta['file'] : titleFromUri(uri),
       language: typeof meta['language'] === 'string' ? meta['language'] : undefined,
-      body,
+      // tldraw shape prop is `code` (matches agent payload field name).
+      code: body,
     };
   }
   if (kind === 'text-document' || kind === 'wiki-page') {

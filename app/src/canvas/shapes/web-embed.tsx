@@ -6,7 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
-import { CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import { CardActions, CardFrame, CardHeader, CardTitle, OpenUrlAction, Tag } from './shared';
 
 export type WebEmbedShape = TLBaseShape<
   'strata:web-embed',
@@ -56,6 +56,10 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
           <CardHeader>
             <CardTitle>{shape.props.title ?? host}</CardTitle>
             <Tag>{host}</Tag>
+            <CardActions
+              shapeId={shape.id}
+              extras={<OpenUrlAction url={shape.props.url} />}
+            />
           </CardHeader>
           {showSnippet ? (
             <div className="strata-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

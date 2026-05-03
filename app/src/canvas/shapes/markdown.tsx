@@ -8,7 +8,15 @@ import {
 } from 'tldraw';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import {
+  CardActions,
+  CardBody,
+  CardFrame,
+  CardHeader,
+  CardTitle,
+  CopyAction,
+  Tag,
+} from './shared';
 
 export type MarkdownShape = TLBaseShape<
   'strata:markdown',
@@ -51,6 +59,10 @@ export class MarkdownShapeUtil extends ShapeUtil<MarkdownShape> {
           <CardHeader>
             <CardTitle>{shape.props.title ?? 'Document'}</CardTitle>
             <Tag>md</Tag>
+            <CardActions
+              shapeId={shape.id}
+              extras={<CopyAction text={shape.props.body} label="markdown" />}
+            />
           </CardHeader>
           <CardBody>
             <div className="strata-markdown">

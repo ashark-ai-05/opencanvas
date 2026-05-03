@@ -19,6 +19,7 @@ export const TicketPayload = z.object({
   status: z.string(),
   assignee: z.string().optional(),
   priority: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export const WebEmbedPayload = z.object({

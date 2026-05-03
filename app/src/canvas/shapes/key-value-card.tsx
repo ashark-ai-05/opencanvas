@@ -6,7 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
-import { CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
 
 type KeyValuePair = { key: string; value: string };
 
@@ -51,6 +51,7 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>data</Tag>
+            <CardActions shapeId={shape.id} />
           </CardHeader>
           <CardBody>
             <dl

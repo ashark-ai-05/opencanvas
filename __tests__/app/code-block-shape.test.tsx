@@ -6,10 +6,11 @@ describe('CodeBlockShapeUtil', () => {
     expect(CodeBlockShapeUtil.type).toBe('strata:code-block');
   });
 
-  it('exposes language, symbolName, filePath, body in props', () => {
+  it('exposes language, code, source + legacy symbolName/filePath in props', () => {
     expect(CodeBlockShapeUtil.props.language).toBeDefined();
+    expect(CodeBlockShapeUtil.props.code).toBeDefined();
+    expect(CodeBlockShapeUtil.props.source).toBeDefined();
     expect(CodeBlockShapeUtil.props.symbolName).toBeDefined();
     expect(CodeBlockShapeUtil.props.filePath).toBeDefined();
-    expect(CodeBlockShapeUtil.props.body).toBeDefined();
   });
 });

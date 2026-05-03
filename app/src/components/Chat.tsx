@@ -13,6 +13,7 @@ import {
   loadChatHistory,
   saveChatHistory,
 } from './chat-persistence';
+import { suggestCommands, tryRunCommand } from './slash-commands';
 import { useChatActions } from '../state/chat-actions-store';
 import type { ToolDirective } from '../../../src/agent/types';
 
@@ -171,9 +172,26 @@ export function Chat() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isStreaming) return;
+    // Slash commands (e.g. /clear, /template, /help) execute locally and
+    // never reach the LLM. tryRunCommand returns true if it consumed the
+    // input — even for unknown commands, so we don't accidentally send
+    // "/typo" up as a chat message.
+    if (tryRunCommand(input)) {
+      setInput('');
+      return;
+    }
     sendMessage({ text: input });
     setInput('');
   };
+
+  // Slash-suggestion popover — shows when input starts with "/".
+  const slashSuggestions = useMemo(() => {
+    const t = input.trim();
+    if (!t.startsWith('/')) return null;
+    // Hide once a space appears — we're past command name, into args.
+    if (t.includes(' ')) return null;
+    return suggestCommands(t.slice(1));
+  }, [input]);
 
   // Register a "new chat" callback the header button can invoke. Clears
   // chat messages + appliedRef + the editor's strata widgets in one shot.
@@ -307,6 +325,41 @@ export function Chat() {
           </motion.div>
         )}
       </div>
+
+      {/* Slash-command suggestion popover. Sits above the form. */}
+      <AnimatePresence>
+        {slashSuggestions && slashSuggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.14 }}
+            className="absolute left-3 right-3 bottom-[64px] z-20 strata-glass rounded-xl overflow-hidden shadow-2xl"
+          >
+            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-zinc-500 border-b border-white/5">
+              Slash commands
+            </div>
+            <ul className="max-h-48 overflow-y-auto">
+              {slashSuggestions.map((c) => (
+                <li
+                  key={c.name}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setInput(`/${c.name}${c.args ? ' ' : ''}`);
+                  }}
+                  className="px-3 py-2 cursor-pointer hover:bg-white/5 flex items-baseline gap-3"
+                >
+                  <span className="font-mono text-[13px] text-violet-300 flex-shrink-0">
+                    /{c.name}
+                    {c.args && <span className="text-zinc-500"> {c.args}</span>}
+                  </span>
+                  <span className="text-[12px] text-zinc-500 truncate">{c.description}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form
         onSubmit={handleSubmit}

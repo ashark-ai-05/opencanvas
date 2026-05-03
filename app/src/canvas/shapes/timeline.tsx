@@ -6,7 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
-import { CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
 
 type EventKind = 'commit' | 'deploy' | 'incident' | 'note' | 'release';
 type Event = {
@@ -74,6 +74,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>{shape.props.events.length} events</Tag>
+            <CardActions shapeId={shape.id} />
           </CardHeader>
           <CardBody>
             <ol style={{ margin: 0, padding: 0, listStyle: 'none', position: 'relative' }}>

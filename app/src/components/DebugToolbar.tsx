@@ -63,7 +63,7 @@ export function DebugToolbar() {
           language: 'typescript',
           symbolName: 'processPayment',
           filePath: 'src/payments/process.ts',
-          body: SAMPLE_CODE,
+          code: SAMPLE_CODE,
           uri: 'file://src/payments/process.ts#processPayment',
         }),
     },

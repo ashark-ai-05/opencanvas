@@ -6,7 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
-import { CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import { CardActions, CardFrame, CardHeader, CardTitle, CopyAction, Tag } from './shared';
 
 type Column = {
   key: string;
@@ -67,6 +67,10 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>{rows.length} {rows.length === 1 ? 'row' : 'rows'}</Tag>
+            <CardActions
+              shapeId={shape.id}
+              extras={<CopyAction text={tableToCsv(columns, rows)} label="CSV" />}
+            />
           </CardHeader>
           <div className="strata-card-body" style={{ padding: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -136,4 +140,16 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
   override canResize() {
     return true;
   }
+}
+
+/** Render a table's columns + rows as CSV for the copy action. Quotes
+ *  any field containing comma/quote/newline per RFC 4180. */
+function tableToCsv(columns: Column[], rows: string[][]): string {
+  const escape = (s: string) =>
+    /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  const header = columns.map((c) => escape(c.label ?? c.key)).join(',');
+  const body = rows
+    .map((r) => columns.map((_, i) => escape(r[i] ?? '')).join(','))
+    .join('\n');
+  return body.length > 0 ? `${header}\n${body}` : header;
 }

@@ -6,7 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
-import { CardBody, CardFrame, CardHeader, CardTitle } from './shared';
+import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, CopyAction } from './shared';
 
 export type TicketCardShape = TLBaseShape<
   'strata:ticket',
@@ -17,6 +17,7 @@ export type TicketCardShape = TLBaseShape<
     title: string;
     status?: string;
     assignee?: string;
+    priority?: string;
     description?: string;
     uri?: string;
   }
@@ -39,6 +40,7 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
     title: T.string,
     status: T.optional(T.string),
     assignee: T.optional(T.string),
+    priority: T.optional(T.string),
     description: T.optional(T.string),
     uri: T.optional(T.string),
   };
@@ -83,12 +85,28 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
                 {status}
               </span>
             )}
+            <CardActions
+              shapeId={shape.id}
+              extras={
+                <CopyAction text={shape.props.ticketId} label="ticket id" />
+              }
+            />
           </CardHeader>
           <CardBody>
-            {shape.props.assignee && (
-              <div style={{ marginBottom: 8, color: '#a1a1aa' }}>
-                <span style={{ color: '#71717a' }}>assignee · </span>
-                {shape.props.assignee}
+            {(shape.props.assignee || shape.props.priority) && (
+              <div style={{ marginBottom: 8, color: '#a1a1aa', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                {shape.props.assignee && (
+                  <span>
+                    <span style={{ color: '#71717a' }}>assignee · </span>
+                    {shape.props.assignee}
+                  </span>
+                )}
+                {shape.props.priority && (
+                  <span>
+                    <span style={{ color: '#71717a' }}>priority · </span>
+                    {shape.props.priority}
+                  </span>
+                )}
               </div>
             )}
             {shape.props.description && (
