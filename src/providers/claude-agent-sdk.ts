@@ -15,6 +15,7 @@
  *   - 'assistant' with error field → error event
  */
 import type { LLMProvider, ProviderEvent, QueryRequest, ProbeResult } from '../core/provider.js';
+import type { AgentToolDeps } from '../agent/tools/index.js';
 
 // SDK types we need — imported as `type` to avoid pulling the entire SDK at import time
 // when it's not the active provider. The actual runtime import happens inside the methods.
@@ -27,15 +28,38 @@ export type ClaudeAgentSdkConfig = {
   systemPrompt?: string;
 };
 
+export type ClaudeAgentSdkDeps = {
+  search?: AgentToolDeps['search'];
+};
+
 const DEFAULT_SYSTEM_PROMPT =
   'You are llm-wiki, a focused personal knowledge assistant. Answer accurately and concisely.';
+
+/**
+ * Stub search adapter used when the adapter is constructed without `deps.search`
+ * (tests, probes). Returns nothing rather than throwing so the agent loop can
+ * still run end-to-end without a wired BackendState.
+ */
+function buildLazySearchAdapter(): AgentToolDeps['search'] {
+  return {
+    async search() {
+      return [];
+    },
+    async fetchById() {
+      return null;
+    },
+  };
+}
 
 export class ClaudeAgentSdkAdapter implements LLMProvider {
   readonly id = 'claude-agent-sdk';
   readonly name = 'Claude Agent SDK';
   readonly kind = 'agent' as const;
 
-  constructor(private readonly config: ClaudeAgentSdkConfig = {}) {}
+  constructor(
+    private readonly config: ClaudeAgentSdkConfig = {},
+    private readonly deps: ClaudeAgentSdkDeps = {},
+  ) {}
 
   async *query(request: QueryRequest): AsyncIterable<ProviderEvent> {
     // Dynamic import keeps startup fast when this provider is not active.
@@ -59,12 +83,45 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     const { join } = await import('node:path');
     const cleanCwd = mkdtempSync(join(tmpdir(), 'llm-wiki-sdk-'));
 
+    // Mirror the caller's abort signal into a fresh AbortController owned by
+    // this turn. The SDK accepts an `abortController` (not a signal) so we
+    // proxy the external signal through to it.
+    const abortController = new AbortController();
+    if (request.abortSignal) {
+      if (request.abortSignal.aborted) abortController.abort();
+      else
+        request.abortSignal.addEventListener(
+          'abort',
+          () => abortController.abort(),
+          { once: true },
+        );
+    }
+
+    const { buildAgentTools } = await import('../agent/tools/index.js');
+    const { createSdkMcpServer } = await import('@anthropic-ai/claude-agent-sdk');
+
+    const search = this.deps.search ?? buildLazySearchAdapter();
+    const snapshot =
+      request.canvasSnapshot ?? {
+        activeTemplateId: 'ask-anything' as const,
+        widgets: [],
+      };
+    const tools = buildAgentTools({ search, getSnapshot: () => snapshot });
+
+    const mcp = createSdkMcpServer({
+      name: 'llm-wiki-tools',
+      version: '0.1.0',
+      // Each tool factory returns a `WithArgs<...>` cast (handlers accept the
+      // public, optional-friendly args type). createSdkMcpServer's parameter
+      // is typed against the SDK's stricter InferShape variant, so we widen
+      // here. The runtime contract is identical.
+      tools: tools as unknown as Parameters<typeof createSdkMcpServer>[0]['tools'],
+    });
+
     const options: Record<string, unknown> = {
       systemPrompt,
       // Don't load .claude/settings.json from the filesystem.
       settingSources: [],
-      // Disable all built-in tools (Bash, Read, Edit, Grep, etc.).
-      tools: [],
       // Run the SDK from an empty tempdir so it has no project files,
       // no git status, no CLAUDE.md, no AGENTS.md to inject as context.
       cwd: cleanCwd,
@@ -74,8 +131,15 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       forkSession: false,
       // No custom agents.
       agents: {},
-      // Defensive: also disallow all tools by name pattern.
-      disallowedTools: ['*'],
+      // In-process MCP server hosting our 9 agent tools. The SDK invokes
+      // them by `mcp__<server>__<tool>` — we name the server `llm-wiki`.
+      mcpServers: { 'llm-wiki': mcp },
+      allowedTools: tools.map((t) => `mcp__llm-wiki__${t.name}`),
+      maxTurns: 10,
+      maxOutputTokens: 8192,
+      effort: 'medium',
+      thinking: { type: 'adaptive', display: 'summarized' },
+      abortController,
     };
     if (this.config.model) options.model = this.config.model;
 
