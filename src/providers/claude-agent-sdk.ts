@@ -114,6 +114,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
         } else if (block.type === 'tool_use') {
           events.push({
             type: 'tool-call',
+            toolCallId: block.id,
             name: block.name,
             input: block.input,
           });

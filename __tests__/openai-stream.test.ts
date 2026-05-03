@@ -57,8 +57,8 @@ describe('providerEventsToOpenAI', () => {
     const out = await collect(
       providerEventsToOpenAI(gen([
         { type: 'thinking-delta', text: 'thinking…' },
-        { type: 'tool-call', name: 'foo', input: {} },
-        { type: 'tool-result', name: 'foo', output: 'bar' },
+        { type: 'tool-call', toolCallId: 'tc-1', name: 'foo', input: {} },
+        { type: 'tool-result', toolCallId: 'tc-1', name: 'foo', output: 'bar' },
         { type: 'text-delta', text: 'final' },
         { type: 'done' },
       ]))

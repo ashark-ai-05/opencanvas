@@ -1,3 +1,5 @@
+import type { CanvasSnapshot } from '../agent/canvas-snapshot.js';
+
 /**
  * Core LLM provider abstraction.
  *
@@ -12,16 +14,22 @@
 export type ProviderEvent =
   | { type: 'text-delta'; text: string }
   | { type: 'thinking-delta'; text: string }
-  | { type: 'tool-call'; name: string; input: unknown }
-  | { type: 'tool-result'; name: string; output: unknown }
+  | { type: 'tool-call'; toolCallId: string; name: string; input: unknown }
+  | {
+      type: 'tool-result';
+      toolCallId: string;
+      name: string;
+      output: unknown;
+      isError?: boolean;
+    }
   | { type: 'error'; message: string }
   | { type: 'done'; usage?: { inputTokens?: number; outputTokens?: number } };
 
 export type QueryRequest = {
   prompt: string;
   systemPrompt?: string;
-  // For agent-kind providers, the agent owns its own tool-calling loop.
-  // For model-kind providers, no tools are wired in this slice (deferred to Plan 5).
+  canvasSnapshot?: CanvasSnapshot;
+  abortSignal?: AbortSignal;
 };
 
 export type ProbeResult = {

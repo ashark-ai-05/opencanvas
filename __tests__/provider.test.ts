@@ -119,8 +119,8 @@ describe('FakeProvider — model kind', () => {
 describe('FakeProvider — agent kind', () => {
   it('emits tool-call and tool-result events', async () => {
     const provider = new FakeProvider('fake-agent', 'agent', [
-      { type: 'tool-call', name: 'read_file', input: { path: '/tmp/test.txt' } },
-      { type: 'tool-result', name: 'read_file', output: 'file contents' },
+      { type: 'tool-call', toolCallId: 'tc-1', name: 'read_file', input: { path: '/tmp/test.txt' } },
+      { type: 'tool-result', toolCallId: 'tc-1', name: 'read_file', output: 'file contents' },
       { type: 'text-delta', text: 'Based on the file...' },
       { type: 'done' },
     ]);
@@ -163,8 +163,8 @@ describe('ProviderEvent — all event types are structurally complete', () => {
     const events: ProviderEvent[] = [
       { type: 'text-delta', text: 'a' },
       { type: 'thinking-delta', text: 'b' },
-      { type: 'tool-call', name: 't', input: {} },
-      { type: 'tool-result', name: 't', output: null },
+      { type: 'tool-call', toolCallId: 'tc-1', name: 't', input: {} },
+      { type: 'tool-result', toolCallId: 'tc-1', name: 't', output: null },
       { type: 'error', message: 'oops' },
       { type: 'done' },
       { type: 'done', usage: { inputTokens: 1, outputTokens: 2 } },
