@@ -64,7 +64,19 @@ export async function* providerEventsToUIMS(
           yield emit({ type: 'reasoning-delta', id: reasoningId, delta: event.text });
           break;
 
-        case 'tool-call':
+        case 'tool-call': {
+          // Dev-time diagnostic: log every tool call so backend logs show
+          // turn-by-turn what the agent is doing. Cheap to print, invaluable
+          // when chasing max_turns / spin-loop bugs.
+          const inputSnippet = (() => {
+            try {
+              const s = JSON.stringify(event.input);
+              return s.length > 120 ? `${s.slice(0, 120)}…` : s;
+            } catch {
+              return '<unserializable>';
+            }
+          })();
+          console.log(`[uims-stream] tool-call ${event.name} ${inputSnippet}`);
           // Top-level chunk — does NOT close any open text/reasoning bracket.
           // Agent loops often interleave tool calls inside a single text stream
           // ("let me search…" → tool-call → continue same text); cutting the
@@ -76,6 +88,7 @@ export async function* providerEventsToUIMS(
             input: event.input,
           });
           break;
+        }
 
         case 'tool-result':
           // Symmetric with tool-call: top-level, never closes text/reasoning.
@@ -84,6 +97,7 @@ export async function* providerEventsToUIMS(
               typeof event.output === 'string'
                 ? event.output
                 : JSON.stringify(event.output);
+            console.log(`[uims-stream] tool-error ${event.name}: ${errorText.slice(0, 160)}`);
             yield emit({
               type: 'tool-output-error',
               toolCallId: event.toolCallId,

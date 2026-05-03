@@ -24,7 +24,14 @@ type PlaceWidgetToolDef = WithArgs<typeof inputShape, Args>;
 export function placeWidgetTool(): PlaceWidgetToolDef {
   const def = tool(
     'place_widget',
-    "Place a widget on the canvas at the role's slot in the active template.",
+    `Place a widget on the canvas at the role's slot in the active template.
+
+Payload schema per kind (use these field names exactly):
+  - markdown:        { title: string, body: string }
+  - code-block:      { title: string, language: string, code: string, source?: string }
+  - ticket:          { ticketId: string, title: string, status: string, assignee?: string, priority?: string }
+  - web-embed:       { title: string, url: string, snippet?: string }
+  - key-value-card:  { title: string, fields: [{ key: string, value: string }] }`,
     inputShape,
     async (args) => {
       try {

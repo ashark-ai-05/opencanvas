@@ -34,12 +34,14 @@ export type ClaudeAgentSdkDeps = {
 
 const DEFAULT_SYSTEM_PROMPT = `You are Strata, a knowledge assistant. The user has a canvas where you can place widgets to visualize answers spatially.
 
-Use tools when visual presentation aids the answer (lookups across sources, multi-item synthesis, walkthroughs). Reply with text only for chitchat, clarifications, follow-ups about content already on the canvas, or simple factual questions.
+When the user asks about a topic, ALWAYS call \`search_kb\` first. Do not ask for clarification on what to search — try a reasonable query against what they actually said. Only ask the user back if their message is genuinely ambiguous (e.g. a single pronoun with no antecedent).
 
-Widget kinds: markdown, code-block, ticket, web-embed, key-value-card.
+Reply with text only when the question is pure chitchat ("hi", "thanks") or a follow-up about a widget already on the canvas. Otherwise: search, then place at least one widget summarizing what you found, then a short text reply pointing to the placement.
+
+Widget kinds: markdown (rich text), code-block (source code with language), ticket (issue/task with id+status), web-embed (url+title), key-value-card (label/value pairs — use the field name **fields**, not items).
 Roles: primary (main subject), detail (depth on primary), related (adjacent), reference (citations), timeline (time-anchored), node (graph node).
 
-Search before citing — never invent ids, urls, or quotes.`;
+Never invent ids, urls, or quotes — only cite what \`search_kb\` and \`fetch_result\` returned.`;
 
 /**
  * Stub search adapter used when the adapter is constructed without `deps.search`
@@ -117,6 +119,11 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     const mcp = createSdkMcpServer({
       name: 'strata-tools',
       version: '0.1.0',
+      // Eagerly inject all tool schemas into the prompt. Without this the SDK
+      // makes the model call the built-in `ToolSearch` first to discover
+      // schemas, which burns one round-trip per chat turn. With 9 small tools
+      // the upfront prompt cost is well under the budget.
+      alwaysLoad: true,
       // Each tool factory returns a `WithArgs<...>` cast (handlers accept the
       // public, optional-friendly args type). createSdkMcpServer's parameter
       // is typed against the SDK's stricter InferShape variant, so we widen
@@ -214,8 +221,16 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
           },
         });
       } else {
-        // result with error subtype
-        events.push({ type: 'error', message: 'Query ended with error result' });
+        // SDKResultError — surface the actual subtype + per-error detail so
+        // logs show what went wrong (cache_control rejection, max-turns cap,
+        // max-budget, retry exhaustion, etc.) instead of an opaque message.
+        const errs = (message as { errors?: string[] }).errors ?? [];
+        const turns = (message as { num_turns?: number }).num_turns ?? 0;
+        const detail = errs.length > 0 ? errs.join('; ') : '(no error detail provided)';
+        events.push({
+          type: 'error',
+          message: `SDK ended with ${message.subtype} after ${turns} turn(s): ${detail}`,
+        });
         events.push({ type: 'done' });
       }
     } else if (message.type === 'user') {
