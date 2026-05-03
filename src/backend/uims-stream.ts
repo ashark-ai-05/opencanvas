@@ -77,6 +77,27 @@ export async function* providerEventsToUIMS(
           });
           break;
 
+        case 'tool-result':
+          // Symmetric with tool-call: top-level, never closes text/reasoning.
+          if (event.isError) {
+            const errorText =
+              typeof event.output === 'string'
+                ? event.output
+                : JSON.stringify(event.output);
+            yield emit({
+              type: 'tool-output-error',
+              toolCallId: event.toolCallId,
+              errorText,
+            });
+          } else {
+            yield emit({
+              type: 'tool-output-available',
+              toolCallId: event.toolCallId,
+              output: event.output,
+            });
+          }
+          break;
+
         case 'error':
           // UIMS has a first-class error chunk — the client surfaces this
           // via useChat's `error` state instead of silently truncating.
@@ -94,8 +115,6 @@ export async function* providerEventsToUIMS(
         case 'done':
           // Fall through to the post-loop cleanup so brackets close once.
           break;
-
-        // tool-result forwarding deferred to Plan 5 T18
       }
     }
 
