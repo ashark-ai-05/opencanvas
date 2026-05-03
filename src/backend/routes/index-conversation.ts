@@ -109,7 +109,10 @@ export function indexConversationRoute(state: BackendState): Hono {
           embedderId,
           now,
         );
-        const chunkId = Number(result.lastInsertRowid);
+        // sqlite-vec's vec0 virtual table rejects JS `number` for the rowid
+        // binding even though chunks.id is INTEGER — bind as BigInt to match
+        // what the document/code indexers do.
+        const chunkId = BigInt(result.lastInsertRowid as bigint | number);
         insertEmbedding.run(chunkId, Buffer.from(vectors[i]!.buffer));
       }
     });

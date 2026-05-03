@@ -10,6 +10,7 @@ import { getEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
 import { collectAppliedToolCallIds } from './chat-persistence';
 import { suggestCommands, tryRunCommand } from './slash-commands';
+import { TeamProgress } from './TeamProgress';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
 import type { ToolDirective } from '../../../src/agent/types';
@@ -291,6 +292,10 @@ export function Chat() {
           />
         )}
       </AnimatePresence>
+
+      {/* Team-pipeline indicator — only renders when a /team run has emitted
+          phase signals; auto-hides on plain chat turns. */}
+      <TeamProgress messages={messages} />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
         {messages.length === 0 && (

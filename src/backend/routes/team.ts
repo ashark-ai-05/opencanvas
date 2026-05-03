@@ -113,9 +113,30 @@ export function teamRoute(state: BackendState): Hono {
       const provider = state.getLLMProvider();
       let accumulatedSnapshot: CanvasSnapshot = initialSnapshot;
 
+      // Helper to emit a custom data part the frontend uses to drive a
+      // visible "team progress" timeline. UIMS chunk type
+      // `data-team-phase` is surfaced by useChat as a parsed part and we
+      // pull it out client-side. Status: 'start' | 'complete'.
+      const emitPhaseSignal = async (
+        agent: string,
+        status: 'start' | 'complete',
+      ) => {
+        await s.write(
+          `data: ${JSON.stringify({
+            type: 'data-team-phase',
+            id: `phase-${agent}-${status}`,
+            data: { agent, status },
+          })}\n\n`,
+        );
+      };
+
       try {
         for (let i = 0; i < PHASES.length; i++) {
           const phase = PHASES[i]!;
+          // Signal phase start so the timeline can light up the right dot
+          // BEFORE the agent's tool calls + text start streaming.
+          await emitPhaseSignal(phase.role, 'start');
+
           // Phase header — visible separator in the chat for the user.
           // Use a unique text-id per phase so useChat doesn't merge them.
           const phaseTextId = `t-${phase.role}`;
@@ -157,6 +178,8 @@ export function teamRoute(state: BackendState): Hono {
             ...accumulatedSnapshot,
             widgets: [...accumulatedSnapshot.widgets, ...placedWidgets],
           };
+
+          await emitPhaseSignal(phase.role, 'complete');
 
           if (abortController.signal.aborted) break;
         }

@@ -8,6 +8,7 @@ import { chatRoute } from './routes/chat.js';
 import { searchRoute } from './routes/search.js';
 import { indexConversationRoute } from './routes/index-conversation.js';
 import { teamRoute } from './routes/team.js';
+import { sourcesListRoute } from './routes/sources-list.js';
 
 /**
  * The Hono app. Tests can hit `app.request(path)` directly without
@@ -228,6 +229,18 @@ app.post('/v1/query', async (c) => {
   lazyApp.post('/v1/team', async (c) => {
     const state = await getState();
     const sub = teamRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  app.route('/', lazyApp);
+}
+
+// GET /v1/sources/list — enumerates every source_id in the chunks table
+// with chunk counts. Drives the Sources popover in the UI.
+{
+  const lazyApp = new Hono();
+  lazyApp.get('/v1/sources/list', async (c) => {
+    const state = await getState();
+    const sub = sourcesListRoute(state);
     return sub.fetch(c.req.raw);
   });
   app.route('/', lazyApp);

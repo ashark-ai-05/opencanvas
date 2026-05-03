@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Toaster } from 'sonner';
-import { Plus, History } from 'lucide-react';
+import { Plus, History, Database } from 'lucide-react';
 import { Canvas } from './canvas/Canvas';
 import { Chat } from './components/Chat';
 import { HealthBadge } from './components/HealthBadge';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
+import { SourcesPanel } from './components/SourcesPanel';
 import { useCanvasStats } from './state/canvas-stats-store';
 import { useChatActions } from './state/chat-actions-store';
 import { useConversationsStore } from './state/conversations-store';
@@ -17,6 +18,7 @@ export function App() {
   const activeId = useConversationsStore((s) => s.activeId);
   const conversationCount = useConversationsStore((s) => s.conversations.length);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   return (
     <div className="flex h-full flex-col relative bg-[var(--color-bg)]">
@@ -66,6 +68,17 @@ export function App() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setSourcesOpen(true)}
+            aria-label="Knowledge base"
+            title="Knowledge base — sources indexed"
+            className="inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-[12px] font-medium text-zinc-300 hover:text-white border border-white/8 hover:border-white/15 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.03)' }}
+          >
+            <Database className="size-3" />
+            <span className="hidden sm:inline">KB</span>
+          </button>
+          <button
+            type="button"
             onClick={() => newChat?.()}
             disabled={!newChat}
             title="Start a new conversation (current one stays in History)"
@@ -93,6 +106,7 @@ export function App() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
+      <SourcesPanel open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
       <Toaster
         theme="dark"
         position="top-right"

@@ -346,6 +346,16 @@
   50%      { transform: scale(0.7); opacity: 0.5; }
 }
 
+/* Team timeline — active phase pulses with role-tint glow. */
+.strata-team-dot-active {
+  box-shadow: 0 0 0 0 currentColor;
+  animation: strata-team-pulse 1.6s ease-in-out infinite;
+}
+@keyframes strata-team-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+  50%      { box-shadow: 0 0 0 6px rgba(167, 139, 250, 0.25); }
+}
+
 .strata-tool-spinner {
   display: inline-block;
   width: 10px;
