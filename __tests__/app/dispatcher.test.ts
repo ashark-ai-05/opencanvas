@@ -54,16 +54,42 @@ describe('placeResultsOnCanvas', () => {
     expect(call.props.language).toBe('typescript');
   });
 
-  it('falls back to key-value-card for unmapped kinds', () => {
+  it('falls back to key-value-card for kinds that map to it (k8s-resource)', () => {
     const editor = { createShape: vi.fn(), getViewportPageBounds: () => ({ x: 0, y: 0, w: 1000, h: 800 }) };
     placeResultsOnCanvas(editor as never, [
       {
-        id: '1', sourceId: 's', kind: 'log-stream' as never,
-        shape: { title: 'log', fields: [{ key: 'host', value: 'x' }] },
-        provenance: { uri: 'mem://log', fetchedAt: 0 }, freshness: {}, links: [],
+        id: '1', sourceId: 's', kind: 'k8s-resource' as never,
+        shape: { title: 'pod', fields: [{ key: 'name', value: 'x' }] },
+        provenance: { uri: 'k8s://pod', fetchedAt: 0 }, freshness: {}, links: [],
       },
     ]);
     const call = editor.createShape.mock.calls[0][0];
     expect(call.type).toBe('strata:key-value-card');
+  });
+
+  it('routes log-stream to timeline shape', () => {
+    const editor = { createShape: vi.fn(), getViewportPageBounds: () => ({ x: 0, y: 0, w: 1000, h: 800 }) };
+    placeResultsOnCanvas(editor as never, [
+      {
+        id: '1', sourceId: 's', kind: 'log-stream' as never,
+        shape: { title: 'log' },
+        provenance: { uri: 'mem://log', fetchedAt: 0 }, freshness: {}, links: [],
+      },
+    ]);
+    const call = editor.createShape.mock.calls[0][0];
+    expect(call.type).toBe('strata:timeline');
+  });
+
+  it('routes table-row-set to table shape', () => {
+    const editor = { createShape: vi.fn(), getViewportPageBounds: () => ({ x: 0, y: 0, w: 1000, h: 800 }) };
+    placeResultsOnCanvas(editor as never, [
+      {
+        id: '1', sourceId: 's', kind: 'table-row-set' as never,
+        shape: { title: 'rows' },
+        provenance: { uri: 'sql://rows', fetchedAt: 0 }, freshness: {}, links: [],
+      },
+    ]);
+    const call = editor.createShape.mock.calls[0][0];
+    expect(call.type).toBe('strata:table');
   });
 });

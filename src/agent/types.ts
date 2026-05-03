@@ -10,6 +10,9 @@ export const WIDGET_KINDS = [
   'ticket',
   'web-embed',
   'key-value-card',
+  'table',
+  'timeline',
+  'file-tree',
 ] as const;
 export type WidgetKind = (typeof WIDGET_KINDS)[number];
 

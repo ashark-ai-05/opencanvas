@@ -37,12 +37,74 @@ export const KeyValueCardPayload = z.object({
   ),
 });
 
+/**
+ * Tabular data: N columns × M rows. Columns can be tagged with an optional
+ * align hint and `mono` flag for monospace cell rendering (ids, hashes).
+ * Rows are arrays of strings — same length as `columns`.
+ */
+export const TablePayload = z.object({
+  title: z.string(),
+  columns: z.array(
+    z.object({
+      key: z.string(),
+      label: z.string().optional(),
+      align: z.enum(['left', 'right', 'center']).optional(),
+      mono: z.boolean().optional(),
+    }),
+  ).min(1),
+  rows: z.array(z.array(z.string())),
+});
+
+/**
+ * Chronological events. Each event has a timestamp (ISO 8601 or any
+ * string the model picks — we don't parse), a label, optional body and
+ * optional kind tag for visual styling (commit / deploy / incident / note).
+ */
+export const TimelinePayload = z.object({
+  title: z.string(),
+  events: z.array(
+    z.object({
+      timestamp: z.string(),
+      label: z.string(),
+      body: z.string().optional(),
+      kind: z.enum(['commit', 'deploy', 'incident', 'note', 'release']).optional(),
+    }),
+  ).min(1),
+});
+
+/**
+ * Hierarchical filesystem-like tree. Nodes are recursive: file leaves
+ * have no children; directories have a children array. `meta` is a free
+ * string slot for size, modtime, file count, etc.
+ */
+type FileNode = {
+  name: string;
+  type: 'file' | 'directory';
+  children?: FileNode[];
+  meta?: string;
+};
+const FileNodeSchema: z.ZodType<FileNode> = z.lazy(() =>
+  z.object({
+    name: z.string(),
+    type: z.enum(['file', 'directory']),
+    children: z.array(FileNodeSchema).optional(),
+    meta: z.string().optional(),
+  }),
+);
+export const FileTreePayload = z.object({
+  title: z.string(),
+  root: FileNodeSchema,
+});
+
 const PAYLOAD_SCHEMAS = {
   markdown: MarkdownPayload,
   'code-block': CodeBlockPayload,
   ticket: TicketPayload,
   'web-embed': WebEmbedPayload,
   'key-value-card': KeyValueCardPayload,
+  table: TablePayload,
+  timeline: TimelinePayload,
+  'file-tree': FileTreePayload,
 } as const;
 
 /**

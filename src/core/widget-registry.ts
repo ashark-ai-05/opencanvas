@@ -27,16 +27,29 @@ const KEY_VALUE_CARD: Widget = {
   // The dispatcher (Plan 4d) treats this as the "no match" branch.
   acceptsKinds: [
     'image',
-    'table-row-set',
     'metric-series',
     'chat-message',
     'runbook',
     'dashboard-embed',
-    'log-stream',
     'k8s-resource',
     'code-diff',
   ],
   shapeType: 'strata:key-value-card',
+};
+const TABLE: Widget = {
+  id: 'table',
+  acceptsKinds: ['table-row-set'],
+  shapeType: 'strata:table',
+};
+const TIMELINE: Widget = {
+  id: 'timeline',
+  acceptsKinds: ['log-stream'],
+  shapeType: 'strata:timeline',
+};
+const FILE_TREE: Widget = {
+  id: 'file-tree',
+  acceptsKinds: [],
+  shapeType: 'strata:file-tree',
 };
 
 /**
@@ -53,11 +66,11 @@ export const WIDGET_REGISTRY: Record<ResultKind, Widget> = {
   'code-file': CODE_BLOCK,
   'code-diff': KEY_VALUE_CARD,
   ticket: TICKET,
-  'log-stream': KEY_VALUE_CARD,
+  'log-stream': TIMELINE,
   'k8s-resource': KEY_VALUE_CARD,
   'web-page': WEB_EMBED,
   image: KEY_VALUE_CARD,
-  'table-row-set': KEY_VALUE_CARD,
+  'table-row-set': TABLE,
   'metric-series': KEY_VALUE_CARD,
   'chat-message': KEY_VALUE_CARD,
   runbook: KEY_VALUE_CARD,
@@ -65,9 +78,18 @@ export const WIDGET_REGISTRY: Record<ResultKind, Widget> = {
 };
 
 /**
- * The five distinct widgets, deduplicated (for use in uniqueness checks etc.)
+ * All distinct widgets, deduplicated (for use in uniqueness checks etc.)
  */
-export const ALL_WIDGETS: Widget[] = [MARKDOWN, CODE_BLOCK, TICKET, WEB_EMBED, KEY_VALUE_CARD];
+export const ALL_WIDGETS: Widget[] = [
+  MARKDOWN,
+  CODE_BLOCK,
+  TICKET,
+  WEB_EMBED,
+  KEY_VALUE_CARD,
+  TABLE,
+  TIMELINE,
+  FILE_TREE,
+];
 
 /**
  * Pick a widget for a given ResultKind. Returns the fallback (KeyValueCard)

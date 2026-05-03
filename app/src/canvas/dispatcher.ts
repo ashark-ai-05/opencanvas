@@ -35,6 +35,21 @@ const KIND_TO_SHAPE: Record<WidgetKind, string> = {
   ticket: 'strata:ticket',
   'web-embed': 'strata:web-embed',
   'key-value-card': 'strata:key-value-card',
+  table: 'strata:table',
+  timeline: 'strata:timeline',
+  'file-tree': 'strata:file-tree',
+};
+
+/** Sensible default size per kind so wide tables don't get cropped at 320×200. */
+const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
+  markdown: { w: 360, h: 240 },
+  'code-block': { w: 480, h: 280 },
+  ticket: { w: 320, h: 200 },
+  'web-embed': { w: 420, h: 200 },
+  'key-value-card': { w: 320, h: 220 },
+  table: { w: 520, h: 280 },
+  timeline: { w: 400, h: 320 },
+  'file-tree': { w: 360, h: 360 },
 };
 
 /**
@@ -57,13 +72,19 @@ export function applyToolDirective(
         occupancy,
         editor.getViewportPageBounds(),
       );
+      // Take the larger of (template slot) and (per-kind default) for each
+      // dimension — keeps wide widgets like table/file-tree from being
+      // clipped while still respecting the template's spatial intent.
+      const def = DEFAULT_SIZE[directive.kind] ?? { w: 320, h: 200 };
+      const w = Math.max(slot.w, def.w);
+      const h = Math.max(slot.h, def.h);
       editor.createShape({
         id: ('shape:' + directive.id) as never,
         type: KIND_TO_SHAPE[directive.kind] as never,
         x: slot.x,
         y: slot.y,
         meta: { role: directive.role } as never,
-        props: { ...directive.payload, w: slot.w, h: slot.h } as never,
+        props: { ...directive.payload, w, h } as never,
       } as never);
       return;
     }

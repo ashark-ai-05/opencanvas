@@ -11,6 +11,9 @@ const SHAPE_TO_KIND: Record<string, WidgetKind> = {
   'strata:ticket': 'ticket',
   'strata:web-embed': 'web-embed',
   'strata:key-value-card': 'key-value-card',
+  'strata:table': 'table',
+  'strata:timeline': 'timeline',
+  'strata:file-tree': 'file-tree',
 };
 
 export type CanvasSnapshotShape = {

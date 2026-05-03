@@ -37,6 +37,33 @@ function toolPartName(p: ToolPart): string {
   return last && last.length > 0 ? last : raw;
 }
 
+/**
+ * Compact human-readable preview of a tool's input for the indicator.
+ * Picks well-known keys per tool, truncates to 50 chars. Returns null when
+ * the input is unstructured or empty.
+ */
+function describeToolInput(input: unknown): string | null {
+  if (!input || typeof input !== 'object') return null;
+  const obj = input as Record<string, unknown>;
+  // Common search/lookup keys, in priority order
+  const keys = ['query', 'q', 'path', 'id', 'url', 'pattern', 'name'];
+  for (const k of keys) {
+    const v = obj[k];
+    if (typeof v === 'string' && v.length > 0) {
+      return truncate(`${k}: ${v}`, 64);
+    }
+  }
+  // Fallback for place_widget — show kind+role
+  if (typeof obj['kind'] === 'string' && typeof obj['role'] === 'string') {
+    return `${obj['kind']} (${obj['role']})`;
+  }
+  return null;
+}
+
+function truncate(s: string, max: number): string {
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+}
+
 function parseToolOutput(
   output: unknown,
 ): { directive: ToolDirective } | null {
@@ -185,13 +212,21 @@ export function Chat() {
                   if (isToolPart(p)) {
                     const tp = p as ToolPart;
                     if (tp.state === 'input-available' || tp.state === 'input-streaming') {
+                      const preview = describeToolInput(tp.input);
                       return (
                         <span
                           key={i}
                           className="block text-[12px] text-zinc-400 mt-2"
                         >
                           <span className="strata-tool-spinner" />
+                          <span>calling </span>
                           <span className="font-mono text-violet-300/80">{toolPartName(tp)}</span>
+                          {preview && (
+                            <span className="text-zinc-500">
+                              {' '}
+                              <span className="font-mono text-zinc-400">{preview}</span>
+                            </span>
+                          )}
                           <span className="text-zinc-500">…</span>
                         </span>
                       );
@@ -199,7 +234,9 @@ export function Chat() {
                     if (tp.state === 'output-error') {
                       return (
                         <span key={i} className="block text-[12px] text-red-400 mt-2">
-                          <span className="font-mono">{toolPartName(tp)}</span>: {tp.errorText ?? 'error'}
+                          <span>tool error (</span>
+                          <span className="font-mono">{toolPartName(tp)}</span>
+                          <span>): {tp.errorText ?? 'error'}</span>
                         </span>
                       );
                     }

@@ -273,9 +273,12 @@ describe('Chat tool indicators', () => {
         ],
       },
     ];
-    const { getByText } = render(<Chat />);
-    // toolPartName strips 'tool-' and the 'mcp__<server>__' prefix → 'search_kb'
-    expect(getByText(/calling search_kb/i)).toBeDefined();
+    const { container } = render(<Chat />);
+    // toolPartName strips 'tool-' and 'mcp__<server>__' → 'search_kb'.
+    // The label and tool name render in separate spans so we check
+    // container.textContent which concatenates child text.
+    expect(container.textContent).toMatch(/calling/i);
+    expect(container.textContent).toMatch(/search_kb/);
   });
 
   it('renders "tool error" for tool parts in output-error state', () => {
@@ -294,8 +297,10 @@ describe('Chat tool indicators', () => {
         ],
       },
     ];
-    const { getByText } = render(<Chat />);
-    expect(getByText(/tool error \(place_widget\): Invalid payload for kind=markdown/)).toBeDefined();
+    const { container } = render(<Chat />);
+    expect(container.textContent).toMatch(/tool error/i);
+    expect(container.textContent).toMatch(/place_widget/);
+    expect(container.textContent).toMatch(/Invalid payload for kind=markdown/);
   });
 
   it('renders nothing visible for output-available (directive applied silently)', () => {
@@ -338,10 +343,11 @@ describe('Chat tool indicators', () => {
         ],
       },
     ];
-    const { getByText } = render(<Chat />);
-    expect(getByText(/Looking that up\./)).toBeDefined();
-    expect(getByText(/calling fetch_result/i)).toBeDefined();
-    expect(getByText(/Here it is\./)).toBeDefined();
+    const { container } = render(<Chat />);
+    expect(container.textContent).toMatch(/Looking that up\./);
+    expect(container.textContent).toMatch(/calling/i);
+    expect(container.textContent).toMatch(/fetch_result/);
+    expect(container.textContent).toMatch(/Here it is\./);
   });
 
   it('renders dynamic-tool input-available with toolName field', () => {
@@ -360,7 +366,8 @@ describe('Chat tool indicators', () => {
         ],
       },
     ];
-    const { getByText } = render(<Chat />);
-    expect(getByText(/calling whatever_dynamic/i)).toBeDefined();
+    const { container } = render(<Chat />);
+    expect(container.textContent).toMatch(/calling/i);
+    expect(container.textContent).toMatch(/whatever_dynamic/);
   });
 });

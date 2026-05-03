@@ -7,6 +7,9 @@ import { CodeBlockShapeUtil } from './shapes/code-block';
 import { TicketCardShapeUtil } from './shapes/ticket-card';
 import { WebEmbedShapeUtil } from './shapes/web-embed';
 import { KeyValueCardShapeUtil } from './shapes/key-value-card';
+import { TableShapeUtil } from './shapes/table';
+import { TimelineShapeUtil } from './shapes/timeline';
+import { FileTreeShapeUtil } from './shapes/file-tree';
 import {
   loadCanvasSnapshot,
   saveCanvasSnapshot,
@@ -15,9 +18,11 @@ import { computeCanvasSnapshot } from './snapshot';
 import { setLatestSnapshot } from '../state/snapshot-ref';
 import { setEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
+import { useCanvasStats } from '../state/canvas-stats-store';
 import { DebugToolbar } from '../components/DebugToolbar';
 import { SearchBar } from '../components/SearchBar';
 import { TemplatePicker } from '../components/TemplatePicker';
+import { EmptyCanvasHint } from '../components/EmptyCanvasHint';
 
 const customShapeUtils = [
   // Plan 4b — proof-of-wire (kept for backwards compat with saved canvases)
@@ -28,6 +33,10 @@ const customShapeUtils = [
   TicketCardShapeUtil,
   WebEmbedShapeUtil,
   KeyValueCardShapeUtil,
+  // Phase 4 — extended kinds
+  TableShapeUtil,
+  TimelineShapeUtil,
+  FileTreeShapeUtil,
 ];
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -63,7 +72,9 @@ export function Canvas() {
       // No source filter — fire on agent-initiated changes (place_widget) too.
       const publishSnapshot = () => {
         const tplId = useTemplateStore.getState().activeTemplateId;
-        setLatestSnapshot(computeCanvasSnapshot(editor, tplId));
+        const snap = computeCanvasSnapshot(editor, tplId);
+        setLatestSnapshot(snap);
+        useCanvasStats.getState().setWidgetCount(snap.widgets.length);
       };
 
       // Initial publish so the very first chat turn sees current canvas state.
@@ -86,6 +97,7 @@ export function Canvas() {
         <DebugToolbar />
         <SearchBar />
         <TemplatePicker />
+        <EmptyCanvasHint />
       </Tldraw>
     </div>
   );

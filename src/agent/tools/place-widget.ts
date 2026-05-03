@@ -31,7 +31,10 @@ Payload schema per kind (use these field names exactly):
   - code-block:      { title: string, language: string, code: string, source?: string }
   - ticket:          { ticketId: string, title: string, status: string, assignee?: string, priority?: string }
   - web-embed:       { title: string, url: string, snippet?: string }
-  - key-value-card:  { title: string, fields: [{ key: string, value: string }] }`,
+  - key-value-card:  { title: string, fields: [{ key: string, value: string }] }
+  - table:           { title: string, columns: [{ key, label?, align?: left|right|center, mono?: bool }], rows: string[][] }
+  - timeline:        { title: string, events: [{ timestamp: string, label: string, body?: string, kind?: commit|deploy|incident|note|release }] }
+  - file-tree:       { title: string, root: { name: string, type: file|directory, children?: [...], meta?: string } }`,
     inputShape,
     async (args) => {
       try {

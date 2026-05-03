@@ -2,8 +2,10 @@ import { Toaster } from 'sonner';
 import { Canvas } from './canvas/Canvas';
 import { Chat } from './components/Chat';
 import { HealthBadge } from './components/HealthBadge';
+import { useCanvasStats } from './state/canvas-stats-store';
 
 export function App() {
+  const widgetCount = useCanvasStats((s) => s.widgetCount);
   return (
     <div className="flex h-full flex-col relative bg-[var(--color-bg)]">
       <header className="flex items-center justify-between px-5 h-12 shrink-0 strata-glass relative z-10 border-b border-white/5">
@@ -20,6 +22,15 @@ export function App() {
           <h1 className="text-[15px] font-semibold tracking-tight text-zinc-100">
             Strata
           </h1>
+          {widgetCount > 0 && (
+            <span
+              className="ml-1 px-2 py-0.5 rounded-md text-[10.5px] font-medium tracking-wide text-zinc-400 border border-white/5"
+              style={{ background: 'rgba(255,255,255,0.03)' }}
+              title={`${widgetCount} widget${widgetCount === 1 ? '' : 's'} on canvas`}
+            >
+              {widgetCount} {widgetCount === 1 ? 'widget' : 'widgets'}
+            </span>
+          )}
         </div>
         <HealthBadge />
       </header>

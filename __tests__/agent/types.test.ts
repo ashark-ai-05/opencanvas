@@ -7,13 +7,16 @@ import {
 } from '../../src/agent/types.js';
 
 describe('agent/types', () => {
-  it('WIDGET_KINDS contains the 5 kinds registered in Plan 4c', () => {
+  it('WIDGET_KINDS contains the 8 registered kinds (5 from Plan 4c + 3 from Phase 4)', () => {
     expect([...WIDGET_KINDS]).toEqual([
       'markdown',
       'code-block',
       'ticket',
       'web-embed',
       'key-value-card',
+      'table',
+      'timeline',
+      'file-tree',
     ]);
   });
 
