@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, CopyAction } from './shared';
 
 export type TicketCardShape = TLBaseShape<
@@ -124,6 +125,10 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
 
   override indicator(shape: TicketCardShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: TicketCardShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {

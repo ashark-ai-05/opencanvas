@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import { CardActions, CardFrame, CardHeader, CardTitle, CopyAction, Tag } from './shared';
 
 export type CodeBlockShape = TLBaseShape<
@@ -85,6 +86,10 @@ export class CodeBlockShapeUtil extends ShapeUtil<CodeBlockShape> {
 
   override indicator(shape: CodeBlockShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: CodeBlockShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {

@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -78,6 +79,10 @@ export class MarkdownShapeUtil extends ShapeUtil<MarkdownShape> {
 
   override indicator(shape: MarkdownShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: MarkdownShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {

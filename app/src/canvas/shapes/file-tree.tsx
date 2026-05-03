@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import { useState } from 'react';
 import { CardActions, CardFrame, CardHeader, CardTitle, Tag } from './shared';
 
@@ -83,6 +84,10 @@ export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
 
   override indicator(shape: FileTreeShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: FileTreeShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {

@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
 
 type EventKind = 'commit' | 'deploy' | 'incident' | 'note' | 'release';
@@ -152,6 +153,10 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
 
   override indicator(shape: TimelineShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: TimelineShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {

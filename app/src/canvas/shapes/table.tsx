@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import { CardActions, CardFrame, CardHeader, CardTitle, CopyAction, Tag } from './shared';
 
 type Column = {
@@ -137,6 +138,10 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
 
   override indicator(shape: TableShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: TableShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {

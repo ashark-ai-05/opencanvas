@@ -6,6 +6,7 @@ import {
   type RecordProps,
   type TLBaseShape,
 } from 'tldraw';
+import { resizeBox } from 'tldraw';
 import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
 
 type KeyValuePair = { key: string; value: string };
@@ -77,6 +78,10 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
 
   override indicator(shape: KeyValueCardShape) {
     return <rect width={shape.props.w} height={shape.props.h} rx={12} />;
+  }
+
+  override onResize(shape: KeyValueCardShape, info: Parameters<typeof resizeBox>[1]) {
+    return resizeBox(shape, info);
   }
 
   override canResize() {
