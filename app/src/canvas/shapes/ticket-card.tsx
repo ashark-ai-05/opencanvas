@@ -86,7 +86,7 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
               </span>
             )}
             <CardActions
-              shapeId={shape.id}
+              shape={shape}
               extras={
                 <CopyAction text={shape.props.ticketId} label="ticket id" />
               }

@@ -1,8 +1,15 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { Copy, ExternalLink, X } from 'lucide-react';
+import { ChevronDown, Copy, ExternalLink, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getEditor } from '../../state/editor-ref';
+
+/**
+ * Header height when a card is collapsed. Should match the rendered
+ * `.strata-card-header` height in globals.css (padding 11+9 + ~22 line + 1
+ * border-bottom = ~43px). Rounded up for safety so nothing visually clips.
+ */
+const COLLAPSED_HEIGHT = 44;
 
 /**
  * Visual primitives for tldraw shapes. The actual styling lives in
@@ -34,6 +41,13 @@ function readRole(meta: unknown): Role {
   return 'primary';
 }
 
+function readCollapsed(meta: unknown): boolean {
+  if (typeof meta === 'object' && meta !== null && 'collapsed' in meta) {
+    return (meta as { collapsed?: unknown }).collapsed === true;
+  }
+  return false;
+}
+
 /**
  * Outer card frame. Pass the shape so we can read role from meta and keep
  * the call sites of each ShapeUtil tidy.
@@ -46,6 +60,7 @@ export function CardFrame({
   children: ReactNode;
 }) {
   const role = readRole(shape.meta);
+  const collapsed = readCollapsed(shape.meta);
 
   // "Freshly placed" pulse — runs once on mount, then we drop the attribute
   // so a re-render (e.g. resize) doesn't re-trigger the animation.
@@ -57,7 +72,13 @@ export function CardFrame({
 
   const style: CSSProperties = { width: shape.props.w, height: shape.props.h };
   return (
-    <div className="strata-card" data-role={role} data-fresh={fresh ? 'true' : 'false'} style={style}>
+    <div
+      className="strata-card"
+      data-role={role}
+      data-fresh={fresh ? 'true' : 'false'}
+      data-collapsed={collapsed ? 'true' : 'false'}
+      style={style}
+    >
       {children}
     </div>
   );
@@ -134,29 +155,29 @@ export function CardActionButton({
 }
 
 /**
- * Hover-only action bar. Renders any per-kind `extras` first, then a
- * default delete button that removes the shape from the editor.
- *
- * Each shape's component should add this to its CardHeader so users can
- * copy the body, open a URL, or remove the widget without diving into
- * tldraw's selection menu.
+ * Hover-only action bar. Renders any per-kind `extras`, then default
+ * collapse-toggle + delete buttons. Take the whole shape so we can
+ * derive id + collapsed state from one place.
  */
 export function CardActions({
-  shapeId,
+  shape,
   extras,
 }: {
-  shapeId: string;
+  shape: { id: string; meta?: unknown };
   extras?: ReactNode;
 }) {
+  const collapsed = readCollapsed(shape.meta);
+
   const handleDelete = () => {
     const editor = getEditor();
     if (!editor) return;
-    editor.deleteShapes([shapeId as never]);
+    editor.deleteShapes([shape.id as never]);
   };
 
   return (
     <span className="strata-card-actions">
       {extras}
+      <ToggleCollapsedAction shapeId={shape.id} collapsed={collapsed} />
       <CardActionButton onClick={handleDelete} title="Remove this widget">
         <X className="size-3" />
       </CardActionButton>
@@ -191,6 +212,65 @@ export function OpenUrlAction({ url }: { url: string }) {
       }}
     >
       <ExternalLink className="size-3" />
+    </CardActionButton>
+  );
+}
+
+/**
+ * Collapse / expand toggle. Stores the pre-collapse height in
+ * `meta.expandedHeight` so we can restore it cleanly. Updates `props.h`
+ * so tldraw's geometry (selection bounds, hit-testing, snap-to) matches
+ * the visible card.
+ */
+export function ToggleCollapsedAction({
+  shapeId,
+  collapsed,
+}: {
+  shapeId: string;
+  collapsed: boolean;
+}) {
+  return (
+    <CardActionButton
+      title={collapsed ? 'Expand' : 'Collapse'}
+      onClick={() => {
+        const editor = getEditor();
+        if (!editor) return;
+        const shape = editor.getShape(shapeId as never) as
+          | { type: string; props: { h: number }; meta?: { expandedHeight?: number } }
+          | undefined;
+        if (!shape) return;
+        const meta = (shape.meta ?? {}) as {
+          expandedHeight?: number;
+          collapsed?: boolean;
+        };
+        if (collapsed) {
+          editor.updateShape({
+            id: shapeId as never,
+            type: shape.type as never,
+            props: { h: meta.expandedHeight ?? 200 } as never,
+            meta: { ...meta, collapsed: false },
+          } as never);
+        } else {
+          editor.updateShape({
+            id: shapeId as never,
+            type: shape.type as never,
+            props: { h: COLLAPSED_HEIGHT } as never,
+            meta: {
+              ...meta,
+              collapsed: true,
+              expandedHeight: shape.props.h,
+            },
+          } as never);
+        }
+      }}
+    >
+      <ChevronDown
+        className="size-3"
+        style={{
+          transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+          transition: 'transform 160ms ease',
+        }}
+      />
     </CardActionButton>
   );
 }

@@ -74,7 +74,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>{shape.props.events.length} events</Tag>
-            <CardActions shapeId={shape.id} />
+            <CardActions shape={shape} />
           </CardHeader>
           <CardBody>
             <ol style={{ margin: 0, padding: 0, listStyle: 'none', position: 'relative' }}>

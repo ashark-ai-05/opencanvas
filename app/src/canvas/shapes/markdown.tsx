@@ -60,7 +60,7 @@ export class MarkdownShapeUtil extends ShapeUtil<MarkdownShape> {
             <CardTitle>{shape.props.title ?? 'Document'}</CardTitle>
             <Tag>md</Tag>
             <CardActions
-              shapeId={shape.id}
+              shape={shape}
               extras={<CopyAction text={shape.props.body} label="markdown" />}
             />
           </CardHeader>

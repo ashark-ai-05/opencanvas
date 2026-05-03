@@ -207,6 +207,20 @@
   border-color: rgba(167, 139, 250, 0.35);
 }
 
+/* Collapsed card — only the header is visible, height shrinks to ~44px.
+   The toggle handler in shared.tsx also writes `props.h = 44` so tldraw's
+   geometry agrees with what we render (no phantom selection space). */
+.strata-card[data-collapsed="true"] > :not(.strata-card-header) {
+  display: none;
+}
+.strata-card[data-collapsed="true"] .strata-card-header {
+  border-bottom: none;
+}
+.strata-card[data-collapsed="true"]::after {
+  /* The "top sheen" gradient overlay would clip oddly on a tiny card. */
+  display: none;
+}
+
 /* Hover-action bar in card headers — appears on card hover, fades away
    otherwise. Clicks are handled with stopPropagation by CardActionButton
    so tldraw's shape selection doesn't fight the buttons. */

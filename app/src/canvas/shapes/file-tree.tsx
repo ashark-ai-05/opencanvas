@@ -69,7 +69,7 @@ export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>{fileCount} {fileCount === 1 ? 'file' : 'files'}</Tag>
-            <CardActions shapeId={shape.id} />
+            <CardActions shape={shape} />
           </CardHeader>
           <div className="strata-card-body" style={{ paddingLeft: 8, paddingRight: 8 }}>
             <TreeNode node={shape.props.root} depth={0} initiallyOpen />

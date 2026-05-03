@@ -51,7 +51,7 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>data</Tag>
-            <CardActions shapeId={shape.id} />
+            <CardActions shape={shape} />
           </CardHeader>
           <CardBody>
             <dl

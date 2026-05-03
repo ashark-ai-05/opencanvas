@@ -68,7 +68,7 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
             <CardTitle>{shape.props.title}</CardTitle>
             <Tag>{rows.length} {rows.length === 1 ? 'row' : 'rows'}</Tag>
             <CardActions
-              shapeId={shape.id}
+              shape={shape}
               extras={<CopyAction text={tableToCsv(columns, rows)} label="CSV" />}
             />
           </CardHeader>

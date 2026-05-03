@@ -57,7 +57,7 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
             <CardTitle>{shape.props.title ?? host}</CardTitle>
             <Tag>{host}</Tag>
             <CardActions
-              shapeId={shape.id}
+              shape={shape}
               extras={<OpenUrlAction url={shape.props.url} />}
             />
           </CardHeader>
