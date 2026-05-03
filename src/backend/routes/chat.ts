@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
 import { providerEventsToUIMS, UIMS_HEADERS } from '../uims-stream.js';
+import { parseCanvasSnapshot } from '../../agent/canvas-snapshot.js';
 import type { BackendState } from '../state.js';
 
 /**
@@ -36,6 +37,7 @@ export function chatRoute(state: BackendState): Hono {
   r.post('/v1/chat', async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as {
       messages?: UIChatMessage[];
+      canvasSnapshot?: unknown;
     };
 
     if (!Array.isArray(body.messages) || body.messages.length === 0) {
@@ -53,14 +55,32 @@ export function chatRoute(state: BackendState): Hono {
 
     const systemMsg = [...body.messages].reverse().find((m) => m.role === 'system');
     const systemPrompt = systemMsg ? extractText(systemMsg) : undefined;
+    // parseCanvasSnapshot is permissive: undefined / malformed input falls
+    // back to EMPTY_SNAPSHOT so a missing snapshot never 400s a chat turn.
+    const canvasSnapshot = parseCanvasSnapshot(body.canvasSnapshot);
 
     // Apply UIMS headers BEFORE entering streamSSE so DefaultChatTransport
     // recognises the protocol on first byte.
     for (const [k, v] of Object.entries(UIMS_HEADERS)) c.header(k, v);
 
     return stream(c, async (s) => {
+      // Mirror the request's underlying signal into a fresh AbortController
+      // owned by this turn, so the provider sees an AbortSignal it can
+      // forward to the SDK without us exposing the raw request internals.
+      const abortController = new AbortController();
+      c.req.raw.signal.addEventListener(
+        'abort',
+        () => abortController.abort(),
+        { once: true },
+      );
+
       const provider = state.getLLMProvider();
-      const events = provider.query({ prompt, systemPrompt });
+      const events = provider.query({
+        prompt,
+        systemPrompt,
+        canvasSnapshot,
+        abortSignal: abortController.signal,
+      });
       for await (const sseLine of providerEventsToUIMS(events)) {
         await s.write(sseLine);
       }

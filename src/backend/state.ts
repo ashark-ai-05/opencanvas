@@ -3,9 +3,11 @@ import { createProvider } from '../providers/index.js';
 import { createEmbedder } from '../embedders/index.js';
 import { SourceRegistry } from '../mcp/registry.js';
 import { openDefaultStore, type Store } from '../storage/store.js';
+import { SearchService } from '../search/service.js';
 import type { Profile } from '../config/schema.js';
 import type { LLMProvider } from '../core/provider.js';
 import type { EmbeddingProvider } from '../core/embedding-provider.js';
+import type { AgentToolDeps } from '../agent/tools/index.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -22,6 +24,7 @@ export class BackendState {
 
   private llmProvider: LLMProvider | null = null;
   private embedder: EmbeddingProvider | null = null;
+  private searchAdapter: AgentToolDeps['search'] | null = null;
   private sourceRegistry = new SourceRegistry();
   private sourcesConnectedPromise: Promise<void> | null = null;
   private storePromise: Promise<Store> | null = null;
@@ -38,7 +41,9 @@ export class BackendState {
 
   getLLMProvider(): LLMProvider {
     if (!this.llmProvider) {
-      this.llmProvider = createProvider(this.profile);
+      this.llmProvider = createProvider(this.profile, {
+        search: this.getSearchService(),
+      });
     }
     return this.llmProvider;
   }
@@ -48,6 +53,30 @@ export class BackendState {
       this.embedder = createEmbedder(this.profile);
     }
     return this.embedder;
+  }
+
+  /**
+   * Returns a stable lazy proxy that satisfies `AgentToolDeps['search']`.
+   * The proxy itself is cached; internally each call awaits `getStore()`
+   * (which is itself promise-cached) and constructs a fresh SearchService —
+   * SearchService is a thin wrapper over store + embedder so this is cheap.
+   */
+  getSearchService(): AgentToolDeps['search'] {
+    if (!this.searchAdapter) {
+      this.searchAdapter = {
+        search: async (query, limit) => {
+          const store = await this.getStore();
+          const svc = new SearchService({ store, embedder: this.getEmbedder() });
+          return svc.search(query, limit);
+        },
+        fetchById: async (id) => {
+          const store = await this.getStore();
+          const svc = new SearchService({ store, embedder: this.getEmbedder() });
+          return svc.fetchById(id);
+        },
+      };
+    }
+    return this.searchAdapter;
   }
 
   getSourceRegistry(): SourceRegistry {

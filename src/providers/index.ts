@@ -3,6 +3,7 @@
  */
 import type { LLMProvider } from '../core/provider.js';
 import type { Profile } from '../config/schema.js';
+import type { AgentToolDeps } from '../agent/tools/index.js';
 
 import { ClaudeAgentSdkAdapter } from './claude-agent-sdk.js';
 import { AnthropicDirectAdapter } from './anthropic-direct.js';
@@ -11,12 +12,24 @@ import { OpenRouterAdapter } from './openrouter.js';
 import { OllamaAdapter } from './ollama.js';
 import { AmpAdapter } from './amp.js';
 
-export function createProvider(profile: Profile): LLMProvider {
+/**
+ * Optional dependencies passed through to provider adapters.
+ * Only `claude-agent-sdk` consumes `search` today; other adapters ignore
+ * `deps` entirely.
+ */
+export type ProviderDeps = {
+  search?: AgentToolDeps['search'];
+};
+
+export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMProvider {
   const { llm } = profile;
 
   switch (llm.provider) {
     case 'claude-agent-sdk':
-      return new ClaudeAgentSdkAdapter({ model: llm.model });
+      return new ClaudeAgentSdkAdapter(
+        { model: llm.model },
+        { search: deps.search },
+      );
 
     case 'anthropic-direct':
       return new AnthropicDirectAdapter({ model: llm.model });
