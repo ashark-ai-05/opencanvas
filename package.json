@@ -17,7 +17,7 @@
     "app:build": "vite build --config app/vite.config.ts",
     "app:preview": "vite preview --config app/vite.config.ts",
     "electron": "electron .",
-    "electron:dev": "concurrently --names 'dev,electron' --kill-others --kill-others-on-fail 'pnpm dev' 'electron .'",
+    "electron:dev": "concurrently --names 'dev,electron' --kill-others --kill-others-on-fail 'pnpm dev' 'electron --no-sandbox .'",
     "electron:rebuild": "electron-builder install-app-deps",
     "dist": "pnpm app:build && electron-builder",
     "dist:mac": "pnpm app:build && electron-builder --mac",

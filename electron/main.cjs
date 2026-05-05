@@ -75,10 +75,14 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      // Sandbox is preferred for prod (signed installer ships its own
+      // setuid chrome-sandbox helper). In dev the SUID helper is rarely
+      // configured, so we drop sandbox to avoid the SETUID_SANDBOX error
+      // that would otherwise abort startup. See electron/electron#17972.
+      sandbox: !isDev,
     },
   });
-  mainWindow.setWindowOpenHandler(({ url }) => {
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
@@ -95,9 +99,12 @@ async function createWindow() {
         `[strata] dev: vite server not reachable on :${APP_PORT}.`,
         err && err.message ? err.message : err,
       );
-      mainWindow.loadURL(
-        `data:text/html,<pre style="color:#fff;background:#0a0a0a;padding:24px;font:14px monospace">Vite dev server not running on :${APP_PORT}. Run \\`pnpm dev\\` first, or use \\`pnpm electron:dev\\`.</pre>`,
-      );
+      const fallbackHtml =
+        '<pre style="color:#fff;background:#0a0a0a;padding:24px;font:14px monospace">' +
+        'Vite dev server not running on :' + APP_PORT + '. ' +
+        'Run `pnpm dev` first, or use `pnpm electron:dev`.' +
+        '</pre>';
+      mainWindow.loadURL('data:text/html,' + encodeURIComponent(fallbackHtml));
     }
   } else {
     spawnBackend();
