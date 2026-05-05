@@ -12,12 +12,20 @@
   --color-muted:    #71717a;
   --color-muted-2:  #52525b;
 
-  /* Single primary accent (violet) + a fuchsia for gradient moments only. */
-  --color-accent:   #a78bfa;     /* violet-400, lifted for AAA on dark */
-  --color-accent-2: #f0abfc;     /* fuchsia-300 */
-  --color-ok:       #34d399;
-  --color-warn:     #fbbf24;
-  --color-fail:     #f87171;
+  /* Primary accent (violet → fuchsia) plus a cyan for the brand gradient. */
+  --color-accent:    #a78bfa;     /* violet-400, lifted for AAA on dark */
+  --color-accent-2:  #f0abfc;     /* fuchsia-300 */
+  --color-accent-3:  #67e8f9;     /* cyan-300 — third gradient stop */
+  --color-ok:        #34d399;
+  --color-warn:      #fbbf24;
+  --color-fail:      #f87171;
+
+  /* Pre-baked gradient strings so we can reuse them on text fills,
+     border masks, and box-shadow glows without re-typing the stops. */
+  --grad-brand:      linear-gradient(135deg, #a78bfa 0%, #f0abfc 45%, #67e8f9 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(167,139,250,0.18) 0%, rgba(240,171,252,0.18) 50%, rgba(103,232,249,0.18) 100%);
+  --glow-violet:     0 0 0 1px rgba(167,139,250,0.40), 0 8px 28px -8px rgba(167,139,250,0.45);
+  --glow-fuchsia:    0 0 0 1px rgba(240,171,252,0.40), 0 8px 28px -8px rgba(240,171,252,0.45);
 
   /* Role accents — the left-edge color on placed widgets. */
   --role-primary:   #a78bfa;
@@ -1037,4 +1045,320 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 50%;
+}
+
+/* ----------------------------------------------------------------------
+ * Visual polish — gradients, glows, hover lifts. CSS-only; everything
+ * animates transform/opacity/filter so it stays GPU-bound.
+ * ---------------------------------------------------------------------- */
+
+/* Brand wordmark gets the tri-stop gradient. */
+header h1 {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.012em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Brand mark — animated soft halo. */
+header [aria-hidden].size-5.rounded-md {
+  background: var(--grad-brand) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10) inset,
+    0 6px 22px -6px rgba(167, 139, 250, 0.7);
+  animation: strata-mark-breathe 4.8s ease-in-out infinite;
+}
+@keyframes strata-mark-breathe {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50%      { filter: brightness(1.18) saturate(1.25); }
+}
+
+/* Header buttons — gradient hover that slides in (pure pseudo-element,
+   no extra elements in the DOM). */
+.strata-header-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+.strata-header-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--grad-brand-soft);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 160ms ease;
+}
+.strata-header-btn:hover {
+  color: #fafafa;
+  border-color: rgba(167, 139, 250, 0.45);
+  transform: translateY(-1px);
+}
+.strata-header-btn:hover::before {
+  opacity: 1;
+}
+.strata-header-btn[data-pressed='true'] {
+  background: var(--grad-brand-soft);
+  border-color: rgba(167, 139, 250, 0.55);
+  color: #fafafa;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.25);
+}
+
+/* Floating chat — gradient hairline border via background-clip + padding-box. */
+.strata-chat-floating {
+  background:
+    linear-gradient(rgba(10, 10, 13, 0.92), rgba(10, 10, 13, 0.92)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  transition:
+    width 200ms ease,
+    height 200ms ease,
+    box-shadow 240ms ease,
+    transform 200ms ease;
+}
+.strata-chat-floating[data-streaming='true'] {
+  box-shadow:
+    0 24px 70px -22px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(167, 139, 250, 0.22) inset,
+    0 0 42px -6px rgba(240, 171, 252, 0.32);
+  animation: strata-chat-glow 2.4s ease-in-out infinite;
+}
+@keyframes strata-chat-glow {
+  0%, 100% { filter: saturate(1) brightness(1); }
+  50%      { filter: saturate(1.12) brightness(1.06); }
+}
+
+/* Chat title bar — animated gradient sweep while streaming. */
+.strata-chat-titlebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+  position: relative;
+}
+.strata-chat-floating[data-streaming='true'] .strata-chat-titlebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.18) 30%,
+    rgba(240, 171, 252, 0.18) 50%,
+    rgba(103, 232, 249, 0.18) 70%,
+    transparent 100%
+  );
+  background-size: 240% 100%;
+  animation: strata-titlebar-sweep 2.4s linear infinite;
+  pointer-events: none;
+}
+@keyframes strata-titlebar-sweep {
+  from { background-position: 240% 0; }
+  to   { background-position: -140% 0; }
+}
+
+/* Composer input — gradient focus ring instead of flat violet. */
+.strata-chat-body input[type='text'] {
+  transition: border-color 160ms ease, box-shadow 200ms ease, background 160ms ease;
+}
+.strata-chat-body input[type='text']:focus {
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  background: rgba(167, 139, 250, 0.04) !important;
+  box-shadow:
+    0 0 0 3px rgba(167, 139, 250, 0.16),
+    0 0 24px -6px rgba(240, 171, 252, 0.35) !important;
+}
+
+/* Send button — vibrant gradient pill with hover lift. The Chat.tsx
+   button doesn't have a single class to target, so we hit the form's
+   submit-type button directly. */
+.strata-chat-body form button[type='submit'] {
+  background: var(--grad-brand) !important;
+  border-color: transparent !important;
+  color: #0a0a0d !important;
+  font-weight: 600;
+  transition: transform 140ms ease, box-shadow 200ms ease, filter 160ms ease;
+  box-shadow: 0 6px 18px -6px rgba(167, 139, 250, 0.55);
+}
+.strata-chat-body form button[type='submit']:not(:disabled):hover {
+  transform: translateY(-1px) scale(1.02);
+  filter: saturate(1.18) brightness(1.06);
+  box-shadow: 0 12px 28px -6px rgba(240, 171, 252, 0.55);
+}
+.strata-chat-body form button[type='submit']:disabled {
+  filter: grayscale(0.4) brightness(0.7);
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Cards — soft role-tinted glow when hovered, transform-only animation. */
+.strata-card {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 200ms ease;
+  will-change: transform;
+}
+.strata-card:hover {
+  transform: translateY(-1px);
+}
+.strata-card[data-role='primary']:hover   { box-shadow: 0 14px 34px -10px rgba(167, 139, 250, 0.42); }
+.strata-card[data-role='detail']:hover    { box-shadow: 0 14px 34px -10px rgba(96, 165, 250, 0.42); }
+.strata-card[data-role='related']:hover   { box-shadow: 0 14px 34px -10px rgba(45, 212, 191, 0.42); }
+.strata-card[data-role='reference']:hover { box-shadow: 0 14px 34px -10px rgba(251, 191, 36, 0.42); }
+.strata-card[data-role='timeline']:hover  { box-shadow: 0 14px 34px -10px rgba(251, 113, 133, 0.42); }
+.strata-card[data-role='node']:hover      { box-shadow: 0 14px 34px -10px rgba(52, 211, 153, 0.42); }
+
+/* "Freshly placed" pulse — slightly bigger entry + role-glow. */
+.strata-card[data-fresh='true'] {
+  animation: strata-card-pop 600ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+@keyframes strata-card-pop {
+  0%   { transform: scale(0.96); opacity: 0; }
+  60%  { transform: scale(1.015); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* KB hits panel — gradient backdrop instead of flat violet wash. */
+.strata-kb-hits {
+  background:
+    linear-gradient(135deg, rgba(167, 139, 250, 0.06) 0%, rgba(240, 171, 252, 0.05) 50%, rgba(103, 232, 249, 0.06) 100%);
+  border-color: transparent;
+  position: relative;
+}
+.strata-kb-hits::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-brand);
+  -webkit-mask:
+    linear-gradient(#000, #000) content-box,
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.4;
+  pointer-events: none;
+}
+.strata-kb-hits-row {
+  transition: transform 140ms ease, border-color 140ms ease, background 160ms ease;
+}
+.strata-kb-hits-row:hover {
+  transform: translateX(2px);
+  border-color: rgba(167, 139, 250, 0.45);
+  background:
+    linear-gradient(90deg, rgba(167, 139, 250, 0.10) 0%, rgba(240, 171, 252, 0.06) 100%);
+}
+
+/* Canvas-map pill — gradient hover. */
+.strata-canvas-map {
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.strata-canvas-map:hover {
+  background: var(--grad-brand-soft);
+  border-color: rgba(167, 139, 250, 0.5);
+  color: #fafafa;
+  transform: translateY(-1px);
+}
+
+/* Launcher bubble — animated gradient + breathing. */
+.strata-chat-launcher {
+  background:
+    linear-gradient(rgba(10, 10, 13, 0.86), rgba(10, 10, 13, 0.86)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  animation: strata-mark-breathe 5.6s ease-in-out infinite;
+}
+.strata-chat-launcher::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  background: var(--grad-brand);
+  filter: blur(18px);
+  opacity: 0.25;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* HealthBadge / KbBadge — soft glow on hover (uses parent button styles). */
+header button:hover {
+  filter: brightness(1.08);
+}
+
+/* Composer status pill — gradient backdrop. */
+.strata-composer-status {
+  background: var(--grad-brand-soft);
+  border-color: rgba(167, 139, 250, 0.35);
+  color: #ede9fe;
+  box-shadow: 0 0 18px -6px rgba(167, 139, 250, 0.4);
+}
+
+/* Subtle dotted-grid responds to pointer — lifts opacity near the cursor.
+   Uses background-position only (no JS), GPU-accelerated. */
+.strata-canvas-grid {
+  transition: opacity 240ms ease;
+  opacity: 0.7;
+}
+.strata-canvas-grid:hover {
+  opacity: 1;
+}
+
+/* Sticky-note hover — cute lift + slight rotation for personality. */
+.strata-sticky {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease;
+}
+.strata-sticky:hover {
+  transform: translateY(-2px) rotate(-0.4deg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 14px 30px -8px rgba(0, 0, 0, 0.45);
+}
+
+/* Tag pills get a faint gradient when accent. */
+.strata-tag--accent {
+  background: var(--grad-brand-soft) !important;
+  border-color: rgba(167, 139, 250, 0.45) !important;
+  color: #ede9fe !important;
+}
+
+/* Drawer panels — gradient hairline. */
+.strata-glass {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Toast fixes — gradient border. */
+[data-sonner-toaster] [data-sonner-toast] {
+  background:
+    linear-gradient(rgba(10, 10, 13, 0.88), rgba(10, 10, 13, 0.88)) padding-box,
+    var(--grad-brand-soft) border-box !important;
+}
+
+/* Streaming pulse bar — already exists, replace the gradient with the brand. */
+.strata-header-pulse {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-accent) 35%,
+    var(--color-accent-2) 50%,
+    var(--color-accent-3) 65%,
+    transparent 100%
+  ) !important;
+}
+
+/* Reduce motion: respect the OS pref so users on motion-sensitivity
+   don't get the breathing/sweeping animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
