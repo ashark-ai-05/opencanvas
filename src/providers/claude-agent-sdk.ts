@@ -14,6 +14,7 @@
  *   - 'result'         → done event with usage
  *   - 'assistant' with error field → error event
  */
+import { spawnSync } from 'node:child_process';
 import type { LLMProvider, ProviderEvent, QueryRequest, ProbeResult } from '../core/provider.js';
 import type { AgentToolDeps } from '../agent/tools/index.js';
 
@@ -186,6 +187,58 @@ Every payload supports an optional \`source\` field — set it on every widget. 
 Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_result\`, \`web_search\`, or an MCP tool returned.`;
 
 /**
+ * Locate a usable `claude` binary.
+ *
+ * The SDK's bundled `@anthropic-ai/claude-agent-sdk-linux-x64-musl`
+ * package ships a musl-built binary that fails on glibc Linux with a
+ * misleading "Claude Code native binary not found" error. We prefer:
+ *   1. STRATA_CLAUDE_PATH env override
+ *   2. The user's installed Claude Code on PATH (the common case —
+ *      anyone who already runs Claude Code interactively has one)
+ * and fall back to letting the SDK pick its own bundled binary.
+ *
+ * Cached at module scope so the lookup runs once per process.
+ */
+let cachedClaudeBinaryPath: string | null | undefined;
+function resolveClaudeBinary(): string | undefined {
+  if (cachedClaudeBinaryPath !== undefined) return cachedClaudeBinaryPath ?? undefined;
+
+  const env = process.env['STRATA_CLAUDE_PATH'];
+  if (env && env.length > 0) {
+    cachedClaudeBinaryPath = env;
+    return env;
+  }
+
+  // Try `which claude` (where.exe on Windows). Non-fatal if missing.
+  try {
+    const result = spawnSync(
+      process.platform === 'win32' ? 'where.exe' : 'which',
+      ['claude'],
+      { encoding: 'utf-8' },
+    );
+    if (result.status === 0) {
+      const path = result.stdout.trim().split('\n')[0]?.trim();
+      if (path && path.length > 0) {
+        console.log(`[claude-agent-sdk] resolved claude binary: ${path}`);
+        cachedClaudeBinaryPath = path;
+        return path;
+      }
+    }
+  } catch (err) {
+    console.warn(
+      '[claude-agent-sdk] which claude failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  console.warn(
+    '[claude-agent-sdk] could not resolve a `claude` binary on PATH; falling back to SDK default (may fail on glibc Linux).',
+  );
+  cachedClaudeBinaryPath = null;
+  return undefined;
+}
+
+/**
  * Stub search adapter used when the adapter is constructed without `deps.search`
  * (tests, probes). Returns nothing rather than throwing so the agent loop can
  * still run end-to-end without a wired BackendState.
@@ -339,8 +392,10 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       tools: tools as unknown as Parameters<typeof createSdkMcpServer>[0]['tools'],
     });
 
+    const claudeBinaryPath = resolveClaudeBinary();
     const options: Record<string, unknown> = {
       systemPrompt,
+      ...(claudeBinaryPath ? { pathToClaudeCodeExecutable: claudeBinaryPath } : {}),
       // Don't load .claude/settings.json from the filesystem.
       settingSources: [],
       // NOTE: deliberately NOT setting `cwd: cleanCwd` here — the SDK
@@ -548,8 +603,10 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
         );
     }
 
+    const claudeBinaryPath = resolveClaudeBinary();
     const options: Record<string, unknown> = {
       ...(request.systemPrompt ? { systemPrompt: request.systemPrompt } : {}),
+      ...(claudeBinaryPath ? { pathToClaudeCodeExecutable: claudeBinaryPath } : {}),
       settingSources: [],
       enableFileCheckpointing: false,
       forkSession: false,
