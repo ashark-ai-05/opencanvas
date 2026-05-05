@@ -38,6 +38,12 @@ export type UiState = {
    */
   canvasWheelLocked: boolean;
   setCanvasWheelLocked: (locked: boolean) => void;
+  /**
+   * When true, the canvas minimap collapses to a header-only chip in
+   * the bottom-left corner. Click the chevron to expand again.
+   */
+  canvasMapCollapsed: boolean;
+  setCanvasMapCollapsed: (collapsed: boolean) => void;
 };
 
 const DEFAULT_CHAT_WINDOW: ChatWindowState = {
@@ -60,4 +66,6 @@ export const useUiStore = create<UiState>((set) => ({
   setHandToolActive: (handToolActive) => set({ handToolActive }),
   canvasWheelLocked: false,
   setCanvasWheelLocked: (canvasWheelLocked) => set({ canvasWheelLocked }),
+  canvasMapCollapsed: false,
+  setCanvasMapCollapsed: (canvasMapCollapsed) => set({ canvasMapCollapsed }),
 }));

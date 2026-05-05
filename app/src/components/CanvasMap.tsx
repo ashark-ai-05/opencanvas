@@ -1,5 +1,6 @@
 import { useEditor, useValue } from 'tldraw';
-import { Compass } from 'lucide-react';
+import { ChevronDown, Compass } from 'lucide-react';
+import { useUiStore } from '../state/ui-store';
 
 /**
  * Bottom-left minimap. Renders a live SVG thumbnail of every strata
@@ -28,6 +29,8 @@ const ROLE_COLOUR: Record<string, string> = {
 
 export function CanvasMap() {
   const editor = useEditor();
+  const collapsed = useUiStore((s) => s.canvasMapCollapsed);
+  const setCollapsed = useUiStore((s) => s.setCanvasMapCollapsed);
 
   // Reactive: every page shape that's a strata:* widget. Re-runs when
   // shapes are added/moved/resized.
@@ -115,11 +118,33 @@ export function CanvasMap() {
   const vpH = viewport.h * scale;
 
   return (
-    <div className="strata-canvas-map" role="region" aria-label="Canvas overview">
+    <div
+      className="strata-canvas-map"
+      data-collapsed={collapsed ? 'true' : 'false'}
+      role="region"
+      aria-label="Canvas overview"
+    >
       <div className="strata-canvas-map-header">
         <Compass className="size-3" />
         <span>{widgets.length}</span>
+        <button
+          type="button"
+          className="strata-canvas-map-toggle"
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand minimap' : 'Collapse minimap'}
+          title={collapsed ? 'Expand minimap' : 'Collapse minimap'}
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          <ChevronDown
+            className="size-3"
+            style={{
+              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 200ms ease',
+            }}
+          />
+        </button>
       </div>
+      {!collapsed && (
       <svg
         width={W}
         height={H}
@@ -159,6 +184,7 @@ export function CanvasMap() {
           pointerEvents="none"
         />
       </svg>
+      )}
     </div>
   );
 }

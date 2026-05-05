@@ -13,7 +13,7 @@ import { suggestCommands, tryRunCommand } from './slash-commands';
 import { TeamProgress, TeamHandoff } from './TeamProgress';
 import { search as searchKb, type SearchResult } from '../api/search';
 import { KbHits } from './KbHits';
-import { LiveStatus, deriveStep } from './LiveStatus';
+import { InlineLiveStep, deriveStep } from './LiveStatus';
 import { ShowThinking } from './ShowThinking';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
@@ -461,6 +461,24 @@ export function Chat() {
                   }
                   return null;
                 })}
+                {/* Live step indicator INSIDE the latest streaming
+                    assistant message — gives the user real-time progress
+                    in conversation flow rather than as a separate pill.
+                    Only renders for the most recent assistant message
+                    while the request is still in-flight. */}
+                {m.role === 'assistant' &&
+                  m.id ===
+                    [...messages].reverse().find((x) => x.role === 'assistant')
+                      ?.id && (
+                    <InlineLiveStep
+                      step={deriveStep({
+                        isStreaming,
+                        kbBusy,
+                        messages:
+                          messages as Parameters<typeof deriveStep>[0]['messages'],
+                      })}
+                    />
+                  )}
               </div>
             </motion.div>
           ))}
@@ -468,10 +486,10 @@ export function Chat() {
 
       </div>
 
-      {/* Inline status stack — sits between the messages list and the
-          composer, taking its own flex space so the conversation text
-          is never covered. Originally absolute-positioned, but that
-          caused the panel to overlap messages above; now inline. */}
+      {/* KB hits stay above the composer (hits are persistent + clickable
+          per turn). The live step indicator has been moved INSIDE the
+          streaming assistant message body so progress reads as part of
+          the conversation, not as a floating pill. */}
       <div className="strata-chat-overlay">
         <KbHits
           query={kbQuery}
@@ -491,13 +509,6 @@ export function Chat() {
             setKbHits(null);
             setKbQuery(null);
           }}
-        />
-        <LiveStatus
-          step={deriveStep({
-            isStreaming,
-            kbBusy,
-            messages: messages as Parameters<typeof deriveStep>[0]['messages'],
-          })}
         />
       </div>
 

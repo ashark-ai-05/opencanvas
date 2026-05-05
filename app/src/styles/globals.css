@@ -1578,3 +1578,66 @@ header button:hover {
   max-height: 280px;
   overflow-y: auto;
 }
+
+/* ----------------------------------------------------------------------
+ * Inline live-step — rendered INSIDE the streaming assistant message
+ * body, so the user sees progress in the conversation flow rather than
+ * as a separate floating pill.
+ * ---------------------------------------------------------------------- */
+.strata-inline-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #ddd6fe;
+  background: rgba(167, 139, 250, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  align-self: flex-start;
+  width: fit-content;
+}
+.strata-inline-step-emoji {
+  font-size: 13px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.55));
+  animation: strata-emoji-bob 1.6s ease-in-out infinite;
+}
+.strata-inline-step-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+/* Minimap toggle (collapse/expand). */
+.strata-canvas-map-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.strata-canvas-map-toggle:hover {
+  color: #fafafa;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* Collapsed minimap — header chip only, narrower, no SVG. */
+.strata-canvas-map[data-collapsed='true'] {
+  width: auto;
+  padding: 4px 6px;
+}
+.strata-canvas-map[data-collapsed='true'] .strata-canvas-map-header {
+  padding: 0;
+}
