@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
-import { History, Plus, ServerCog } from 'lucide-react';
+import { History, Plus, ServerCog, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Canvas } from './canvas/Canvas';
 import { FloatingChat, FloatingChatLauncher } from './components/FloatingChat';
+import { getEditor } from './state/editor-ref';
+import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
 import { SourcesPanel } from './components/SourcesPanel';
@@ -119,6 +122,33 @@ export function App() {
           <HeaderCanvasControls />
           <span className="strata-header-divider" aria-hidden />
           <HeaderDrawTools />
+          <button
+            type="button"
+            onClick={async () => {
+              const editor = getEditor();
+              if (!editor) return;
+              const tplId = useTemplateStore.getState().activeTemplateId;
+              const widgetCount = editor
+                .getCurrentPageShapes()
+                .filter((s) => s.type.startsWith('strata:')).length;
+              if (widgetCount === 0) {
+                toast('Canvas is already empty');
+                return;
+              }
+              const { applyToolDirective } = await import(
+                './canvas/dispatcher'
+              );
+              applyToolDirective(editor, { type: 'clear' }, tplId);
+              toast(
+                `Cleared ${widgetCount} widget${widgetCount === 1 ? '' : 's'}`,
+              );
+            }}
+            title="Clear all widgets from the canvas"
+            aria-label="Clear canvas"
+            className="strata-header-btn strata-header-btn--danger"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <KbBadge onClick={() => setSourcesOpen(true)} />

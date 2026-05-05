@@ -1950,3 +1950,24 @@ header button:hover {
   display: inline-flex;
   align-items: center;
 }
+
+/* Hide the tldraw "Made with tldraw" watermark. Removing the watermark
+   in production requires a tldraw license — see https://tldraw.dev for
+   commercial licensing. This rule keeps it out of the dev surface. */
+.tl-watermark_SEE-LICENSE {
+  display: none !important;
+}
+
+/* Danger variant of the header icon button — used by Clear canvas. */
+.strata-header-btn--danger:hover {
+  color: #fecaca !important;
+  border-color: rgba(248, 113, 113, 0.45) !important;
+  background: rgba(248, 113, 113, 0.10) !important;
+}
+.strata-header-btn--danger:hover::before {
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.18) 0%,
+    rgba(244, 114, 182, 0.14) 100%
+  ) !important;
+}
