@@ -1362,3 +1362,118 @@ header button:hover {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ----------------------------------------------------------------------
+ * Live status pill + busy-state input border
+ * Driven by data-busy on the input + the LiveStatus component.
+ * ---------------------------------------------------------------------- */
+
+.strata-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ede9fe;
+  background:
+    linear-gradient(rgba(10, 10, 13, 0.85), rgba(10, 10, 13, 0.85)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  box-shadow: 0 0 24px -8px rgba(167, 139, 250, 0.55);
+  align-self: flex-start;
+  /* Inner highlight + breathing for "active" feel. */
+  position: relative;
+  overflow: hidden;
+}
+.strata-live-status::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.16) 30%,
+    rgba(240, 171, 252, 0.16) 50%,
+    rgba(103, 232, 249, 0.16) 70%,
+    transparent 100%
+  );
+  background-size: 240% 100%;
+  animation: strata-titlebar-sweep 2.4s linear infinite;
+  pointer-events: none;
+}
+.strata-live-status-emoji {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6));
+  animation: strata-emoji-bob 1.6s ease-in-out infinite;
+}
+@keyframes strata-emoji-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+.strata-live-status-label {
+  position: relative;
+}
+.strata-live-status-dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 2px;
+}
+.strata-live-status-dots span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.6;
+  animation: strata-dot-bounce 1.2s ease-in-out infinite;
+}
+.strata-live-status-dots span:nth-child(2) { animation-delay: 0.15s; }
+.strata-live-status-dots span:nth-child(3) { animation-delay: 0.30s; }
+@keyframes strata-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%           { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Composer input — animated gradient border while busy. We keep the
+   resting border subtle and switch to a sweeping gradient hairline once
+   data-busy="true". Pure background-position animation, no layout. */
+.strata-chat-input[data-busy='true'] {
+  background:
+    linear-gradient(var(--color-bg-2), var(--color-bg-2)) padding-box,
+    linear-gradient(
+      90deg,
+      var(--color-accent),
+      var(--color-accent-2),
+      var(--color-accent-3),
+      var(--color-accent-2),
+      var(--color-accent)
+    ) border-box !important;
+  background-size: 200% 100%, 300% 100% !important;
+  border: 1px solid transparent !important;
+  animation: strata-input-busy 2.4s linear infinite;
+  box-shadow:
+    0 0 0 3px rgba(167, 139, 250, 0.10),
+    0 0 28px -6px rgba(240, 171, 252, 0.45) !important;
+}
+@keyframes strata-input-busy {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, -300% 0; }
+}
+
+/* Make the placeholder shimmer while busy too — pure background trick. */
+.strata-chat-input[data-busy='true']::placeholder {
+  background: var(--grad-brand);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: strata-placeholder-shimmer 3s linear infinite;
+}
+@keyframes strata-placeholder-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -100% 0; }
+}

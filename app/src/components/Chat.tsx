@@ -13,6 +13,7 @@ import { suggestCommands, tryRunCommand } from './slash-commands';
 import { TeamProgress, TeamHandoff } from './TeamProgress';
 import { search as searchKb, type SearchResult } from '../api/search';
 import { KbHits } from './KbHits';
+import { LiveStatus, deriveStep } from './LiveStatus';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
@@ -428,19 +429,18 @@ export function Chat() {
           ))}
         </AnimatePresence>
 
-        {/* "Thinking…" indicator that fires the moment the user submits, before
-            any streamed content arrives. Disappears once the first chunk lands. */}
-        {isStreaming && messages[messages.length - 1]?.role === 'user' && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2.5 text-zinc-500 text-[12px]"
-          >
-            <span className="strata-streaming-pulse" />
-            thinking…
-          </motion.div>
-        )}
       </div>
+
+      {/* Live status pill — derives meaningful step text from KB-busy +
+          last assistant message tool parts + streaming state. Replaces
+          the flat "thinking…" indicator. */}
+      <LiveStatus
+        step={deriveStep({
+          isStreaming,
+          kbBusy,
+          messages: messages as Parameters<typeof deriveStep>[0]['messages'],
+        })}
+      />
 
       {/* KB hits — every chat submit fires `/v1/search` in parallel and
           shows the top hits inline. The agent runs its own `search_kb`
@@ -510,9 +510,10 @@ export function Chat() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Strata anything…"
+          placeholder={isStreaming || kbBusy ? '✨ Strata is working…' : '✨ Ask Strata anything…'}
           disabled={isStreaming}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-zinc-100 placeholder-zinc-500 text-[14px] focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/15 transition-all disabled:opacity-50"
+          data-busy={isStreaming || kbBusy ? 'true' : 'false'}
+          className="strata-chat-input flex-1 px-4 py-2.5 rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-zinc-100 placeholder-zinc-500 text-[14px] focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/15 transition-all disabled:opacity-50"
         />
         {isStreaming ? (
           <button
