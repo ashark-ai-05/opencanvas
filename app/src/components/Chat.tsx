@@ -14,6 +14,7 @@ import { TeamProgress, TeamHandoff } from './TeamProgress';
 import { search as searchKb, type SearchResult } from '../api/search';
 import { KbHits } from './KbHits';
 import { LiveStatus, deriveStep } from './LiveStatus';
+import { ShowThinking } from './ShowThinking';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
@@ -335,7 +336,14 @@ export function Chat() {
           phase signals; auto-hides on plain chat turns. */}
       <TeamProgress messages={messages} />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-5"
+        // Bottom padding reserves space under the messages so the absolute
+        // overlay stack (KbHits + LiveStatus + slash suggestions) never
+        // covers content the user is reading.
+        style={{ paddingBottom: 96 }}
+      >
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -357,7 +365,9 @@ export function Chat() {
           {messages.map((m) => (
             <motion.div
               key={m.id}
-              layout="position"
+              // No `layout` prop — animating position on every streamed
+              // chunk causes the conversation to jitter as text appears.
+              // Plain opacity/translate-in on mount is enough.
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
@@ -366,6 +376,31 @@ export function Chat() {
               <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
                 {m.role === 'user' ? 'you' : 'strata'}
               </div>
+              {/* Reasoning ("Show thinking") — collapsible per-message
+                  block. Concatenates every reasoning part the message
+                  carries; AI SDK v6 emits them with type 'reasoning'
+                  and an incremental `text` while state === 'streaming'. */}
+              {m.role === 'assistant' &&
+                (() => {
+                  const reasoningParts = (m.parts as Array<{
+                    type: string;
+                    text?: string;
+                    state?: string;
+                  }>).filter((p) => p.type === 'reasoning');
+                  if (reasoningParts.length === 0) return null;
+                  const text = reasoningParts
+                    .map((p) => p.text ?? '')
+                    .join('\n\n');
+                  const stillStreaming = reasoningParts.some(
+                    (p) => p.state === 'streaming',
+                  );
+                  return (
+                    <ShowThinking
+                      reasoningText={text}
+                      streaming={stillStreaming}
+                    />
+                  );
+                })()}
               <div
                 className={
                   m.role === 'user'
@@ -374,6 +409,12 @@ export function Chat() {
                 }
               >
                 {(m.parts as Array<{ type: string }>).map((p, i) => {
+                  if (p.type === 'reasoning') {
+                    // Rendered above as a collapsible ShowThinking block;
+                    // suppress here so the inline body shows the user-facing
+                    // text reply only.
+                    return null;
+                  }
                   if (p.type === 'text') {
                     return <span key={i}>{(p as unknown as { text: string }).text}</span>;
                   }
@@ -431,41 +472,38 @@ export function Chat() {
 
       </div>
 
-      {/* Live status pill — derives meaningful step text from KB-busy +
-          last assistant message tool parts + streaming state. Replaces
-          the flat "thinking…" indicator. */}
-      <LiveStatus
-        step={deriveStep({
-          isStreaming,
-          kbBusy,
-          messages: messages as Parameters<typeof deriveStep>[0]['messages'],
-        })}
-      />
-
-      {/* KB hits — every chat submit fires `/v1/search` in parallel and
-          shows the top hits inline. The agent runs its own `search_kb`
-          tool with semantic-variant queries against the SAME index; this
-          panel is the user-facing view. Click a hit to drop a widget on
-          the canvas. */}
-      <KbHits
-        query={kbQuery}
-        hits={kbHits}
-        busy={kbBusy}
-        onPlace={(hit) => {
-          const editor = getEditor();
-          if (!editor) return;
-          import('../canvas/dispatcher')
-            .then((m) => m.placeResultsOnCanvas(editor, [hit]))
-            .catch((e) => {
-              console.error('[chat] place from KB failed:', e);
-              toast.error('Could not place from KB');
-            });
-        }}
-        onDismiss={() => {
-          setKbHits(null);
-          setKbQuery(null);
-        }}
-      />
+      {/* Floating overlay stack — pinned above the composer with
+          `position: absolute` so showing/hiding any panel here NEVER
+          shifts the messages list or the input. The scroll area above
+          reserves bottom-padding so this overlay can't cover content. */}
+      <div className="strata-chat-overlay">
+        <KbHits
+          query={kbQuery}
+          hits={kbHits}
+          busy={kbBusy}
+          onPlace={(hit) => {
+            const editor = getEditor();
+            if (!editor) return;
+            import('../canvas/dispatcher')
+              .then((m) => m.placeResultsOnCanvas(editor, [hit]))
+              .catch((e) => {
+                console.error('[chat] place from KB failed:', e);
+                toast.error('Could not place from KB');
+              });
+          }}
+          onDismiss={() => {
+            setKbHits(null);
+            setKbQuery(null);
+          }}
+        />
+        <LiveStatus
+          step={deriveStep({
+            isStreaming,
+            kbBusy,
+            messages: messages as Parameters<typeof deriveStep>[0]['messages'],
+          })}
+        />
+      </div>
 
       {/* Slash-command suggestion popover. Sits above the form. */}
       <AnimatePresence>

@@ -1477,3 +1477,90 @@ header button:hover {
   from { background-position: 200% 0; }
   to   { background-position: -100% 0; }
 }
+
+/* ----------------------------------------------------------------------
+ * Pinned overlay stack — KbHits + LiveStatus sit ABOVE the composer
+ * without taking flex space. Showing/hiding either no longer shifts
+ * the messages list or the input.
+ * ---------------------------------------------------------------------- */
+.strata-chat-overlay {
+  position: absolute;
+  /* Sit just above the form (composer is ~64px tall — see globals form
+     padding). 4px breathing room. */
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.strata-chat-overlay > * {
+  pointer-events: auto;
+}
+/* Override the in-component margins now that the overlay handles spacing. */
+.strata-chat-overlay .strata-kb-hits {
+  margin: 0 12px;
+}
+.strata-chat-overlay .strata-live-status {
+  margin: 0 12px;
+}
+
+/* Reasoning ("Show thinking") block. */
+.strata-thinking {
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  background:
+    linear-gradient(rgba(10, 10, 13, 0.55), rgba(10, 10, 13, 0.55)) padding-box,
+    var(--grad-brand-soft) border-box;
+  overflow: hidden;
+  font-size: 12.5px;
+}
+.strata-thinking-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ddd6fe;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: left;
+  transition: background 140ms ease;
+}
+.strata-thinking-toggle:hover {
+  background: rgba(167, 139, 250, 0.08);
+}
+.strata-thinking-toggle-chevron {
+  transition: transform 200ms ease;
+  display: inline-flex;
+}
+.strata-thinking-toggle[aria-expanded='true'] .strata-thinking-toggle-chevron {
+  transform: rotate(90deg);
+}
+.strata-thinking-toggle-streaming {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #c4b5fd;
+}
+.strata-thinking-body {
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(167, 139, 250, 0.16);
+  color: var(--color-fg-2);
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  max-height: 280px;
+  overflow-y: auto;
+}
