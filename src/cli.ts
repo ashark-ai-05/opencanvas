@@ -51,7 +51,21 @@ async function main(): Promise<void> {
       index: { type: 'string' },
       search: { type: 'string' },
       'index-code': { type: 'string' },
+      'index-url': { type: 'string' },
       'search-symbols': { type: 'string' },
+      'source-id': { type: 'string' },
+      // Knowledge-base (per-project) flags
+      'kb-init': { type: 'string' },
+      'kb-root': { type: 'string' },
+      'no-enrich': { type: 'boolean' },
+      'kb-ingest': { type: 'string' },
+      'kb-only': { type: 'string' },
+      'kb-enrich-limit': { type: 'string' },
+      'kb-enrich-kinds': { type: 'string' },
+      'kb-status': { type: 'string' },
+      'kb-search': { type: 'string' },
+      'kb-export': { type: 'string' },
+      'kb-out': { type: 'string' },
       help: { type: 'boolean', short: 'h' },
     },
     allowPositionals: true,
@@ -354,6 +368,82 @@ async function main(): Promise<void> {
       .map((n) => n.toFixed(4))
       .join(', ');
     console.log(`first 8:  [${head}, ...]`);
+    return;
+  }
+
+  // KB commands — handled before profile/provider construction since
+  // some of them mutate config (kb-init).
+  if (typeof values['kb-init'] === 'string') {
+    const { kbInit } = await import('./kb/cli-commands.js');
+    const opts: Parameters<typeof kbInit>[0] = {
+      name: values['kb-init'] as string,
+      enrich: !values['no-enrich'],
+    };
+    if (values['kb-root']) opts.rootPath = values['kb-root'] as string;
+    await kbInit(opts);
+    return;
+  }
+  if (typeof values['kb-ingest'] === 'string') {
+    const { kbIngest } = await import('./kb/cli-commands.js');
+    const opts: Parameters<typeof kbIngest>[0] = {
+      name: values['kb-ingest'] as string,
+    };
+    const only = values['kb-only'];
+    if (typeof only === 'string') {
+      if (
+        only !== 'code' &&
+        only !== 'jira' &&
+        only !== 'stash' &&
+        only !== 'confluence'
+      ) {
+        console.error(
+          `Error: --kb-only must be one of code|jira|stash|confluence`,
+        );
+        process.exit(1);
+      }
+      opts.only = only;
+    }
+    if (typeof values['kb-enrich-limit'] === 'string') {
+      const n = Number(values['kb-enrich-limit']);
+      if (!Number.isFinite(n) || n < 0) {
+        console.error('Error: --kb-enrich-limit must be a non-negative number');
+        process.exit(1);
+      }
+      opts.enrichLimit = n;
+    }
+    if (typeof values['kb-enrich-kinds'] === 'string') {
+      opts.enrichKinds = (values['kb-enrich-kinds'] as string)
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+    }
+    if (typeof values.profile === 'string') opts.profile = values.profile;
+    await kbIngest(opts);
+    return;
+  }
+  if (typeof values['kb-status'] === 'string') {
+    const { kbStatus } = await import('./kb/cli-commands.js');
+    await kbStatus(values['kb-status'] as string);
+    return;
+  }
+  if (typeof values['kb-search'] === 'string') {
+    const { kbSearch } = await import('./kb/cli-commands.js');
+    const query = positionals.join(' ').trim();
+    if (!query) {
+      console.error('Error: --kb-search requires a query');
+      process.exit(1);
+    }
+    await kbSearch(values['kb-search'] as string, query);
+    return;
+  }
+  if (typeof values['kb-export'] === 'string') {
+    const { kbExport } = await import('./kb/cli-commands.js');
+    const out = values['kb-out'];
+    if (typeof out !== 'string' || out.length === 0) {
+      console.error('Error: --kb-export requires --kb-out <dir>');
+      process.exit(1);
+    }
+    await kbExport(values['kb-export'] as string, out);
     return;
   }
 
