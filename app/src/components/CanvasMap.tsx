@@ -67,7 +67,11 @@ export function CanvasMap() {
     [editor],
   );
 
-  if (widgets.length === 0) return null;
+  // (No early-return on empty widgets — the minimap stays visible as a
+  // "you are here" indicator showing just the viewport rect, with the
+  // count chip reading "0". Hiding the panel on empty canvases meant
+  // users couldn't see where they were panning until the agent placed
+  // something.)
 
   // Compute the world bounds we need to fit — the union of all widget
   // rects AND the viewport, so the user always sees their viewport
