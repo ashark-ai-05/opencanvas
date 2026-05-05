@@ -94,7 +94,8 @@
     ],
     "overrides": {
       "tar": "^7.5.11",
-      "@tootallnate/once": "^3.0.1"
+      "@tootallnate/once": "^3.0.1",
+      "@anthropic-ai/sdk": "^0.92.0"
     }
   },
   "build": {

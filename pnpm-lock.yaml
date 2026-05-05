@@ -7,6 +7,7 @@ settings:
 overrides:
   tar: ^7.5.11
   '@tootallnate/once': ^3.0.1
+  '@anthropic-ai/sdk': ^0.92.0
 
 importers:
 
@@ -19,7 +20,7 @@ importers:
         specifier: '*'
         version: 0.2.126(zod@4.4.2)
       '@anthropic-ai/sdk':
-        specifier: '*'
+        specifier: ^0.92.0
         version: 0.92.0(zod@4.4.2)
       '@hono/node-server':
         specifier: ^1.10.0
@@ -245,15 +246,6 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^4.0.0
-
-  '@anthropic-ai/sdk@0.81.0':
-    resolution: {integrity: sha512-D4K5PvEV6wPiRtVlVsJHIUhHAmOZ6IT/I9rKlTf84gR7GyyAurPJK7z9BOf/AZqC5d1DhYQGJNKRmV+q8dGhgw==}
-    hasBin: true
-    peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
-    peerDependenciesMeta:
-      zod:
-        optional: true
 
   '@anthropic-ai/sdk@0.92.0':
     resolution: {integrity: sha512-l653JFC83wCglH8H83t1xpgDurCyPyslYW1maPRdCsfuNuGbLvQjQ81sWd3Go3LWRm0jNspzAhuqAYV8r9joSw==}
@@ -5441,7 +5433,7 @@ snapshots:
 
   '@anthropic-ai/claude-agent-sdk@0.2.126(zod@4.4.2)':
     dependencies:
-      '@anthropic-ai/sdk': 0.81.0(zod@4.4.2)
+      '@anthropic-ai/sdk': 0.92.0(zod@4.4.2)
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.2)
       zod: 4.4.2
     optionalDependencies:
@@ -5456,12 +5448,6 @@ snapshots:
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - supports-color
-
-  '@anthropic-ai/sdk@0.81.0(zod@4.4.2)':
-    dependencies:
-      json-schema-to-ts: 3.1.1
-    optionalDependencies:
-      zod: 4.4.2
 
   '@anthropic-ai/sdk@0.92.0(zod@4.4.2)':
     dependencies:
