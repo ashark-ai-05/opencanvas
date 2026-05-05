@@ -182,6 +182,16 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     // Dynamic import keeps startup fast when this provider is not active.
     const { query: sdkQuery } = await import('@anthropic-ai/claude-agent-sdk');
 
+    // rawPrompt: bypass agent framing entirely — used by QaEnricher to call
+    // the LLM as a plain text-completion. No MCP tools, no system prompt
+    // (caller passes its own via systemPrompt if needed), no thinking, no
+    // session resume. The SDK still owns the connection but acts as a
+    // simple LLM client.
+    if (request.rawPrompt) {
+      yield* this.queryRaw(request, sdkQuery);
+      return;
+    }
+
     // Pass system prompt through the SDK option (NOT prepended to the user
     // prompt) so the model treats it as a system role. Using a simple string
     // also skips the default Claude Code preset, which loads dynamic
@@ -308,6 +318,10 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       abortController,
     };
     if (this.config.model) options.model = this.config.model;
+    // resume: rehydrate the prior native session so the model has full
+    // turn-by-turn context without us replaying the transcript. The chat
+    // route maintains the conversationId → sessionId map in BackendState.
+    if (request.sessionId) options['resume'] = request.sessionId;
 
     const sdkQuery_ = sdkQuery({ prompt: request.prompt, options });
 
@@ -329,22 +343,30 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
   mapMessage(message: SDKMessage): ProviderEvent[] {
     const events: ProviderEvent[] = [];
 
-    if (message.type === 'assistant') {
+    if (message.type === 'system') {
+      // The SDK emits one `system` message at the start of each query with
+      // `session_id`. Surface it so the chat route can persist it for
+      // future-turn rehydration via `resume:`.
+      const sysMsg = message as unknown as { session_id?: string };
+      if (typeof sysMsg.session_id === 'string' && sysMsg.session_id.length > 0) {
+        events.push({ type: 'session-started', sessionId: sysMsg.session_id });
+      }
+    } else if (message.type === 'assistant') {
       // If the assistant message has an error, emit an error event
       if (message.error) {
         events.push({ type: 'error', message: `SDK error: ${message.error}` });
         return events;
       }
-      // Extract text and thinking blocks from the message content
+      // Extract text and reasoning ("thinking") blocks from the message content
       for (const block of message.message.content) {
         if (block.type === 'text') {
           events.push({ type: 'text-delta', text: block.text });
         } else if (block.type === 'thinking') {
-          events.push({ type: 'thinking-delta', text: block.thinking });
+          events.push({ type: 'reasoning-delta', text: block.thinking });
         } else if (block.type === 'tool_use') {
           events.push({
-            type: 'tool-call',
-            toolCallId: block.id,
+            type: 'tool-input',
+            id: block.id,
             name: block.name,
             input: block.input,
           });
@@ -362,7 +384,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
         event.type === 'content_block_delta' &&
         event.delta.type === 'thinking_delta'
       ) {
-        events.push({ type: 'thinking-delta', text: event.delta.thinking });
+        events.push({ type: 'reasoning-delta', text: event.delta.thinking });
       }
     } else if (message.type === 'result') {
       if (message.subtype === 'success') {
@@ -418,9 +440,9 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
                   : rawContent;
             events.push({
               type: 'tool-result',
-              toolCallId: tr.tool_use_id,
-              // SDK doesn't carry the tool name on tool_result blocks; UIMS only
-              // needs toolCallId to correlate with the prior tool-call event.
+              id: tr.tool_use_id,
+              // SDK doesn't carry the tool name on tool_result blocks; UIMS
+              // only needs `id` to correlate with the prior tool-input event.
               name: '',
               output,
               isError,
@@ -431,6 +453,56 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     }
 
     return events;
+  }
+
+  /**
+   * Plain-prompt fast path — no MCP tools, no canvas framing, no thinking,
+   * no session resume. Used by `QaEnricher` and other consumers that need
+   * the LLM as a JSON-emitting completion endpoint, not an agent loop.
+   */
+  private async *queryRaw(
+    request: QueryRequest,
+    sdkQuery: typeof import('@anthropic-ai/claude-agent-sdk').query,
+  ): AsyncIterable<ProviderEvent> {
+    const abortController = new AbortController();
+    if (request.abortSignal) {
+      if (request.abortSignal.aborted) abortController.abort();
+      else
+        request.abortSignal.addEventListener(
+          'abort',
+          () => abortController.abort(),
+          { once: true },
+        );
+    }
+
+    const options: Record<string, unknown> = {
+      ...(request.systemPrompt ? { systemPrompt: request.systemPrompt } : {}),
+      settingSources: [],
+      enableFileCheckpointing: false,
+      forkSession: false,
+      agents: {},
+      mcpServers: {},
+      allowedTools: [],
+      disallowedTools: SDK_BUILTIN_TOOLS,
+      permissionMode: 'dontAsk' as const,
+      maxTurns: 1,
+      maxOutputTokens: 4096,
+      abortController,
+    };
+    if (this.config.model) options.model = this.config.model;
+
+    try {
+      for await (const message of sdkQuery({ prompt: request.prompt, options })) {
+        for (const event of this.mapMessage(message as SDKMessage)) {
+          yield event;
+        }
+      }
+    } catch (err) {
+      yield {
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 
   async probe(): Promise<ProbeResult> {

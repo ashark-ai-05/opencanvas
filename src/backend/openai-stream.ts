@@ -49,7 +49,9 @@ export async function* providerEventsToOpenAI(
         console.error('[openai-stream] provider error:', event.message);
         yield chunk({}, 'stop');
         break;
-      // thinking-delta, tool-call, tool-result are intentionally dropped in v1
+      // reasoning-delta, tool-input, tool-result, session-started are
+      // intentionally dropped — OpenAI's chat-completions schema has no
+      // standard slot for them.
     }
   }
 

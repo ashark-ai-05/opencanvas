@@ -19,11 +19,14 @@ function parseChunks(lines: string[]): Array<Record<string, unknown>> {
 }
 
 describe('UIMS tool-output forwarding', () => {
+  // ProviderEvent uses `id`; UIMS wire-format uses `toolCallId` for both
+  // tool-output-available and tool-output-error chunks.
+
   it('forwards a successful tool-result as tool-output-available', async () => {
     const lines = await collect([
       {
         type: 'tool-result',
-        toolCallId: 'tc-1',
+        id: 'tc-1',
         name: 'search_kb',
         output: { results: [{ id: 'a', kind: 'doc', title: 't' }] },
       },
@@ -42,7 +45,7 @@ describe('UIMS tool-output forwarding', () => {
     const lines = await collect([
       {
         type: 'tool-result',
-        toolCallId: 'tc-2',
+        id: 'tc-2',
         name: 'place_widget',
         output: 'Invalid payload for kind=markdown',
         isError: true,
@@ -62,7 +65,7 @@ describe('UIMS tool-output forwarding', () => {
     const lines = await collect([
       {
         type: 'tool-result',
-        toolCallId: 'tc-3',
+        id: 'tc-3',
         name: 'place_widget',
         output: { code: 'INVALID', detail: 'nope' },
         isError: true,
@@ -82,7 +85,7 @@ describe('UIMS tool-output forwarding', () => {
       { type: 'text-delta', text: 'searching' },
       {
         type: 'tool-result',
-        toolCallId: 'tc-4',
+        id: 'tc-4',
         name: 'search_kb',
         output: { results: [] },
       },

@@ -8,6 +8,7 @@
  * Streams messages using the extended thinking + adaptive thinking feature.
  */
 import type { LLMProvider, ProviderEvent, QueryRequest, ProbeResult } from '../core/provider.js';
+import { renderHistoryBlock } from './history-helpers.js';
 
 export type AnthropicDirectConfig = {
   model?: string;
@@ -37,13 +38,35 @@ export class AnthropicDirectAdapter implements LLMProvider {
     const client = new Anthropic();
     const model = this.config.model ?? DEFAULT_MODEL;
 
+    // Anthropic's `messages` API doesn't expose a session id, so prior
+    // turns must be sent inline. Map history → role'd messages; rawPrompt
+    // skips both the system prompt and the history.
+    const historyMessages = (request.history ?? []).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    const messages = [
+      ...historyMessages,
+      { role: 'user' as const, content: request.prompt },
+    ];
+
+    const systemPrompt = request.rawPrompt
+      ? request.systemPrompt
+      : request.systemPrompt;
+    const historyBlock = request.rawPrompt
+      ? ''
+      : renderHistoryBlock(request.history);
+    const composedSystem = [systemPrompt, historyBlock]
+      .filter((s): s is string => Boolean(s && s.length > 0))
+      .join('\n\n');
+
     try {
       const stream = client.messages.stream({
         model,
         max_tokens: 16000,
-        thinking: { type: 'adaptive' },
-        messages: [{ role: 'user', content: request.prompt }],
-        ...(request.systemPrompt ? { system: request.systemPrompt } : {}),
+        ...(request.rawPrompt ? {} : { thinking: { type: 'adaptive' as const } }),
+        messages,
+        ...(composedSystem.length > 0 ? { system: composedSystem } : {}),
       });
 
       for await (const event of stream) {
@@ -56,7 +79,7 @@ export class AnthropicDirectAdapter implements LLMProvider {
           event.type === 'content_block_delta' &&
           event.delta.type === 'thinking_delta'
         ) {
-          yield { type: 'thinking-delta', text: event.delta.thinking };
+          yield { type: 'reasoning-delta', text: event.delta.thinking };
         }
       }
 

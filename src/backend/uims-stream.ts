@@ -71,7 +71,7 @@ export async function* providerEventsToUIMS(
           yield emit({ type: 'text-delta', id: textId, delta: event.text });
           break;
 
-        case 'thinking-delta':
+        case 'reasoning-delta':
           if (!event.text) break;
           if (!reasoningOpen) {
             yield emit({ type: 'reasoning-start', id: reasoningId });
@@ -80,7 +80,7 @@ export async function* providerEventsToUIMS(
           yield emit({ type: 'reasoning-delta', id: reasoningId, delta: event.text });
           break;
 
-        case 'tool-call': {
+        case 'tool-input': {
           // Dev-time diagnostic: log every tool call so backend logs show
           // turn-by-turn what the agent is doing. Cheap to print, invaluable
           // when chasing max_turns / spin-loop bugs.
@@ -92,14 +92,23 @@ export async function* providerEventsToUIMS(
               return '<unserializable>';
             }
           })();
-          console.log(`[uims-stream] tool-call ${event.name} ${inputSnippet}`);
-          // Top-level chunk — does NOT close any open text/reasoning bracket.
+          console.log(`[uims-stream] tool-input ${event.name} ${inputSnippet}`);
+          // Top-level chunks — do NOT close any open text/reasoning bracket.
           // Agent loops often interleave tool calls inside a single text stream
-          // ("let me search…" → tool-call → continue same text); cutting the
+          // ("let me search…" → tool-input → continue same text); cutting the
           // bracket would cause the UI to start a new text part and stutter.
+          //
+          // Per UIMS v1: emit `tool-input-start` before `tool-input-available`
+          // so the client can render an in-flight indicator before the input
+          // is fully serialised.
+          yield emit({
+            type: 'tool-input-start',
+            toolCallId: event.id,
+            toolName: event.name,
+          });
           yield emit({
             type: 'tool-input-available',
-            toolCallId: event.toolCallId,
+            toolCallId: event.id,
             toolName: event.name,
             input: event.input,
           });
@@ -107,7 +116,7 @@ export async function* providerEventsToUIMS(
         }
 
         case 'tool-result':
-          // Symmetric with tool-call: top-level, never closes text/reasoning.
+          // Symmetric with tool-input: top-level, never closes text/reasoning.
           if (event.isError) {
             const errorText =
               typeof event.output === 'string'
@@ -116,16 +125,22 @@ export async function* providerEventsToUIMS(
             console.log(`[uims-stream] tool-error ${event.name}: ${errorText.slice(0, 160)}`);
             yield emit({
               type: 'tool-output-error',
-              toolCallId: event.toolCallId,
+              toolCallId: event.id,
               errorText,
             });
           } else {
             yield emit({
               type: 'tool-output-available',
-              toolCallId: event.toolCallId,
+              toolCallId: event.id,
               output: event.output,
             });
           }
+          break;
+
+        case 'session-started':
+          // Diagnostic only — the chat route observes this directly to
+          // persist the session id; UIMS doesn't surface it to the client.
+          console.log(`[uims-stream] session-started ${event.sessionId}`);
           break;
 
         case 'error':

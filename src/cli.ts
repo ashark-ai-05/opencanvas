@@ -407,13 +407,15 @@ async function main(): Promise<void> {
     for await (const event of provider.query({ prompt })) {
       if (event.type === 'text-delta') {
         process.stdout.write(event.text);
-      } else if (event.type === 'thinking-delta') {
-        // Print thinking to stderr with a prefix so it's visible but separate
-        process.stderr.write(`[thinking] ${event.text}`);
-      } else if (event.type === 'tool-call') {
-        process.stderr.write(`\n[tool-call: ${event.name}]\n`);
+      } else if (event.type === 'reasoning-delta') {
+        // Print reasoning to stderr with a prefix so it's visible but separate
+        process.stderr.write(`[reasoning] ${event.text}`);
+      } else if (event.type === 'tool-input') {
+        process.stderr.write(`\n[tool-input: ${event.name}]\n`);
       } else if (event.type === 'tool-result') {
         process.stderr.write(`[tool-result: ${event.name}]\n`);
+      } else if (event.type === 'session-started') {
+        process.stderr.write(`[session-started: ${event.sessionId}]\n`);
       } else if (event.type === 'error') {
         console.error(`\nError: ${event.message}`);
         hasError = true;

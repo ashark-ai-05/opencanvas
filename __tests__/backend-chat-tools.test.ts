@@ -6,8 +6,17 @@ import type { BackendState } from '../src/backend/state.js';
 
 function makeState(events: Parameters<typeof makeMockProvider>[0]) {
   const provider = makeMockProvider(events);
+  let latestSnapshot: unknown = null;
+  const sessions = new Map<string, string>();
   return {
     getLLMProvider: () => provider,
+    setLatestSnapshot: (s: unknown) => {
+      latestSnapshot = s;
+    },
+    getLatestSnapshot: () => latestSnapshot,
+    getSessionId: (id: string) => sessions.get(id),
+    setSessionId: (id: string, sess: string) => sessions.set(id, sess),
+    clearSessionId: (id: string) => sessions.delete(id),
   } as unknown as BackendState;
 }
 

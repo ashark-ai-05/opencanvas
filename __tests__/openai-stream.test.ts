@@ -53,12 +53,13 @@ describe('providerEventsToOpenAI', () => {
     expect(unique.size).toBe(1);
   });
 
-  it('ignores thinking-delta, tool-call, tool-result events', async () => {
+  it('ignores reasoning-delta, tool-input, tool-result, session-started events', async () => {
     const out = await collect(
       providerEventsToOpenAI(gen([
-        { type: 'thinking-delta', text: 'thinking…' },
-        { type: 'tool-call', toolCallId: 'tc-1', name: 'foo', input: {} },
-        { type: 'tool-result', toolCallId: 'tc-1', name: 'foo', output: 'bar' },
+        { type: 'reasoning-delta', text: 'thinking…' },
+        { type: 'tool-input', id: 'tc-1', name: 'foo', input: {} },
+        { type: 'tool-result', id: 'tc-1', name: 'foo', output: 'bar' },
+        { type: 'session-started', sessionId: 'sess-1' },
         { type: 'text-delta', text: 'final' },
         { type: 'done' },
       ]))
@@ -68,6 +69,7 @@ describe('providerEventsToOpenAI', () => {
     expect(concatenated).toContain('"content":"final"');
     expect(concatenated).not.toContain('thinking');
     expect(concatenated).not.toContain('tool_call');
+    expect(concatenated).not.toContain('sess-1');
   });
 
   it('handles empty stream (no text-delta) gracefully', async () => {

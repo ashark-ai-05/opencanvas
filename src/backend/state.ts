@@ -10,6 +10,7 @@ import type { LLMProvider } from '../core/provider.js';
 import type { EmbeddingProvider } from '../core/embedding-provider.js';
 import type { AgentToolDeps } from '../agent/tools/index.js';
 import type { ExternalMcpSource } from '../providers/claude-agent-sdk.js';
+import type { CanvasSnapshot } from '../agent/canvas-snapshot.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -31,6 +32,21 @@ export class BackendState {
   private sourceRegistry = new SourceRegistry();
   private sourcesConnectedPromise: Promise<void> | null = null;
   private storePromise: Promise<Store> | null = null;
+  /**
+   * Maps `conversationId` → provider-native `sessionId`. Populated when
+   * the active provider emits a `session-started` event during a turn;
+   * read by the chat route on the next turn to call the SDK with `resume`.
+   * In-memory only — backend restart drops the map and the next turn
+   * falls back to history-replay rehydration.
+   */
+  private sessionIds = new Map<string, string>();
+  /**
+   * Last canvas snapshot the frontend mirrored via `/v1/chat`. The
+   * out-of-process Strata MCP server (Amp profile) reads this to back
+   * `read_canvas` / `read_widget` requests without a round-trip to the
+   * browser.
+   */
+  private latestSnapshot: CanvasSnapshot | null = null;
 
   private constructor(profile: Profile) {
     this.profile = profile;
@@ -136,6 +152,33 @@ export class BackendState {
       await this.sourceRegistry.connectAll(this.profile.sources);
     })();
     return this.sourcesConnectedPromise;
+  }
+
+  /** Look up the provider-native session id for a conversation. */
+  getSessionId(conversationId: string): string | undefined {
+    return this.sessionIds.get(conversationId);
+  }
+
+  /**
+   * Persist a session id observed mid-turn. Replaces any prior id for the
+   * same conversation. No-op when either input is empty.
+   */
+  setSessionId(conversationId: string, sessionId: string): void {
+    if (!conversationId || !sessionId) return;
+    this.sessionIds.set(conversationId, sessionId);
+  }
+
+  /** Clear session map for a conversation (e.g. /clear). */
+  clearSessionId(conversationId: string): void {
+    this.sessionIds.delete(conversationId);
+  }
+
+  getLatestSnapshot(): CanvasSnapshot | null {
+    return this.latestSnapshot;
+  }
+
+  setLatestSnapshot(snapshot: CanvasSnapshot | null): void {
+    this.latestSnapshot = snapshot;
   }
 
   async shutdown(): Promise<void> {

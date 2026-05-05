@@ -53,9 +53,19 @@ export class OpenAIAdapter implements LLMProvider {
     });
 
     try {
-      const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+      const messages: Array<{
+        role: 'system' | 'user' | 'assistant';
+        content: string;
+      }> = [];
       if (request.systemPrompt) {
         messages.push({ role: 'system', content: request.systemPrompt });
+      }
+      // History: forward role'd messages so the model has full conversational
+      // context. Skipped under rawPrompt — the QA enricher wants a flat call.
+      if (!request.rawPrompt) {
+        for (const m of request.history ?? []) {
+          messages.push({ role: m.role, content: m.content });
+        }
       }
       messages.push({ role: 'user', content: request.prompt });
 

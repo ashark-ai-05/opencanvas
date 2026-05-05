@@ -19,11 +19,11 @@ function parseChunks(lines: string[]): Array<Record<string, unknown>> {
 }
 
 describe('UIMS tool-input forwarding', () => {
-  it('forwards tool-call as tool-input-available', async () => {
+  it('forwards tool-input as tool-input-start + tool-input-available', async () => {
     const lines = await collect([
       {
-        type: 'tool-call',
-        toolCallId: 'tc-1',
+        type: 'tool-input',
+        id: 'tc-1',
         name: 'search_kb',
         input: { query: 'auth' },
       },
@@ -31,8 +31,14 @@ describe('UIMS tool-input forwarding', () => {
     ]);
     const json = parseChunks(lines);
 
+    const toolStart = json.find((j) => j.type === 'tool-input-start');
+    expect(toolStart).toEqual({
+      type: 'tool-input-start',
+      toolCallId: 'tc-1',
+      toolName: 'search_kb',
+    });
+
     const toolInput = json.find((j) => j.type === 'tool-input-available');
-    expect(toolInput).toBeDefined();
     expect(toolInput).toEqual({
       type: 'tool-input-available',
       toolCallId: 'tc-1',
@@ -41,12 +47,12 @@ describe('UIMS tool-input forwarding', () => {
     });
   });
 
-  it('keeps text bracket open across an interleaved tool-call', async () => {
+  it('keeps text bracket open across an interleaved tool-input', async () => {
     const lines = await collect([
       { type: 'text-delta', text: 'thinking' },
       {
-        type: 'tool-call',
-        toolCallId: 'tc-2',
+        type: 'tool-input',
+        id: 'tc-2',
         name: 'search_kb',
         input: { query: 'x' },
       },
@@ -60,7 +66,7 @@ describe('UIMS tool-input forwarding', () => {
     expect(json.filter((j) => j.type === 'text-delta')).toHaveLength(2);
     expect(json.filter((j) => j.type === 'text-end')).toHaveLength(1);
 
-    // Order: text-start, text-delta, tool-input-available, text-delta, text-end
+    // Order: text-start, text-delta, tool-input-*, text-delta, text-end
     const types = json.map((j) => j.type);
     const startIdx = types.indexOf('text-start');
     const endIdx = types.indexOf('text-end');
@@ -72,10 +78,21 @@ describe('UIMS tool-input forwarding', () => {
   it('preserves complex input objects without coercing to string', async () => {
     const input = { query: 'a', filters: { kind: ['code', 'doc'] }, limit: 5 };
     const lines = await collect([
-      { type: 'tool-call', toolCallId: 'tc-3', name: 'search_kb', input },
+      { type: 'tool-input', id: 'tc-3', name: 'search_kb', input },
       { type: 'done' },
     ]);
     const toolInput = parseChunks(lines).find((j) => j.type === 'tool-input-available');
     expect(toolInput?.input).toEqual(input);
+  });
+
+  it('does not surface session-started to the wire (UIMS swallows it)', async () => {
+    const lines = await collect([
+      { type: 'session-started', sessionId: 'sess-1' },
+      { type: 'text-delta', text: 'hi' },
+      { type: 'done' },
+    ]);
+    const json = parseChunks(lines);
+    expect(json.find((j) => j.type === 'session-started')).toBeUndefined();
+    expect(json.find((j) => j.type === 'text-delta')).toBeDefined();
   });
 });

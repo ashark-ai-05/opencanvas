@@ -76,12 +76,12 @@ describe('FakeProvider — model kind', () => {
 
   it('emits thinking-delta events', async () => {
     const provider = new FakeProvider('fake-model', 'model', [
-      { type: 'thinking-delta', text: 'Let me think...' },
+      { type: 'reasoning-delta', text: 'Let me think...' },
       { type: 'text-delta', text: 'Answer' },
       { type: 'done', usage: { inputTokens: 10, outputTokens: 5 } },
     ]);
     const events = await collectEvents(provider);
-    expect(events[0]).toEqual({ type: 'thinking-delta', text: 'Let me think...' });
+    expect(events[0]).toEqual({ type: 'reasoning-delta', text: 'Let me think...' });
     expect(events[1]).toEqual({ type: 'text-delta', text: 'Answer' });
     expect(events[2]).toMatchObject({ type: 'done', usage: { inputTokens: 10, outputTokens: 5 } });
   });
@@ -119,14 +119,14 @@ describe('FakeProvider — model kind', () => {
 describe('FakeProvider — agent kind', () => {
   it('emits tool-call and tool-result events', async () => {
     const provider = new FakeProvider('fake-agent', 'agent', [
-      { type: 'tool-call', toolCallId: 'tc-1', name: 'read_file', input: { path: '/tmp/test.txt' } },
-      { type: 'tool-result', toolCallId: 'tc-1', name: 'read_file', output: 'file contents' },
+      { type: 'tool-input', id: 'tc-1', name: 'read_file', input: { path: '/tmp/test.txt' } },
+      { type: 'tool-result', id: 'tc-1', name: 'read_file', output: 'file contents' },
       { type: 'text-delta', text: 'Based on the file...' },
       { type: 'done' },
     ]);
     const events = await collectEvents(provider);
     expect(events).toHaveLength(4);
-    expect(events[0]).toMatchObject({ type: 'tool-call', name: 'read_file' });
+    expect(events[0]).toMatchObject({ type: 'tool-input', name: 'read_file' });
     expect(events[1]).toMatchObject({ type: 'tool-result', name: 'read_file' });
   });
 
@@ -162,17 +162,17 @@ describe('ProviderEvent — all event types are structurally complete', () => {
   it('all event type strings are covered', () => {
     const events: ProviderEvent[] = [
       { type: 'text-delta', text: 'a' },
-      { type: 'thinking-delta', text: 'b' },
-      { type: 'tool-call', toolCallId: 'tc-1', name: 't', input: {} },
-      { type: 'tool-result', toolCallId: 'tc-1', name: 't', output: null },
+      { type: 'reasoning-delta', text: 'b' },
+      { type: 'tool-input', id: 'tc-1', name: 't', input: {} },
+      { type: 'tool-result', id: 'tc-1', name: 't', output: null },
       { type: 'error', message: 'oops' },
       { type: 'done' },
       { type: 'done', usage: { inputTokens: 1, outputTokens: 2 } },
     ];
     const types = events.map((e) => e.type);
     expect(types).toContain('text-delta');
-    expect(types).toContain('thinking-delta');
-    expect(types).toContain('tool-call');
+    expect(types).toContain('reasoning-delta');
+    expect(types).toContain('tool-input');
     expect(types).toContain('tool-result');
     expect(types).toContain('error');
     expect(types).toContain('done');

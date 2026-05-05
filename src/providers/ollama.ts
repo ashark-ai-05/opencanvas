@@ -34,9 +34,17 @@ export class OllamaAdapter implements LLMProvider {
       const { Ollama } = await import('ollama');
       const client = new Ollama({ host: this.baseUrl });
 
-      const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+      const messages: Array<{
+        role: 'system' | 'user' | 'assistant';
+        content: string;
+      }> = [];
       if (request.systemPrompt) {
         messages.push({ role: 'system', content: request.systemPrompt });
+      }
+      if (!request.rawPrompt) {
+        for (const m of request.history ?? []) {
+          messages.push({ role: m.role, content: m.content });
+        }
       }
       messages.push({ role: 'user', content: request.prompt });
 

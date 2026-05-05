@@ -7,7 +7,7 @@ import {
 import type { ProviderEvent } from '../src/core/provider.js';
 
 describe('claude-agent-sdk adapter — tool event mapping', () => {
-  it('maps assistant tool_use block to a tool-call ProviderEvent with toolCallId', () => {
+  it('maps assistant tool_use block to a tool-input ProviderEvent with id', () => {
     const msg = {
       type: 'assistant',
       uuid: 'u-1',
@@ -33,10 +33,10 @@ describe('claude-agent-sdk adapter — tool event mapping', () => {
 
     const events = mapMessageForTesting(msg);
     const call = events.find(
-      (e: ProviderEvent) => e.type === 'tool-call',
-    ) as Extract<ProviderEvent, { type: 'tool-call' }>;
+      (e: ProviderEvent) => e.type === 'tool-input',
+    ) as Extract<ProviderEvent, { type: 'tool-input' }>;
     expect(call).toBeDefined();
-    expect(call.toolCallId).toBe('toolu_abc');
+    expect(call.id).toBe('toolu_abc');
     expect(call.name).toBe('search_kb');
     expect(call.input).toEqual({ query: 'auth' });
   });
@@ -63,7 +63,7 @@ describe('claude-agent-sdk adapter — tool event mapping', () => {
       (e: ProviderEvent) => e.type === 'tool-result',
     ) as Extract<ProviderEvent, { type: 'tool-result' }>;
     expect(result).toBeDefined();
-    expect(result.toolCallId).toBe('toolu_abc');
+    expect(result.id).toBe('toolu_abc');
     expect(result.output).toBe('{"results":[]}');
     expect(result.isError).toBe(false);
   });
@@ -91,7 +91,7 @@ describe('claude-agent-sdk adapter — tool event mapping', () => {
       (e: ProviderEvent) => e.type === 'tool-result',
     ) as Extract<ProviderEvent, { type: 'tool-result' }>;
     expect(result).toBeDefined();
-    expect(result.toolCallId).toBe('toolu_xyz');
+    expect(result.id).toBe('toolu_xyz');
     expect(result.isError).toBe(true);
   });
 
