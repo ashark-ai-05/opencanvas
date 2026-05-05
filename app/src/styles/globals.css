@@ -1479,33 +1479,27 @@ header button:hover {
 }
 
 /* ----------------------------------------------------------------------
- * Pinned overlay stack — KbHits + LiveStatus sit ABOVE the composer
- * without taking flex space. Showing/hiding either no longer shifts
- * the messages list or the input.
+ * Inline status stack — KbHits + LiveStatus live BETWEEN the messages
+ * list and the composer, taking their own flex space. When neither has
+ * anything to render the container collapses to 0 (children return null),
+ * so it costs no space when idle. Bounded max-height keeps a long list
+ * of KB hits from pushing the messages list off-screen.
  * ---------------------------------------------------------------------- */
 .strata-chat-overlay {
-  position: absolute;
-  /* Sit just above the form (composer is ~64px tall — see globals form
-     padding). 4px breathing room. */
-  bottom: 64px;
-  left: 0;
-  right: 0;
-  z-index: 5;
-  pointer-events: none;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 4px;
+  max-height: 40vh;
+  overflow: hidden;
 }
-.strata-chat-overlay > * {
-  pointer-events: auto;
-}
-/* Override the in-component margins now that the overlay handles spacing. */
 .strata-chat-overlay .strata-kb-hits {
   margin: 0 12px;
 }
 .strata-chat-overlay .strata-live-status {
   margin: 0 12px;
+  align-self: flex-start;
 }
 
 /* Reasoning ("Show thinking") block. */

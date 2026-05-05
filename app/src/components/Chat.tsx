@@ -339,10 +339,6 @@ export function Chat() {
       <div
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-5"
-        // Bottom padding reserves space under the messages so the absolute
-        // overlay stack (KbHits + LiveStatus + slash suggestions) never
-        // covers content the user is reading.
-        style={{ paddingBottom: 96 }}
       >
         {messages.length === 0 && (
           <motion.div
@@ -472,10 +468,10 @@ export function Chat() {
 
       </div>
 
-      {/* Floating overlay stack — pinned above the composer with
-          `position: absolute` so showing/hiding any panel here NEVER
-          shifts the messages list or the input. The scroll area above
-          reserves bottom-padding so this overlay can't cover content. */}
+      {/* Inline status stack — sits between the messages list and the
+          composer, taking its own flex space so the conversation text
+          is never covered. Originally absolute-positioned, but that
+          caused the panel to overlap messages above; now inline. */}
       <div className="strata-chat-overlay">
         <KbHits
           query={kbQuery}
