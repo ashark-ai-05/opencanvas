@@ -1,3 +1,4 @@
+import type { SourcePill } from './shared';
 import {
   HTMLContainer,
   Rectangle2d,
@@ -18,6 +19,7 @@ export type WebEmbedShape = TLBaseShape<
     title?: string;
     snippet?: string;
     source?: string;
+    sources?: SourcePill[];
   }
 >;
 
@@ -31,6 +33,7 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
     title: T.optional(T.string),
     snippet: T.optional(T.string),
     source: T.optional(T.string),
+    sources: T.optional(T.any),
   };
 
   override getDefaultProps(): WebEmbedShape['props'] {

@@ -20,13 +20,18 @@ function deterministicEmbedder(): EmbeddingProvider {
   // ranking.
   return {
     id: 'test',
+    name: 'test',
     dims: 384,
+    capabilities: { batchSize: 32, offline: true },
     async embed(texts: string[]) {
       return texts.map(() => {
         const v = new Float32Array(384);
         for (let i = 0; i < 384; i++) v[i] = 0.5;
         return v;
       });
+    },
+    async probe() {
+      return { ok: true };
     },
   };
 }

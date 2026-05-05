@@ -1,3 +1,4 @@
+import type { SourcePill } from './shared';
 import {
   HTMLContainer,
   Rectangle2d,
@@ -22,6 +23,7 @@ export type TicketCardShape = TLBaseShape<
     description?: string;
     uri?: string;
     source?: string;
+    sources?: SourcePill[];
   }
 >;
 
@@ -46,6 +48,7 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
     description: T.optional(T.string),
     uri: T.optional(T.string),
     source: T.optional(T.string),
+    sources: T.optional(T.any),
   };
 
   override getDefaultProps(): TicketCardShape['props'] {

@@ -33,15 +33,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 function fixedEmbedder(): EmbeddingProvider {
   return {
     id: 'test',
+    name: 'test',
     dims: 384,
+    capabilities: { batchSize: 32, offline: true },
     async embed(texts: string[]) {
-      // Deterministic: hash each text into a tiny float vec; fast and
-      // sufficient for testing the orchestrator's persistence path.
+      // Deterministic-shape: random vec is fine for testing the
+      // orchestrator's persistence path (we never assert similarity).
       return texts.map(() => {
         const v = new Float32Array(384);
         for (let i = 0; i < 384; i++) v[i] = Math.random();
         return v;
       });
+    },
+    async probe() {
+      return { ok: true };
     },
   };
 }

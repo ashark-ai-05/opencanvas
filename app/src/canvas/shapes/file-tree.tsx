@@ -1,3 +1,4 @@
+import type { SourcePill } from './shared';
 import {
   HTMLContainer,
   Rectangle2d,
@@ -26,6 +27,7 @@ export type FileTreeShape = TLBaseShape<
     root: FileNode;
     uri?: string;
     source?: string;
+    sources?: SourcePill[];
   }
 >;
 
@@ -45,6 +47,7 @@ export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
     root: FileNodeRuntime,
     uri: T.optional(T.string),
     source: T.optional(T.string),
+    sources: T.optional(T.any),
   };
 
   override getDefaultProps(): FileTreeShape['props'] {

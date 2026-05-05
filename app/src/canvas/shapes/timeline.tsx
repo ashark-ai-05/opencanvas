@@ -1,3 +1,4 @@
+import type { SourcePill } from './shared';
 import {
   HTMLContainer,
   Rectangle2d,
@@ -28,6 +29,7 @@ export type TimelineShape = TLBaseShape<
     events: Event[];
     uri?: string;
     source?: string;
+    sources?: SourcePill[];
   }
 >;
 
@@ -56,6 +58,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
     ),
     uri: T.optional(T.string),
     source: T.optional(T.string),
+    sources: T.optional(T.any),
   };
 
   override getDefaultProps(): TimelineShape['props'] {

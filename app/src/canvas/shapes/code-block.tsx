@@ -1,3 +1,4 @@
+import type { SourcePill } from './shared';
 import {
   HTMLContainer,
   Rectangle2d,
@@ -19,6 +20,7 @@ export type CodeBlockShape = TLBaseShape<
     code: string;
     /** Optional source path/URI shown in the header — agent can supply via payload.source. */
     source?: string;
+    sources?: SourcePill[];
     /** Legacy props kept so canvases saved before the agent-payload alignment still hydrate. */
     symbolName?: string;
     filePath?: string;
@@ -36,6 +38,7 @@ export class CodeBlockShapeUtil extends ShapeUtil<CodeBlockShape> {
     language: T.optional(T.string),
     code: T.string,
     source: T.optional(T.string),
+    sources: T.optional(T.any),
     // Legacy
     symbolName: T.optional(T.string),
     filePath: T.optional(T.string),

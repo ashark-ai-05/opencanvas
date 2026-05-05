@@ -10,6 +10,10 @@ import { KeyValueCardShapeUtil } from './shapes/key-value-card';
 import { TableShapeUtil } from './shapes/table';
 import { TimelineShapeUtil } from './shapes/timeline';
 import { FileTreeShapeUtil } from './shapes/file-tree';
+import { CompositeShapeUtil } from './shapes/composite';
+import { TasksShapeUtil } from './shapes/tasks';
+import { KanbanShapeUtil } from './shapes/kanban';
+import { StickyNoteShapeUtil } from './shapes/sticky-note';
 import { computeCanvasSnapshot } from './snapshot';
 import { setLatestSnapshot } from '../state/snapshot-ref';
 import { setEditor } from '../state/editor-ref';
@@ -34,6 +38,11 @@ const customShapeUtils = [
   TableShapeUtil,
   TimelineShapeUtil,
   FileTreeShapeUtil,
+  // Phase 5 — composite + interactive widgets
+  CompositeShapeUtil,
+  TasksShapeUtil,
+  KanbanShapeUtil,
+  StickyNoteShapeUtil,
 ];
 const SAVE_DEBOUNCE_MS = 500;
 

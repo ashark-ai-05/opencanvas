@@ -38,19 +38,33 @@ const KIND_TO_SHAPE: Record<WidgetKind, string> = {
   table: 'strata:table',
   timeline: 'strata:timeline',
   'file-tree': 'strata:file-tree',
+  composite: 'strata:composite',
+  tasks: 'strata:tasks',
+  kanban: 'strata:kanban',
+  'sticky-note': 'strata:sticky-note',
 };
 
 /** Sensible default size per kind so wide tables don't get cropped at 320×200. */
 const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
-  markdown: { w: 360, h: 240 },
-  'code-block': { w: 480, h: 280 },
-  ticket: { w: 320, h: 200 },
-  'web-embed': { w: 420, h: 200 },
-  'key-value-card': { w: 320, h: 220 },
-  table: { w: 520, h: 280 },
-  timeline: { w: 400, h: 320 },
-  'file-tree': { w: 360, h: 360 },
+  markdown: { w: 320, h: 180 },
+  'code-block': { w: 420, h: 220 },
+  ticket: { w: 280, h: 150 },
+  'web-embed': { w: 360, h: 160 },
+  'key-value-card': { w: 280, h: 170 },
+  table: { w: 520, h: 240 },
+  timeline: { w: 360, h: 280 },
+  'file-tree': { w: 320, h: 300 },
+  composite: { w: 480, h: 480 },
+  tasks: { w: 320, h: 260 },
+  kanban: { w: 720, h: 360 },
+  'sticky-note': { w: 200, h: 200 },
 };
+
+/**
+ * After this many strata widgets are on the canvas, new placements start
+ * collapsed so dense canvases don't visually overflow. Spec §12.
+ */
+const COLLAPSE_THRESHOLD = 3;
 
 /**
  * Apply a directive coming from a backend tool to the tldraw editor.
@@ -87,14 +101,78 @@ export function applyToolDirective(
       // spot near the template's preferred position.
       const { x, y } = findFreePosition(editor, slot.x, slot.y, w, h);
 
+      const totalStrata = editor
+        .getCurrentPageShapes()
+        .filter((s) => s.type.startsWith('strata:')).length;
+      const startCollapsed = totalStrata >= COLLAPSE_THRESHOLD;
+
+      // sources / sourceLabel: peeled into `meta` so the shape props stay
+      // payload-pure. CardFrame reads either `props.sources` or
+      // `meta.sources` (we keep both for backwards compat with widgets
+      // saved by older builds).
+      const meta: Record<string, unknown> = { role: directive.role };
+      if (startCollapsed) {
+        meta['collapsed'] = true;
+        meta['expandedHeight'] = h;
+      }
+
       editor.createShape({
         id: ('shape:' + directive.id) as never,
         type: KIND_TO_SHAPE[directive.kind] as never,
         x,
         y,
-        meta: { role: directive.role } as never,
-        props: { ...directive.payload, w, h } as never,
+        meta: meta as never,
+        props: {
+          ...directive.payload,
+          w,
+          h: startCollapsed ? 44 : h,
+        } as never,
       } as never);
+      return;
+    }
+    case 'update': {
+      const target = editor.getShape(('shape:' + directive.id) as never) as
+        | {
+            type: string;
+            props: { w?: number; h?: number; sections?: unknown[] };
+          }
+        | undefined;
+      if (!target) {
+        // Don't throw — the agent may reference an id that's been
+        // deleted. Surface in console and bail.
+        console.warn(`[dispatcher] update: shape not found for id ${directive.id}`);
+        return;
+      }
+
+      // appendSections (composite-only): append to props.sections,
+      // preserving everything else.
+      if (directive.appendSections) {
+        const existing = Array.isArray(target.props.sections)
+          ? target.props.sections
+          : [];
+        editor.updateShape({
+          id: ('shape:' + directive.id) as never,
+          type: target.type as never,
+          props: {
+            sections: [...existing, ...directive.appendSections],
+          } as never,
+        } as never);
+        return;
+      }
+
+      // payload replacement: merge over existing props but preserve w/h
+      // (spatial layout is a canvas concern, not a payload concern).
+      if (directive.payload) {
+        editor.updateShape({
+          id: ('shape:' + directive.id) as never,
+          type: target.type as never,
+          props: {
+            ...directive.payload,
+            ...(target.props.w !== undefined ? { w: target.props.w } : {}),
+            ...(target.props.h !== undefined ? { h: target.props.h } : {}),
+          } as never,
+        } as never);
+      }
       return;
     }
     case 'clear': {

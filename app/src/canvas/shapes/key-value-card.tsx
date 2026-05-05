@@ -1,3 +1,4 @@
+import type { SourcePill } from './shared';
 import {
   HTMLContainer,
   Rectangle2d,
@@ -20,6 +21,7 @@ export type KeyValueCardShape = TLBaseShape<
     fields: KeyValuePair[];
     uri?: string;
     source?: string;
+    sources?: SourcePill[];
   }
 >;
 
@@ -33,6 +35,7 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
     fields: T.arrayOf(T.object({ key: T.string, value: T.string })),
     uri: T.optional(T.string),
     source: T.optional(T.string),
+    sources: T.optional(T.any),
   };
 
   override getDefaultProps(): KeyValueCardShape['props'] {

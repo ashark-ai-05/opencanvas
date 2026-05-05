@@ -49,17 +49,32 @@ function readCollapsed(meta: unknown): boolean {
 }
 
 /**
+ * A single attribution entry — either a bare URL string or a {url, label?}.
+ */
+export type SourcePill = string | { url: string; label?: string };
+
+/**
  * Outer card frame. Pass the shape so we can read role from meta and keep
- * the call sites of each ShapeUtil tidy. If `props.source` is set, we
- * append a small attribution footer so users can see (and click through
- * to) where the widget content came from.
+ * the call sites of each ShapeUtil tidy.
+ *
+ * Attribution: the spec lets every payload carry both a single canonical
+ * `source: string` (typed in via the body URL pill) AND a `sources` array
+ * of clickable footer pills for multi-attribution. Both render side-by-side
+ * when present; web-embed suppresses the single-source footer because the
+ * URL is already prominent in the body.
  */
 export function CardFrame({
   shape,
   children,
 }: {
   shape: {
-    props: { w: number; h: number; source?: string; url?: string };
+    props: {
+      w: number;
+      h: number;
+      source?: string;
+      sources?: SourcePill[];
+      url?: string;
+    };
     meta?: unknown;
   };
   children: ReactNode;
@@ -76,9 +91,10 @@ export function CardFrame({
   }, []);
 
   const style: CSSProperties = { width: shape.props.w, height: shape.props.h };
-  // web-embed already shows the URL prominently in its body, so don't
-  // double up. For everything else, surface `source` as a footer.
-  const showSourceFooter =
+  const sources = Array.isArray(shape.props.sources)
+    ? shape.props.sources
+    : undefined;
+  const showSingleSource =
     typeof shape.props.source === 'string' &&
     shape.props.source.length > 0 &&
     !shape.props.url;
@@ -92,7 +108,8 @@ export function CardFrame({
       style={style}
     >
       {children}
-      {showSourceFooter && <CardSourceFooter source={shape.props.source!} />}
+      {showSingleSource && <CardSourceFooter source={shape.props.source!} />}
+      {sources && sources.length > 0 && <CardSourcesFooter sources={sources} />}
     </div>
   );
 }
@@ -125,6 +142,54 @@ function CardSourceFooter({ source }: { source: string }) {
       {isUrl && <ExternalLink className="size-3 opacity-60" />}
     </div>
   );
+}
+
+/**
+ * Render the `sources[]` array as a row of clickable pills. Each entry can
+ * be either a bare URL or a `{url, label?}` — we show `label` when present
+ * and fall back to the URL host. Hidden when the card is collapsed via
+ * the [data-collapsed] CSS rules in globals.css.
+ */
+function CardSourcesFooter({ sources }: { sources: SourcePill[] }) {
+  return (
+    <div
+      className="strata-card-footer strata-card-footer--multi"
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <span className="strata-card-footer-label">sources</span>
+      <span className="strata-card-footer-pills">
+        {sources.map((s, i) => {
+          const url = typeof s === 'string' ? s : s.url;
+          const label =
+            typeof s === 'string' ? labelFromUrl(url) : (s.label ?? labelFromUrl(url));
+          return (
+            <a
+              key={`${url}-${i}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="strata-card-footer-pill"
+              title={url}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {label}
+              <ExternalLink className="size-3 opacity-60" />
+            </a>
+          );
+        })}
+      </span>
+    </div>
+  );
+}
+
+function labelFromUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.host.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
 }
 
 export function CardHeader({ children }: { children: ReactNode }) {
