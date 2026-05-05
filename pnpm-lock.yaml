@@ -28,7 +28,7 @@ importers:
         version: 1.29.0(zod@4.4.2)
       '@sourcegraph/amp-sdk':
         specifier: '*'
-        version: 0.1.0-20260505051145-g8d9576a
+        version: 0.1.0-20260505123815-g9186014
       ai:
         specifier: ^6.0.0
         version: 6.0.174(zod@4.4.2)
@@ -136,8 +136,8 @@ importers:
         specifier: ^9.0.0
         version: 9.2.1
       electron:
-        specifier: ^33.0.0
-        version: 33.4.11
+        specifier: ^39.8.5
+        version: 39.8.5
       electron-builder:
         specifier: ^25.0.0
         version: 25.1.8(electron-builder-squirrel-windows@25.1.8)
@@ -1901,8 +1901,8 @@ packages:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260505051145-g8d9576a':
-    resolution: {integrity: sha512-swYJo6ZWBv8U73wZycuJS5X/jUvwypejO7vCarth7HD81LtK42Qu8gCJu8S4vZkR3vDSp2K7AHQd7g/nFeswCA==}
+  '@sourcegraph/amp-sdk@0.1.0-20260505123815-g9186014':
+    resolution: {integrity: sha512-zqHwNwCQ8lvSqA9CiHW92WRKpZ/yhck/uzNETYym/I4znLTUCY48z2icJphQH9vIf9fdEMWbHaTHmUZZ67hVjg==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2276,8 +2276,8 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
-  '@types/node@20.19.39':
-    resolution: {integrity: sha512-orrrD74MBUyK8jOAD/r0+lfa1I2MO6I+vAkmAWzMYbCcgrN4lCrmK52gRFQq/JRxfYPfonkr4b0jcY7Olqdqbw==}
+  '@types/node@22.19.17':
+    resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
 
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
@@ -2935,8 +2935,8 @@ packages:
   electron-to-chromium@1.5.349:
     resolution: {integrity: sha512-QsWVGyRuY07Aqb234QytTfwd5d9AJlfNIQ5wIOl1L+PZDzI9d9+Fn0FRale/QYlFxt/bUnB0/nLd1jFPGxGK1A==}
 
-  electron@33.4.11:
-    resolution: {integrity: sha512-xmdAs5QWRkInC7TpXGNvzo/7exojubk+72jn1oJL7keNeIlw7xNglf8TGtJtkR4rWC5FJq0oXiIXPS9BcK2Irg==}
+  electron@39.8.5:
+    resolution: {integrity: sha512-q6+LiQIcTadSyvtPgLDQkCtVA9jQJXQVMrQcctfOJILh6OFMN+UJJLRkuUTy8CZDYeCIBn1ZycqsL1dAXugxZA==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -6862,7 +6862,7 @@ snapshots:
 
   '@sindresorhus/is@4.6.0': {}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260505051145-g8d9576a':
+  '@sourcegraph/amp-sdk@0.1.0-20260505123815-g9186014':
     dependencies:
       zod: 3.25.76
 
@@ -7281,7 +7281,7 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@20.19.39':
+  '@types/node@22.19.17':
     dependencies:
       undici-types: 6.21.0
 
@@ -8049,10 +8049,10 @@ snapshots:
 
   electron-to-chromium@1.5.349: {}
 
-  electron@33.4.11:
+  electron@39.8.5:
     dependencies:
       '@electron/get': 2.0.3
-      '@types/node': 20.19.39
+      '@types/node': 22.19.17
       extract-zip: 2.0.1
     transitivePeerDependencies:
       - supports-color

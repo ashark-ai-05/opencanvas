@@ -72,7 +72,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "concurrently": "^9.0.0",
-    "electron": "^33.0.0",
+    "electron": "^39.8.5",
     "electron-builder": "^25.0.0",
     "jsdom": "^25.0.0",
     "tailwindcss": "^4.0.0",
