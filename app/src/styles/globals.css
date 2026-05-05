@@ -90,7 +90,7 @@
    key-value-card) consume the same visual language. Shapes opt into a role accent
    via data-role; opt into the freshly-placed pulse via data-fresh="true". */
 
-.strata-card {
+.opencanvas-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -115,7 +115,7 @@
 }
 
 /* Left-edge role accent — soft glow stripe in the role color. */
-.strata-card::before {
+.opencanvas-card::before {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
@@ -126,7 +126,7 @@
 }
 
 /* Top sheen — subtle highlight across the card top edge. */
-.strata-card::after {
+.opencanvas-card::after {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
@@ -135,14 +135,14 @@
   pointer-events: none;
 }
 
-.strata-card[data-role="primary"]   { --role-color: var(--role-primary); }
-.strata-card[data-role="detail"]    { --role-color: var(--role-detail); }
-.strata-card[data-role="related"]   { --role-color: var(--role-related); }
-.strata-card[data-role="reference"] { --role-color: var(--role-reference); }
-.strata-card[data-role="timeline"]  { --role-color: var(--role-timeline); }
-.strata-card[data-role="node"]      { --role-color: var(--role-node); }
+.opencanvas-card[data-role="primary"]   { --role-color: var(--role-primary); }
+.opencanvas-card[data-role="detail"]    { --role-color: var(--role-detail); }
+.opencanvas-card[data-role="related"]   { --role-color: var(--role-related); }
+.opencanvas-card[data-role="reference"] { --role-color: var(--role-reference); }
+.opencanvas-card[data-role="timeline"]  { --role-color: var(--role-timeline); }
+.opencanvas-card[data-role="node"]      { --role-color: var(--role-node); }
 
-.strata-card:hover {
+.opencanvas-card:hover {
   transform: translateY(-2px);
   border-color: var(--color-line-2);
   box-shadow:
@@ -152,12 +152,12 @@
     0 4px 12px -2px rgba(0, 0, 0, 0.6),
     0 0 0 1px color-mix(in oklab, var(--role-color, var(--role-primary)) 40%, transparent) inset;
 }
-.strata-card:hover::before {
+.opencanvas-card:hover::before {
   box-shadow: 0 0 28px 0 var(--role-color, var(--role-primary));
   opacity: 1;
 }
 
-.strata-card-header {
+.opencanvas-card-header {
   padding: 11px 16px 9px 18px;
   border-bottom: 1px solid var(--color-line);
   display: flex;
@@ -166,7 +166,7 @@
   flex-shrink: 0;
 }
 
-.strata-card-title {
+.opencanvas-card-title {
   font-weight: 600;
   font-size: 13px;
   color: var(--color-fg);
@@ -178,7 +178,7 @@
   letter-spacing: -0.012em;
 }
 
-.strata-card-body {
+.opencanvas-card-body {
   padding: 12px 16px;
   flex: 1;
   overflow: auto;
@@ -188,7 +188,7 @@
   color: var(--color-fg-2);
 }
 
-.strata-card-body--mono {
+.opencanvas-card-body--mono {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   white-space: pre-wrap;
@@ -197,7 +197,7 @@
   color: #e4e4e7;
 }
 
-.strata-tag {
+.opencanvas-tag {
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -209,7 +209,7 @@
   border: 1px solid var(--color-line);
 }
 
-.strata-tag--accent {
+.opencanvas-tag--accent {
   background: linear-gradient(90deg, rgba(167, 139, 250, 0.16), rgba(240, 171, 252, 0.16));
   color: #ddd6fe;
   border-color: rgba(167, 139, 250, 0.35);
@@ -217,7 +217,7 @@
 
 /* Source-attribution footer — rendered by CardFrame when shape.props.source
    is set. Sits at the bottom of the card; click-through if URL. */
-.strata-card-footer {
+.opencanvas-card-footer {
   flex-shrink: 0;
   padding: 6px 14px 7px;
   border-top: 1px solid var(--color-line);
@@ -228,13 +228,13 @@
   color: var(--color-muted);
   background: rgba(0, 0, 0, 0.18);
 }
-.strata-card-footer-label {
+.opencanvas-card-footer-label {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
   color: var(--color-muted-2);
 }
-.strata-card-footer-value {
+.opencanvas-card-footer-value {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -242,20 +242,20 @@
   white-space: nowrap;
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-.strata-card-footer:hover .strata-card-footer-value {
+.opencanvas-card-footer:hover .opencanvas-card-footer-value {
   color: #c4b5fd;
 }
 
 /* Collapsed card — only the header is visible, height shrinks to ~44px.
    The toggle handler in shared.tsx also writes `props.h = 44` so tldraw's
    geometry agrees with what we render (no phantom selection space). */
-.strata-card[data-collapsed="true"] > :not(.strata-card-header) {
+.opencanvas-card[data-collapsed="true"] > :not(.opencanvas-card-header) {
   display: none;
 }
-.strata-card[data-collapsed="true"] .strata-card-header {
+.opencanvas-card[data-collapsed="true"] .opencanvas-card-header {
   border-bottom: none;
 }
-.strata-card[data-collapsed="true"]::after {
+.opencanvas-card[data-collapsed="true"]::after {
   /* The "top sheen" gradient overlay would clip oddly on a tiny card. */
   display: none;
 }
@@ -263,7 +263,7 @@
 /* Hover-action bar in card headers — appears on card hover, fades away
    otherwise. Clicks are handled with stopPropagation by CardActionButton
    so tldraw's shape selection doesn't fight the buttons. */
-.strata-card-actions {
+.opencanvas-card-actions {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -272,12 +272,12 @@
   transform: translateY(-1px);
   transition: opacity 140ms ease, transform 140ms ease;
 }
-.strata-card:hover .strata-card-actions,
-.strata-card:focus-within .strata-card-actions {
+.opencanvas-card:hover .opencanvas-card-actions,
+.opencanvas-card:focus-within .opencanvas-card-actions {
   opacity: 1;
   transform: translateY(0);
 }
-.strata-card-action {
+.opencanvas-card-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -291,20 +291,20 @@
   transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
   pointer-events: all;
 }
-.strata-card-action:hover {
+.opencanvas-card-action:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--color-line-2);
   color: #fafafa;
 }
-.strata-card-action:active {
+.opencanvas-card-action:active {
   background: rgba(255, 255, 255, 0.12);
 }
 
 /* Freshly-placed pulse — punchier two-stage entrance: scale + glow + tilt. */
-.strata-card[data-fresh="true"] {
-  animation: strata-fresh 900ms cubic-bezier(0.16, 1.2, 0.3, 1) 1;
+.opencanvas-card[data-fresh="true"] {
+  animation: opencanvas-fresh 900ms cubic-bezier(0.16, 1.2, 0.3, 1) 1;
 }
-@keyframes strata-fresh {
+@keyframes opencanvas-fresh {
   0% {
     transform: scale(0.88) translateY(8px);
     opacity: 0;
@@ -332,71 +332,71 @@
 
 /* ---------- Chat surface ---------- */
 
-.strata-chat-message {
-  animation: strata-fade-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+.opencanvas-chat-message {
+  animation: opencanvas-fade-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-@keyframes strata-fade-up {
+@keyframes opencanvas-fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.strata-streaming-pulse {
+.opencanvas-streaming-pulse {
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
   box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
-  animation: strata-pulse 1.4s ease-in-out infinite;
+  animation: opencanvas-pulse 1.4s ease-in-out infinite;
 }
-@keyframes strata-pulse {
+@keyframes opencanvas-pulse {
   0%, 100% { transform: scale(1);   opacity: 1;   }
   50%      { transform: scale(0.7); opacity: 0.5; }
 }
 
 /* Team timeline — active phase pulses with role-tint glow. */
-.strata-team-dot-active {
+.opencanvas-team-dot-active {
   box-shadow: 0 0 0 0 currentColor;
-  animation: strata-team-pulse 1.6s ease-in-out infinite;
+  animation: opencanvas-team-pulse 1.6s ease-in-out infinite;
 }
-@keyframes strata-team-pulse {
+@keyframes opencanvas-team-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
   50%      { box-shadow: 0 0 0 6px rgba(167, 139, 250, 0.25); }
 }
 
 /* Handoff card between phases — gradient-tinted to suggest baton pass. */
-.strata-handoff {
+.opencanvas-handoff {
   border: 1px solid var(--color-line);
   border-radius: 10px;
   padding: 10px 12px 12px;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
-.strata-handoff-arrow {
-  animation: strata-handoff-glide 1.8s ease-in-out infinite;
+.opencanvas-handoff-arrow {
+  animation: opencanvas-handoff-glide 1.8s ease-in-out infinite;
 }
-@keyframes strata-handoff-glide {
+@keyframes opencanvas-handoff-glide {
   0%, 100% { transform: translateX(0); opacity: 0.6; }
   50%      { transform: translateX(3px); opacity: 1; }
 }
 
-.strata-tool-spinner {
+.opencanvas-tool-spinner {
   display: inline-block;
   width: 10px;
   height: 10px;
   border: 1.5px solid rgba(139, 92, 246, 0.25);
   border-top-color: var(--color-accent);
   border-radius: 50%;
-  animation: strata-spin 0.7s linear infinite;
+  animation: opencanvas-spin 0.7s linear infinite;
   vertical-align: -1px;
   margin-right: 6px;
 }
-@keyframes strata-spin {
+@keyframes opencanvas-spin {
   to { transform: rotate(360deg); }
 }
 
 /* Glass utility — used on chat input, toolbar, panels. */
-.strata-glass {
+.opencanvas-glass {
   background: rgba(10, 10, 13, 0.7);
   border: 1px solid var(--color-line);
   backdrop-filter: blur(14px) saturate(160%);
@@ -404,7 +404,7 @@
 }
 
 /* Gradient button — primary CTA accent. */
-.strata-btn-accent {
+.opencanvas-btn-accent {
   background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-2) 100%);
   color: #0a0a0a;
   font-weight: 600;
@@ -414,30 +414,30 @@
     0 6px 22px -8px rgba(167, 139, 250, 0.6);
   transition: transform 120ms ease, box-shadow 160ms ease, filter 120ms ease;
 }
-.strata-btn-accent:hover:not(:disabled) {
+.opencanvas-btn-accent:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.08);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.25) inset,
     0 12px 32px -10px rgba(167, 139, 250, 0.7);
 }
-.strata-btn-accent:active:not(:disabled) {
+.opencanvas-btn-accent:active:not(:disabled) {
   transform: translateY(0);
 }
-.strata-btn-accent:disabled {
+.opencanvas-btn-accent:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* Subtle "header is alive" gradient bar — appears under the title bar while streaming. */
-.strata-header-pulse {
+.opencanvas-header-pulse {
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--color-accent), var(--color-accent-2), transparent);
   background-size: 200% 100%;
-  animation: strata-shimmer 1.6s linear infinite;
+  animation: opencanvas-shimmer 1.6s linear infinite;
   opacity: 0.9;
 }
-@keyframes strata-shimmer {
+@keyframes opencanvas-shimmer {
   from { background-position: 200% 0; }
   to   { background-position: -200% 0; }
 }
@@ -449,7 +449,7 @@
  * ---------------------------------------------------------------------- */
 
 /* Subtle dotted-grid behind tldraw — pure background, no JS. */
-.strata-canvas-grid {
+.opencanvas-canvas-grid {
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: -12px -12px;
@@ -457,7 +457,7 @@
 
 /* Bottom-left minimap container — glass panel with a small header chip
    and a clickable SVG thumbnail beneath it. */
-.strata-canvas-map {
+.opencanvas-canvas-map {
   position: absolute;
   left: 16px;
   bottom: 16px;
@@ -478,13 +478,13 @@
     0 0 24px -8px rgba(167, 139, 250, 0.3);
   transition: transform 160ms ease, box-shadow 200ms ease, opacity 160ms ease;
 }
-.strata-canvas-map:hover {
+.opencanvas-canvas-map:hover {
   transform: translateY(-1px);
   box-shadow:
     0 16px 36px -8px rgba(0, 0, 0, 0.65),
     0 0 32px -6px rgba(167, 139, 250, 0.45);
 }
-.strata-canvas-map-header {
+.opencanvas-canvas-map-header {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -495,10 +495,10 @@
   text-transform: uppercase;
   color: var(--color-fg-2);
 }
-.strata-canvas-map-header svg {
+.opencanvas-canvas-map-header svg {
   color: var(--color-accent);
 }
-.strata-canvas-map-svg {
+.opencanvas-canvas-map-svg {
   display: block;
   width: 100%;
   height: auto;
@@ -511,7 +511,7 @@
 }
 
 /* Generic header icon button. Used by HeaderCanvasControls + HeaderDrawTools. */
-.strata-header-btn {
+.opencanvas-header-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -524,17 +524,17 @@
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.strata-header-btn:hover {
+.opencanvas-header-btn:hover {
   color: #fafafa;
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.06);
 }
-.strata-header-btn[data-pressed='true'] {
+.opencanvas-header-btn[data-pressed='true'] {
   background: rgba(167, 139, 250, 0.16);
   border-color: rgba(167, 139, 250, 0.45);
   color: #fafafa;
 }
-.strata-header-divider {
+.opencanvas-header-divider {
   width: 1px;
   height: 18px;
   background: rgba(255, 255, 255, 0.08);
@@ -542,7 +542,7 @@
 }
 
 /* Collapsible style panel — slides in from right. */
-.strata-style-panel {
+.opencanvas-style-panel {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -551,7 +551,7 @@
   align-items: flex-start;
   gap: 4px;
 }
-.strata-style-panel-toggle {
+.opencanvas-style-panel-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -564,7 +564,7 @@
   cursor: pointer;
   backdrop-filter: blur(14px);
 }
-.strata-style-panel-toggle:hover {
+.opencanvas-style-panel-toggle:hover {
   border-color: rgba(167, 139, 250, 0.45);
   color: #fafafa;
 }
@@ -574,7 +574,7 @@
  * data-fullmode, data-dragging, data-streaming.
  * ---------------------------------------------------------------------- */
 
-.strata-chat-floating {
+.opencanvas-chat-floating {
   position: fixed;
   z-index: 30;
   width: min(440px, 90vw);
@@ -591,7 +591,7 @@
     0 0 0 1px rgba(167, 139, 250, 0.05) inset;
   transition: width 200ms ease, height 200ms ease, border-color 240ms ease;
 }
-.strata-chat-floating[data-fullmode='full'] {
+.opencanvas-chat-floating[data-fullmode='full'] {
   width: min(720px, 92vw);
   height: min(80vh, 800px);
 }
@@ -599,24 +599,24 @@
    regardless of source order. Compound selector pushes specificity to
    (0, 2, 1) so a minimized full-mode panel still collapses to 48px
    instead of rendering as a tall empty title-bar panel. */
-.strata-chat-floating[data-mode='minimized'],
-.strata-chat-floating[data-mode='minimized'][data-fullmode='full'],
-.strata-chat-floating[data-mode='minimized'][data-fullmode='normal'] {
+.opencanvas-chat-floating[data-mode='minimized'],
+.opencanvas-chat-floating[data-mode='minimized'][data-fullmode='full'],
+.opencanvas-chat-floating[data-mode='minimized'][data-fullmode='normal'] {
   height: 48px;
 }
-.strata-chat-floating[data-streaming='true'] {
+.opencanvas-chat-floating[data-streaming='true'] {
   border-color: rgba(167, 139, 250, 0.34);
   box-shadow:
     0 20px 60px -20px rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(167, 139, 250, 0.18) inset,
     0 0 32px -8px rgba(167, 139, 250, 0.25);
 }
-.strata-chat-floating[data-dragging='true'] {
+.opencanvas-chat-floating[data-dragging='true'] {
   cursor: grabbing;
   transition: none;
 }
 
-.strata-chat-titlebar {
+.opencanvas-chat-titlebar {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -631,27 +631,27 @@
     rgba(255, 255, 255, 0) 100%
   );
 }
-.strata-chat-titlebar:active {
+.opencanvas-chat-titlebar:active {
   cursor: grabbing;
 }
-.strata-chat-titlebar-grip {
+.opencanvas-chat-titlebar-grip {
   display: inline-flex;
   align-items: center;
   color: var(--color-muted);
 }
-.strata-chat-titlebar-title {
+.opencanvas-chat-titlebar-title {
   flex: 1;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--color-fg-2);
 }
-.strata-chat-titlebar-actions {
+.opencanvas-chat-titlebar-actions {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
-.strata-chat-titlebar-btn {
+.opencanvas-chat-titlebar-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -664,30 +664,30 @@
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
 }
-.strata-chat-titlebar-btn:hover {
+.opencanvas-chat-titlebar-btn:hover {
   color: var(--color-fg);
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.08);
 }
-.strata-chat-titlebar-btn[data-danger='true']:hover {
+.opencanvas-chat-titlebar-btn[data-danger='true']:hover {
   color: var(--color-fail);
   border-color: rgba(248, 113, 113, 0.32);
   background: rgba(248, 113, 113, 0.08);
 }
 
-.strata-chat-body {
+.opencanvas-chat-body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-.strata-chat-floating[data-mode='minimized'] .strata-chat-body {
+.opencanvas-chat-floating[data-mode='minimized'] .opencanvas-chat-body {
   display: none;
 }
 
 /* Launcher bubble — visible when chatWindow.mode === 'collapsed'. */
-.strata-chat-launcher {
+.opencanvas-chat-launcher {
   position: fixed;
   right: 24px;
   bottom: 24px;
@@ -707,13 +707,13 @@
   box-shadow: 0 12px 40px -12px rgba(167, 139, 250, 0.4);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
-.strata-chat-launcher:hover {
+.opencanvas-chat-launcher:hover {
   transform: translateY(-1px);
   box-shadow: 0 16px 50px -10px rgba(167, 139, 250, 0.55);
 }
 
 /* Composer streaming/options accents */
-.strata-composer-status {
+.opencanvas-composer-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -725,17 +725,17 @@
   font-size: 11px;
   letter-spacing: 0.02em;
 }
-.strata-composer-status[data-state='idle'] {
+.opencanvas-composer-status[data-state='idle'] {
   display: none;
 }
 
 /* Composite + interactive widget bodies (added in Phase 5) */
-.strata-composite {
+.opencanvas-composite {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.strata-composite-section {
+.opencanvas-composite-section {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -744,26 +744,26 @@
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
-.strata-composite-section-heading {
+.opencanvas-composite-section-heading {
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
-.strata-composite-fallback {
+.opencanvas-composite-fallback {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px;
   color: var(--color-fg-2);
   white-space: pre-wrap;
   margin: 0;
 }
-.strata-composite-ticket {
+.opencanvas-composite-ticket {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.strata-tag-row {
+.opencanvas-tag-row {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -771,7 +771,7 @@
 }
 
 /* tasks shape rows */
-.strata-tasks {
+.opencanvas-tasks {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -779,7 +779,7 @@
   flex-direction: column;
   gap: 6px;
 }
-.strata-tasks-row {
+.opencanvas-tasks-row {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -790,30 +790,30 @@
   font-size: 12.5px;
   color: var(--color-fg);
 }
-.strata-tasks-row[data-done='true'] .strata-tasks-text {
+.opencanvas-tasks-row[data-done='true'] .opencanvas-tasks-text {
   text-decoration: line-through;
   color: var(--color-muted);
 }
-.strata-tasks-checkbox {
+.opencanvas-tasks-checkbox {
   width: 14px;
   height: 14px;
   accent-color: var(--color-accent);
 }
-.strata-tasks-text {
+.opencanvas-tasks-text {
   flex: 1;
 }
-.strata-tasks-assignee, .strata-tasks-due {
+.opencanvas-tasks-assignee, .opencanvas-tasks-due {
   font-size: 11px;
   color: var(--color-muted);
 }
 
 /* kanban board */
-.strata-kanban {
+.opencanvas-kanban {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
 }
-.strata-kanban-col {
+.opencanvas-kanban-col {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -822,12 +822,12 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
-.strata-kanban-col[data-colour='blue']    { border-color: rgba(96, 165, 250, 0.32); }
-.strata-kanban-col[data-colour='amber']   { border-color: rgba(251, 191, 36, 0.32); }
-.strata-kanban-col[data-colour='green']   { border-color: rgba(52, 211, 153, 0.32); }
-.strata-kanban-col[data-colour='rose']    { border-color: rgba(251, 113, 133, 0.32); }
-.strata-kanban-col[data-colour='violet']  { border-color: rgba(167, 139, 250, 0.32); }
-.strata-kanban-col-header {
+.opencanvas-kanban-col[data-colour='blue']    { border-color: rgba(96, 165, 250, 0.32); }
+.opencanvas-kanban-col[data-colour='amber']   { border-color: rgba(251, 191, 36, 0.32); }
+.opencanvas-kanban-col[data-colour='green']   { border-color: rgba(52, 211, 153, 0.32); }
+.opencanvas-kanban-col[data-colour='rose']    { border-color: rgba(251, 113, 133, 0.32); }
+.opencanvas-kanban-col[data-colour='violet']  { border-color: rgba(167, 139, 250, 0.32); }
+.opencanvas-kanban-col-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -839,7 +839,7 @@
   padding-bottom: 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
-.strata-kanban-cards {
+.opencanvas-kanban-cards {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -847,7 +847,7 @@
   flex-direction: column;
   gap: 6px;
 }
-.strata-kanban-card {
+.opencanvas-kanban-card {
   padding: 8px 10px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
@@ -857,12 +857,12 @@
   gap: 4px;
   font-size: 12.5px;
 }
-.strata-kanban-card-title { font-weight: 500; color: var(--color-fg); }
-.strata-kanban-card-body { color: var(--color-fg-2); font-size: 11.5px; line-height: 1.45; }
-.strata-kanban-card-assignee { font-size: 10.5px; color: var(--color-muted); }
+.opencanvas-kanban-card-title { font-weight: 500; color: var(--color-fg); }
+.opencanvas-kanban-card-body { color: var(--color-fg-2); font-size: 11.5px; line-height: 1.45; }
+.opencanvas-kanban-card-assignee { font-size: 10.5px; color: var(--color-muted); }
 
 /* sticky note */
-.strata-sticky {
+.opencanvas-sticky {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -877,45 +877,45 @@
     0 1px 0 rgba(255, 255, 255, 0.4) inset,
     0 6px 18px -4px rgba(0, 0, 0, 0.4);
 }
-.strata-sticky[data-colour='yellow'] { background: linear-gradient(180deg, #fde68a, #fcd34d); }
-.strata-sticky[data-colour='pink']   { background: linear-gradient(180deg, #fbcfe8, #f9a8d4); }
-.strata-sticky[data-colour='blue']   { background: linear-gradient(180deg, #bfdbfe, #93c5fd); }
-.strata-sticky[data-colour='green']  { background: linear-gradient(180deg, #bbf7d0, #86efac); }
-.strata-sticky[data-colour='violet'] { background: linear-gradient(180deg, #ddd6fe, #c4b5fd); }
-.strata-sticky[data-colour='orange'] { background: linear-gradient(180deg, #fed7aa, #fdba74); }
-.strata-sticky-actions {
+.opencanvas-sticky[data-colour='yellow'] { background: linear-gradient(180deg, #fde68a, #fcd34d); }
+.opencanvas-sticky[data-colour='pink']   { background: linear-gradient(180deg, #fbcfe8, #f9a8d4); }
+.opencanvas-sticky[data-colour='blue']   { background: linear-gradient(180deg, #bfdbfe, #93c5fd); }
+.opencanvas-sticky[data-colour='green']  { background: linear-gradient(180deg, #bbf7d0, #86efac); }
+.opencanvas-sticky[data-colour='violet'] { background: linear-gradient(180deg, #ddd6fe, #c4b5fd); }
+.opencanvas-sticky[data-colour='orange'] { background: linear-gradient(180deg, #fed7aa, #fdba74); }
+.opencanvas-sticky-actions {
   position: absolute;
   top: 6px;
   right: 6px;
   opacity: 0;
   transition: opacity 140ms ease;
 }
-.strata-sticky:hover .strata-sticky-actions {
+.opencanvas-sticky:hover .opencanvas-sticky-actions {
   opacity: 1;
 }
-.strata-sticky-body {
+.opencanvas-sticky-body {
   flex: 1;
   white-space: pre-wrap;
   word-break: break-word;
 }
-.strata-sticky-author {
+.opencanvas-sticky-author {
   font-size: 14px;
   color: rgba(28, 25, 23, 0.66);
 }
 
 /* Multi-attribution sources footer */
-.strata-card-footer--multi {
+.opencanvas-card-footer--multi {
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
 }
-.strata-card-footer-pills {
+.opencanvas-card-footer-pills {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
 }
-.strata-card-footer-pill {
+.opencanvas-card-footer-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -928,7 +928,7 @@
   text-decoration: none;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.strata-card-footer-pill:hover {
+.opencanvas-card-footer-pill:hover {
   background: rgba(167, 139, 250, 0.12);
   border-color: rgba(167, 139, 250, 0.4);
   color: #fafafa;
@@ -938,7 +938,7 @@
  * KB hits panel — surfaces the parallel /v1/search results above the
  * chat composer. Glass background, role-tinted accent, dense rows.
  * ---------------------------------------------------------------------- */
-.strata-kb-hits {
+.opencanvas-kb-hits {
   position: relative;
   margin: 6px 12px 0;
   padding: 8px 10px;
@@ -953,7 +953,7 @@
   font-size: 12px;
   color: var(--color-fg-2);
 }
-.strata-kb-hits-header {
+.opencanvas-kb-hits-header {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -961,13 +961,13 @@
   border-bottom: 1px solid rgba(167, 139, 250, 0.12);
   color: #ddd6fe;
 }
-.strata-kb-hits-label {
+.opencanvas-kb-hits-label {
   flex: 1;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.02em;
 }
-.strata-kb-hits-dismiss {
+.opencanvas-kb-hits-dismiss {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -979,16 +979,16 @@
   color: var(--color-muted);
   cursor: pointer;
 }
-.strata-kb-hits-dismiss:hover {
+.opencanvas-kb-hits-dismiss:hover {
   color: var(--color-fg);
   background: rgba(255, 255, 255, 0.06);
 }
-.strata-kb-hits-empty {
+.opencanvas-kb-hits-empty {
   padding: 4px 2px;
   color: var(--color-muted);
   font-size: 11.5px;
 }
-.strata-kb-hits-list {
+.opencanvas-kb-hits-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -996,7 +996,7 @@
   flex-direction: column;
   gap: 4px;
 }
-.strata-kb-hits-row {
+.opencanvas-kb-hits-row {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -1006,17 +1006,17 @@
   border: 1px solid rgba(255, 255, 255, 0.04);
   transition: border-color 120ms ease, background 120ms ease;
 }
-.strata-kb-hits-row:hover {
+.opencanvas-kb-hits-row:hover {
   border-color: rgba(167, 139, 250, 0.32);
   background: rgba(167, 139, 250, 0.08);
 }
-.strata-kb-hits-row-head {
+.opencanvas-kb-hits-row-head {
   display: flex;
   align-items: baseline;
   gap: 6px;
   min-width: 0;
 }
-.strata-kb-hits-row-kind {
+.opencanvas-kb-hits-row-kind {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1024,7 +1024,7 @@
   color: var(--color-muted);
   flex-shrink: 0;
 }
-.strata-kb-hits-row-title {
+.opencanvas-kb-hits-row-title {
   flex: 1;
   font-size: 12px;
   font-weight: 500;
@@ -1033,7 +1033,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.strata-kb-hits-row-snippet {
+.opencanvas-kb-hits-row-snippet {
   font-size: 11.5px;
   color: var(--color-fg-2);
   line-height: 1.45;
@@ -1043,14 +1043,14 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.strata-kb-hits-row-actions {
+.opencanvas-kb-hits-row-actions {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
-.strata-kb-hits-row-actions button,
-.strata-kb-hits-row-actions a {
+.opencanvas-kb-hits-row-actions button,
+.opencanvas-kb-hits-row-actions a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1065,13 +1065,13 @@
   text-decoration: none;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.strata-kb-hits-row-actions button:hover,
-.strata-kb-hits-row-actions a:hover {
+.opencanvas-kb-hits-row-actions button:hover,
+.opencanvas-kb-hits-row-actions a:hover {
   background: rgba(167, 139, 250, 0.15);
   border-color: rgba(167, 139, 250, 0.45);
   color: #fafafa;
 }
-.strata-kb-hits-row-source {
+.opencanvas-kb-hits-row-source {
   margin-left: auto;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10px;
@@ -1103,16 +1103,16 @@ header [aria-hidden].size-5.rounded-md {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.10) inset,
     0 6px 22px -6px rgba(167, 139, 250, 0.7);
-  animation: strata-mark-breathe 4.8s ease-in-out infinite;
+  animation: opencanvas-mark-breathe 4.8s ease-in-out infinite;
 }
-@keyframes strata-mark-breathe {
+@keyframes opencanvas-mark-breathe {
   0%, 100% { filter: brightness(1) saturate(1); }
   50%      { filter: brightness(1.18) saturate(1.25); }
 }
 
 /* Header buttons — gradient hover that slides in (pure pseudo-element,
    no extra elements in the DOM). */
-.strata-header-btn {
+.opencanvas-header-btn {
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -1121,7 +1121,7 @@ header [aria-hidden].size-5.rounded-md {
     border-color 140ms ease,
     transform 140ms ease;
 }
-.strata-header-btn::before {
+.opencanvas-header-btn::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -1130,15 +1130,15 @@ header [aria-hidden].size-5.rounded-md {
   z-index: -1;
   transition: opacity 160ms ease;
 }
-.strata-header-btn:hover {
+.opencanvas-header-btn:hover {
   color: #fafafa;
   border-color: rgba(167, 139, 250, 0.45);
   transform: translateY(-1px);
 }
-.strata-header-btn:hover::before {
+.opencanvas-header-btn:hover::before {
   opacity: 1;
 }
-.strata-header-btn[data-pressed='true'] {
+.opencanvas-header-btn[data-pressed='true'] {
   background: var(--grad-brand-soft);
   border-color: rgba(167, 139, 250, 0.55);
   color: #fafafa;
@@ -1146,7 +1146,7 @@ header [aria-hidden].size-5.rounded-md {
 }
 
 /* Floating chat — gradient hairline border via background-clip + padding-box. */
-.strata-chat-floating {
+.opencanvas-chat-floating {
   background:
     linear-gradient(rgba(10, 10, 13, 0.92), rgba(10, 10, 13, 0.92)) padding-box,
     var(--grad-brand) border-box;
@@ -1157,25 +1157,25 @@ header [aria-hidden].size-5.rounded-md {
     box-shadow 240ms ease,
     transform 200ms ease;
 }
-.strata-chat-floating[data-streaming='true'] {
+.opencanvas-chat-floating[data-streaming='true'] {
   box-shadow:
     0 24px 70px -22px rgba(0, 0, 0, 0.65),
     0 0 0 1px rgba(167, 139, 250, 0.22) inset,
     0 0 42px -6px rgba(240, 171, 252, 0.32);
-  animation: strata-chat-glow 2.4s ease-in-out infinite;
+  animation: opencanvas-chat-glow 2.4s ease-in-out infinite;
 }
-@keyframes strata-chat-glow {
+@keyframes opencanvas-chat-glow {
   0%, 100% { filter: saturate(1) brightness(1); }
   50%      { filter: saturate(1.12) brightness(1.06); }
 }
 
 /* Chat title bar — animated gradient sweep while streaming. */
-.strata-chat-titlebar {
+.opencanvas-chat-titlebar {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
   position: relative;
 }
-.strata-chat-floating[data-streaming='true'] .strata-chat-titlebar::after {
+.opencanvas-chat-floating[data-streaming='true'] .opencanvas-chat-titlebar::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -1188,19 +1188,19 @@ header [aria-hidden].size-5.rounded-md {
     transparent 100%
   );
   background-size: 240% 100%;
-  animation: strata-titlebar-sweep 2.4s linear infinite;
+  animation: opencanvas-titlebar-sweep 2.4s linear infinite;
   pointer-events: none;
 }
-@keyframes strata-titlebar-sweep {
+@keyframes opencanvas-titlebar-sweep {
   from { background-position: 240% 0; }
   to   { background-position: -140% 0; }
 }
 
 /* Composer input — gradient focus ring instead of flat violet. */
-.strata-chat-body input[type='text'] {
+.opencanvas-chat-body input[type='text'] {
   transition: border-color 160ms ease, box-shadow 200ms ease, background 160ms ease;
 }
-.strata-chat-body input[type='text']:focus {
+.opencanvas-chat-body input[type='text']:focus {
   border-color: rgba(167, 139, 250, 0.55) !important;
   background: rgba(167, 139, 250, 0.04) !important;
   box-shadow:
@@ -1211,7 +1211,7 @@ header [aria-hidden].size-5.rounded-md {
 /* Send button — vibrant gradient pill with hover lift. The Chat.tsx
    button doesn't have a single class to target, so we hit the form's
    submit-type button directly. */
-.strata-chat-body form button[type='submit'] {
+.opencanvas-chat-body form button[type='submit'] {
   background: var(--grad-brand) !important;
   border-color: transparent !important;
   color: #0a0a0d !important;
@@ -1219,53 +1219,53 @@ header [aria-hidden].size-5.rounded-md {
   transition: transform 140ms ease, box-shadow 200ms ease, filter 160ms ease;
   box-shadow: 0 6px 18px -6px rgba(167, 139, 250, 0.55);
 }
-.strata-chat-body form button[type='submit']:not(:disabled):hover {
+.opencanvas-chat-body form button[type='submit']:not(:disabled):hover {
   transform: translateY(-1px) scale(1.02);
   filter: saturate(1.18) brightness(1.06);
   box-shadow: 0 12px 28px -6px rgba(240, 171, 252, 0.55);
 }
-.strata-chat-body form button[type='submit']:disabled {
+.opencanvas-chat-body form button[type='submit']:disabled {
   filter: grayscale(0.4) brightness(0.7);
   opacity: 0.6;
   box-shadow: none;
 }
 
 /* Cards — soft role-tinted glow when hovered, transform-only animation. */
-.strata-card {
+.opencanvas-card {
   transition:
     transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 200ms ease;
   will-change: transform;
 }
-.strata-card:hover {
+.opencanvas-card:hover {
   transform: translateY(-1px);
 }
-.strata-card[data-role='primary']:hover   { box-shadow: 0 14px 34px -10px rgba(167, 139, 250, 0.42); }
-.strata-card[data-role='detail']:hover    { box-shadow: 0 14px 34px -10px rgba(96, 165, 250, 0.42); }
-.strata-card[data-role='related']:hover   { box-shadow: 0 14px 34px -10px rgba(45, 212, 191, 0.42); }
-.strata-card[data-role='reference']:hover { box-shadow: 0 14px 34px -10px rgba(251, 191, 36, 0.42); }
-.strata-card[data-role='timeline']:hover  { box-shadow: 0 14px 34px -10px rgba(251, 113, 133, 0.42); }
-.strata-card[data-role='node']:hover      { box-shadow: 0 14px 34px -10px rgba(52, 211, 153, 0.42); }
+.opencanvas-card[data-role='primary']:hover   { box-shadow: 0 14px 34px -10px rgba(167, 139, 250, 0.42); }
+.opencanvas-card[data-role='detail']:hover    { box-shadow: 0 14px 34px -10px rgba(96, 165, 250, 0.42); }
+.opencanvas-card[data-role='related']:hover   { box-shadow: 0 14px 34px -10px rgba(45, 212, 191, 0.42); }
+.opencanvas-card[data-role='reference']:hover { box-shadow: 0 14px 34px -10px rgba(251, 191, 36, 0.42); }
+.opencanvas-card[data-role='timeline']:hover  { box-shadow: 0 14px 34px -10px rgba(251, 113, 133, 0.42); }
+.opencanvas-card[data-role='node']:hover      { box-shadow: 0 14px 34px -10px rgba(52, 211, 153, 0.42); }
 
 /* "Freshly placed" pulse — slightly bigger entry + role-glow. */
-.strata-card[data-fresh='true'] {
-  animation: strata-card-pop 600ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
+.opencanvas-card[data-fresh='true'] {
+  animation: opencanvas-card-pop 600ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
 }
-@keyframes strata-card-pop {
+@keyframes opencanvas-card-pop {
   0%   { transform: scale(0.96); opacity: 0; }
   60%  { transform: scale(1.015); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
 
 /* KB hits panel — gradient backdrop instead of flat violet wash. */
-.strata-kb-hits {
+.opencanvas-kb-hits {
   background:
     linear-gradient(135deg, rgba(167, 139, 250, 0.06) 0%, rgba(240, 171, 252, 0.05) 50%, rgba(103, 232, 249, 0.06) 100%);
   border-color: transparent;
   position: relative;
 }
-.strata-kb-hits::before {
+.opencanvas-kb-hits::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -1280,10 +1280,10 @@ header [aria-hidden].size-5.rounded-md {
   opacity: 0.4;
   pointer-events: none;
 }
-.strata-kb-hits-row {
+.opencanvas-kb-hits-row {
   transition: transform 140ms ease, border-color 140ms ease, background 160ms ease;
 }
-.strata-kb-hits-row:hover {
+.opencanvas-kb-hits-row:hover {
   transform: translateX(2px);
   border-color: rgba(167, 139, 250, 0.45);
   background:
@@ -1293,14 +1293,14 @@ header [aria-hidden].size-5.rounded-md {
 /* (Canvas-map polish moved into the real minimap selector earlier.) */
 
 /* Launcher bubble — animated gradient + breathing. */
-.strata-chat-launcher {
+.opencanvas-chat-launcher {
   background:
     linear-gradient(rgba(10, 10, 13, 0.86), rgba(10, 10, 13, 0.86)) padding-box,
     var(--grad-brand) border-box;
   border: 1px solid transparent;
-  animation: strata-mark-breathe 5.6s ease-in-out infinite;
+  animation: opencanvas-mark-breathe 5.6s ease-in-out infinite;
 }
-.strata-chat-launcher::before {
+.opencanvas-chat-launcher::before {
   content: '';
   position: absolute;
   inset: -8px;
@@ -1318,7 +1318,7 @@ header button:hover {
 }
 
 /* Composer status pill — gradient backdrop. */
-.strata-composer-status {
+.opencanvas-composer-status {
   background: var(--grad-brand-soft);
   border-color: rgba(167, 139, 250, 0.35);
   color: #ede9fe;
@@ -1327,19 +1327,19 @@ header button:hover {
 
 /* Subtle dotted-grid responds to pointer — lifts opacity near the cursor.
    Uses background-position only (no JS), GPU-accelerated. */
-.strata-canvas-grid {
+.opencanvas-canvas-grid {
   transition: opacity 240ms ease;
   opacity: 0.7;
 }
-.strata-canvas-grid:hover {
+.opencanvas-canvas-grid:hover {
   opacity: 1;
 }
 
 /* Sticky-note hover — cute lift + slight rotation for personality. */
-.strata-sticky {
+.opencanvas-sticky {
   transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease;
 }
-.strata-sticky:hover {
+.opencanvas-sticky:hover {
   transform: translateY(-2px) rotate(-0.4deg);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
@@ -1347,14 +1347,14 @@ header button:hover {
 }
 
 /* Tag pills get a faint gradient when accent. */
-.strata-tag--accent {
+.opencanvas-tag--accent {
   background: var(--grad-brand-soft) !important;
   border-color: rgba(167, 139, 250, 0.45) !important;
   color: #ede9fe !important;
 }
 
 /* Drawer panels — gradient hairline. */
-.strata-glass {
+.opencanvas-glass {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -1366,7 +1366,7 @@ header button:hover {
 }
 
 /* Streaming pulse bar — already exists, replace the gradient with the brand. */
-.strata-header-pulse {
+.opencanvas-header-pulse {
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -1394,7 +1394,7 @@ header button:hover {
  * Driven by data-busy on the input + the LiveStatus component.
  * ---------------------------------------------------------------------- */
 
-.strata-live-status {
+.opencanvas-live-status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1414,7 +1414,7 @@ header button:hover {
   position: relative;
   overflow: hidden;
 }
-.strata-live-status::before {
+.opencanvas-live-status::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -1427,39 +1427,39 @@ header button:hover {
     transparent 100%
   );
   background-size: 240% 100%;
-  animation: strata-titlebar-sweep 2.4s linear infinite;
+  animation: opencanvas-titlebar-sweep 2.4s linear infinite;
   pointer-events: none;
 }
-.strata-live-status-emoji {
+.opencanvas-live-status-emoji {
   font-size: 14px;
   line-height: 1;
   filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6));
-  animation: strata-emoji-bob 1.6s ease-in-out infinite;
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
 }
-@keyframes strata-emoji-bob {
+@keyframes opencanvas-emoji-bob {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-2px); }
 }
-.strata-live-status-label {
+.opencanvas-live-status-label {
   position: relative;
 }
-.strata-live-status-dots {
+.opencanvas-live-status-dots {
   display: inline-flex;
   gap: 3px;
   margin-left: 2px;
 }
-.strata-live-status-dots span {
+.opencanvas-live-status-dots span {
   display: inline-block;
   width: 4px;
   height: 4px;
   border-radius: 999px;
   background: currentColor;
   opacity: 0.6;
-  animation: strata-dot-bounce 1.2s ease-in-out infinite;
+  animation: opencanvas-dot-bounce 1.2s ease-in-out infinite;
 }
-.strata-live-status-dots span:nth-child(2) { animation-delay: 0.15s; }
-.strata-live-status-dots span:nth-child(3) { animation-delay: 0.30s; }
-@keyframes strata-dot-bounce {
+.opencanvas-live-status-dots span:nth-child(2) { animation-delay: 0.15s; }
+.opencanvas-live-status-dots span:nth-child(3) { animation-delay: 0.30s; }
+@keyframes opencanvas-dot-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30%           { transform: translateY(-3px); opacity: 1; }
 }
@@ -1467,7 +1467,7 @@ header button:hover {
 /* Composer input — animated gradient border while busy. We keep the
    resting border subtle and switch to a sweeping gradient hairline once
    data-busy="true". Pure background-position animation, no layout. */
-.strata-chat-input[data-busy='true'] {
+.opencanvas-chat-input[data-busy='true'] {
   background:
     linear-gradient(var(--color-bg-2), var(--color-bg-2)) padding-box,
     linear-gradient(
@@ -1480,26 +1480,26 @@ header button:hover {
     ) border-box !important;
   background-size: 200% 100%, 300% 100% !important;
   border: 1px solid transparent !important;
-  animation: strata-input-busy 2.4s linear infinite;
+  animation: opencanvas-input-busy 2.4s linear infinite;
   box-shadow:
     0 0 0 3px rgba(167, 139, 250, 0.10),
     0 0 28px -6px rgba(240, 171, 252, 0.45) !important;
 }
-@keyframes strata-input-busy {
+@keyframes opencanvas-input-busy {
   from { background-position: 0 0, 0 0; }
   to   { background-position: 0 0, -300% 0; }
 }
 
 /* Make the placeholder shimmer while busy too — pure background trick. */
-.strata-chat-input[data-busy='true']::placeholder {
+.opencanvas-chat-input[data-busy='true']::placeholder {
   background: var(--grad-brand);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: strata-placeholder-shimmer 3s linear infinite;
+  animation: opencanvas-placeholder-shimmer 3s linear infinite;
 }
-@keyframes strata-placeholder-shimmer {
+@keyframes opencanvas-placeholder-shimmer {
   from { background-position: 200% 0; }
   to   { background-position: -100% 0; }
 }
@@ -1511,7 +1511,7 @@ header button:hover {
  * so it costs no space when idle. Bounded max-height keeps a long list
  * of KB hits from pushing the messages list off-screen.
  * ---------------------------------------------------------------------- */
-.strata-chat-overlay {
+.opencanvas-chat-overlay {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -1520,16 +1520,16 @@ header button:hover {
   max-height: 40vh;
   overflow: hidden;
 }
-.strata-chat-overlay .strata-kb-hits {
+.opencanvas-chat-overlay .opencanvas-kb-hits {
   margin: 0 12px;
 }
-.strata-chat-overlay .strata-live-status {
+.opencanvas-chat-overlay .opencanvas-live-status {
   margin: 0 12px;
   align-self: flex-start;
 }
 
 /* Reasoning ("Show thinking") block. */
-.strata-thinking {
+.opencanvas-thinking {
   margin-top: 6px;
   border-radius: 10px;
   border: 1px solid rgba(167, 139, 250, 0.18);
@@ -1539,7 +1539,7 @@ header button:hover {
   overflow: hidden;
   font-size: 12.5px;
 }
-.strata-thinking-toggle {
+.opencanvas-thinking-toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1555,17 +1555,17 @@ header button:hover {
   text-align: left;
   transition: background 140ms ease;
 }
-.strata-thinking-toggle:hover {
+.opencanvas-thinking-toggle:hover {
   background: rgba(167, 139, 250, 0.08);
 }
-.strata-thinking-toggle-chevron {
+.opencanvas-thinking-toggle-chevron {
   transition: transform 200ms ease;
   display: inline-flex;
 }
-.strata-thinking-toggle[aria-expanded='true'] .strata-thinking-toggle-chevron {
+.opencanvas-thinking-toggle[aria-expanded='true'] .opencanvas-thinking-toggle-chevron {
   transform: rotate(90deg);
 }
-.strata-thinking-toggle-streaming {
+.opencanvas-thinking-toggle-streaming {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
@@ -1573,7 +1573,7 @@ header button:hover {
   font-size: 10px;
   color: #c4b5fd;
 }
-.strata-thinking-body {
+.opencanvas-thinking-body {
   padding: 8px 12px 10px;
   border-top: 1px solid rgba(167, 139, 250, 0.16);
   color: var(--color-fg-2);
@@ -1590,7 +1590,7 @@ header button:hover {
  * body, so the user sees progress in the conversation flow rather than
  * as a separate floating pill.
  * ---------------------------------------------------------------------- */
-.strata-inline-step {
+.opencanvas-inline-step {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1605,13 +1605,13 @@ header button:hover {
   align-self: flex-start;
   width: fit-content;
 }
-.strata-inline-step-emoji {
+.opencanvas-inline-step-emoji {
   font-size: 13px;
   line-height: 1;
   filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.55));
-  animation: strata-emoji-bob 1.6s ease-in-out infinite;
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
 }
-.strata-inline-step-label {
+.opencanvas-inline-step-label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1619,7 +1619,7 @@ header button:hover {
 }
 
 /* Minimap toggle (collapse/expand). */
-.strata-canvas-map-toggle {
+.opencanvas-canvas-map-toggle {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
@@ -1633,18 +1633,18 @@ header button:hover {
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
 }
-.strata-canvas-map-toggle:hover {
+.opencanvas-canvas-map-toggle:hover {
   color: #fafafa;
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.10);
 }
 
 /* Collapsed minimap — header chip only, narrower, no SVG. */
-.strata-canvas-map[data-collapsed='true'] {
+.opencanvas-canvas-map[data-collapsed='true'] {
   width: auto;
   padding: 4px 6px;
 }
-.strata-canvas-map[data-collapsed='true'] .strata-canvas-map-header {
+.opencanvas-canvas-map[data-collapsed='true'] .opencanvas-canvas-map-header {
   padding: 0;
 }
 
@@ -1653,7 +1653,7 @@ header button:hover {
  * region as the input so live updates + KB hits visually belong with
  * the place the user is typing into.
  * ---------------------------------------------------------------------- */
-.strata-composer-status-row {
+.opencanvas-composer-status-row {
   position: relative;
   display: flex;
   align-items: center;
@@ -1666,7 +1666,7 @@ header button:hover {
 }
 
 /* Live step pill — sits left, animated emoji, bouncing dots. */
-.strata-composer-step {
+.opencanvas-composer-step {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1683,7 +1683,7 @@ header button:hover {
   position: relative;
   overflow: hidden;
 }
-.strata-composer-step::before {
+.opencanvas-composer-step::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -1696,17 +1696,17 @@ header button:hover {
     transparent 100%
   );
   background-size: 240% 100%;
-  animation: strata-titlebar-sweep 2.4s linear infinite;
+  animation: opencanvas-titlebar-sweep 2.4s linear infinite;
   pointer-events: none;
 }
-.strata-composer-step-emoji {
+.opencanvas-composer-step-emoji {
   font-size: 14px;
   line-height: 1;
   filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.65));
-  animation: strata-emoji-bob 1.6s ease-in-out infinite;
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
   position: relative;
 }
-.strata-composer-step-label {
+.opencanvas-composer-step-label {
   position: relative;
   white-space: nowrap;
   overflow: hidden;
@@ -1715,7 +1715,7 @@ header button:hover {
 }
 
 /* KB hit count chip — clickable, opens the popover above. */
-.strata-composer-hits-chip {
+.opencanvas-composer-hits-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1729,13 +1729,13 @@ header button:hover {
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
 }
-.strata-composer-hits-chip:hover {
+.opencanvas-composer-hits-chip:hover {
   background: rgba(167, 139, 250, 0.18);
   border-color: rgba(167, 139, 250, 0.55);
   color: #fafafa;
   transform: translateY(-1px);
 }
-.strata-composer-hits-chip[aria-expanded='true'] {
+.opencanvas-composer-hits-chip[aria-expanded='true'] {
   background: rgba(167, 139, 250, 0.22);
   border-color: rgba(167, 139, 250, 0.6);
   color: #fafafa;
@@ -1744,7 +1744,7 @@ header button:hover {
 /* Hits popover — anchored to the composer status row, expands UPWARD so
    it doesn't shove the input down. Capped at 40vh so a flood of results
    can't push the messages off-screen. */
-.strata-composer-hits-popover {
+.opencanvas-composer-hits-popover {
   position: absolute;
   left: 12px;
   right: 12px;
@@ -1764,7 +1764,7 @@ header button:hover {
   max-height: 40vh;
   overflow-y: auto;
 }
-.strata-composer-hits-popover-header {
+.opencanvas-composer-hits-popover-header {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1776,7 +1776,7 @@ header button:hover {
   font-weight: 500;
   letter-spacing: 0.02em;
 }
-.strata-composer-hits-popover-dismiss {
+.opencanvas-composer-hits-popover-dismiss {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
@@ -1790,11 +1790,11 @@ header button:hover {
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease;
 }
-.strata-composer-hits-popover-dismiss:hover {
+.opencanvas-composer-hits-popover-dismiss:hover {
   color: var(--color-fg);
   background: rgba(255, 255, 255, 0.06);
 }
-.strata-composer-hits-list {
+.opencanvas-composer-hits-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1802,7 +1802,7 @@ header button:hover {
   flex-direction: column;
   gap: 4px;
 }
-.strata-composer-hits-row {
+.opencanvas-composer-hits-row {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -1812,19 +1812,19 @@ header button:hover {
   border: 1px solid rgba(255, 255, 255, 0.04);
   transition: transform 140ms ease, border-color 140ms ease, background 160ms ease;
 }
-.strata-composer-hits-row:hover {
+.opencanvas-composer-hits-row:hover {
   transform: translateX(2px);
   border-color: rgba(167, 139, 250, 0.45);
   background:
     linear-gradient(90deg, rgba(167, 139, 250, 0.10) 0%, rgba(240, 171, 252, 0.06) 100%);
 }
-.strata-composer-hits-row-head {
+.opencanvas-composer-hits-row-head {
   display: flex;
   align-items: baseline;
   gap: 6px;
   min-width: 0;
 }
-.strata-composer-hits-row-kind {
+.opencanvas-composer-hits-row-kind {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1832,7 +1832,7 @@ header button:hover {
   color: var(--color-muted);
   flex-shrink: 0;
 }
-.strata-composer-hits-row-title {
+.opencanvas-composer-hits-row-title {
   flex: 1;
   font-size: 12px;
   font-weight: 500;
@@ -1841,7 +1841,7 @@ header button:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.strata-composer-hits-row-snippet {
+.opencanvas-composer-hits-row-snippet {
   font-size: 11.5px;
   color: var(--color-fg-2);
   line-height: 1.45;
@@ -1850,14 +1850,14 @@ header button:hover {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.strata-composer-hits-row-actions {
+.opencanvas-composer-hits-row-actions {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
-.strata-composer-hits-row-actions button,
-.strata-composer-hits-row-actions a {
+.opencanvas-composer-hits-row-actions button,
+.opencanvas-composer-hits-row-actions a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1872,13 +1872,13 @@ header button:hover {
   text-decoration: none;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.strata-composer-hits-row-actions button:hover,
-.strata-composer-hits-row-actions a:hover {
+.opencanvas-composer-hits-row-actions button:hover,
+.opencanvas-composer-hits-row-actions a:hover {
   background: rgba(167, 139, 250, 0.15);
   border-color: rgba(167, 139, 250, 0.45);
   color: #fafafa;
 }
-.strata-composer-hits-row-source {
+.opencanvas-composer-hits-row-source {
   margin-left: auto;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10px;
@@ -1895,14 +1895,14 @@ header button:hover {
  * so the user can still focus + type through it; vanishes the moment
  * `input.value` becomes non-empty.
  * ---------------------------------------------------------------------- */
-.strata-chat-input-wrap {
+.opencanvas-chat-input-wrap {
   display: flex;
   align-items: stretch;
 }
-.strata-chat-input-wrap .strata-chat-input {
+.opencanvas-chat-input-wrap .opencanvas-chat-input {
   flex: 1;
 }
-.strata-input-step {
+.opencanvas-input-step {
   /* Stretch to the input's full content box and use flex centering so
      the mixed-size children (16px emoji + 14px label + dots) all share
      the input's vertical baseline. No manual translateY math, no
@@ -1923,7 +1923,7 @@ header button:hover {
   white-space: nowrap;
   overflow: hidden;
 }
-.strata-input-step-emoji {
+.opencanvas-input-step-emoji {
   font-size: 16px;
   line-height: 1;
   flex-shrink: 0;
@@ -1932,9 +1932,9 @@ header button:hover {
      centre; this nudge balances them with the 14px label text. */
   margin-top: -1px;
   filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.7));
-  animation: strata-emoji-bob 1.6s ease-in-out infinite;
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
 }
-.strata-input-step-label {
+.opencanvas-input-step-label {
   /* Match the input's typography exactly. line-height: 1.2 gives the
      gradient-clipped text room without breaking flex centering (the
      parent's line-height: 1 still drives the box height). */
@@ -1945,12 +1945,12 @@ header button:hover {
   background-clip: text;
   color: transparent;
   background-size: 200% 100%;
-  animation: strata-placeholder-shimmer 3s linear infinite;
+  animation: opencanvas-placeholder-shimmer 3s linear infinite;
   min-width: 0;
   text-overflow: ellipsis;
   overflow: hidden;
 }
-.strata-input-step .strata-live-status-dots {
+.opencanvas-input-step .opencanvas-live-status-dots {
   flex-shrink: 0;
   color: #a78bfa;
   display: inline-flex;
@@ -1965,12 +1965,12 @@ header button:hover {
 }
 
 /* Danger variant of the header icon button — used by Clear canvas. */
-.strata-header-btn--danger:hover {
+.opencanvas-header-btn--danger:hover {
   color: #fecaca !important;
   border-color: rgba(248, 113, 113, 0.45) !important;
   background: rgba(248, 113, 113, 0.10) !important;
 }
-.strata-header-btn--danger:hover::before {
+.opencanvas-header-btn--danger:hover::before {
   background: linear-gradient(
     135deg,
     rgba(248, 113, 113, 0.18) 0%,

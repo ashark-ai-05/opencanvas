@@ -11,7 +11,7 @@ import { resizeBox } from 'tldraw';
 import { CardActions, CardFrame, CardHeader, CardTitle, CopyAction, Tag } from './shared';
 
 export type CodeBlockShape = TLBaseShape<
-  'strata:code-block',
+  'opencanvas:code-block',
   {
     w: number;
     h: number;
@@ -29,7 +29,7 @@ export type CodeBlockShape = TLBaseShape<
 >;
 
 export class CodeBlockShapeUtil extends ShapeUtil<CodeBlockShape> {
-  static override type = 'strata:code-block' as const;
+  static override type = 'opencanvas:code-block' as const;
 
   static override props: RecordProps<CodeBlockShape> = {
     w: T.number,
@@ -79,7 +79,7 @@ export class CodeBlockShapeUtil extends ShapeUtil<CodeBlockShape> {
               extras={<CopyAction text={shape.props.code} label="code" />}
             />
           </CardHeader>
-          <pre className="strata-card-body strata-card-body--mono" style={{ margin: 0 }}>
+          <pre className="opencanvas-card-body opencanvas-card-body--mono" style={{ margin: 0 }}>
             {shape.props.code}
           </pre>
         </CardFrame>

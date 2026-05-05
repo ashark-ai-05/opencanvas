@@ -3,7 +3,7 @@ import { Sparkles, Search, LayoutGrid, Globe } from 'lucide-react';
 import { useCanvasStats } from '../state/canvas-stats-store';
 
 /**
- * Shown when the canvas has zero Strata widgets. Disappears with a fade as
+ * Shown when the canvas has zero OpenCanvas widgets. Disappears with a fade as
  * soon as the first widget is placed. Positioned absolutely; doesn't block
  * canvas interactions (pointer-events: none everywhere except the chip itself).
  */
@@ -30,7 +30,7 @@ export function EmptyCanvasHint() {
           }}
         >
           <div
-            className="strata-glass"
+            className="opencanvas-glass"
             style={{
               padding: '20px 24px',
               borderRadius: 16,
@@ -65,7 +65,7 @@ export function EmptyCanvasHint() {
                 color: '#fafafa',
               }}
             >
-              Ask Strata to build your view
+              Ask OpenCanvas to build your view
             </h2>
             <p
               style={{

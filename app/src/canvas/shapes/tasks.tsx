@@ -35,7 +35,7 @@ export type TaskItem = {
 };
 
 export type TasksShape = TLBaseShape<
-  'strata:tasks',
+  'opencanvas:tasks',
   {
     w: number;
     h: number;
@@ -47,7 +47,7 @@ export type TasksShape = TLBaseShape<
 >;
 
 export class TasksShapeUtil extends ShapeUtil<TasksShape> {
-  static override type = 'strata:tasks' as const;
+  static override type = 'opencanvas:tasks' as const;
 
   static override props: RecordProps<TasksShape> = {
     w: T.number,
@@ -82,7 +82,7 @@ export class TasksShapeUtil extends ShapeUtil<TasksShape> {
             <CardActions shape={shape} />
           </CardHeader>
           <CardBody>
-            <ul className="strata-tasks">
+            <ul className="opencanvas-tasks">
               {items.map((item, i) => (
                 <TaskRow key={item.id ?? i} item={item} index={i} shape={shape} />
               ))}
@@ -124,13 +124,13 @@ function TaskRow({
     items[index] = { ...target, done: !target.done };
     editor.updateShape({
       id: shape.id as never,
-      type: 'strata:tasks' as never,
+      type: 'opencanvas:tasks' as never,
       props: { items } as never,
     } as never);
   };
   return (
     <li
-      className="strata-tasks-row"
+      className="opencanvas-tasks-row"
       data-done={item.done ? 'true' : 'false'}
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
@@ -139,10 +139,10 @@ function TaskRow({
         type="checkbox"
         checked={item.done === true}
         onChange={toggle}
-        className="strata-tasks-checkbox"
+        className="opencanvas-tasks-checkbox"
         aria-label={item.text}
       />
-      <span className="strata-tasks-text">
+      <span className="opencanvas-tasks-text">
         {item.url ? (
           <a href={item.url} target="_blank" rel="noopener noreferrer">
             {item.text}
@@ -153,9 +153,9 @@ function TaskRow({
       </span>
       {item.priority && <Tag>{item.priority}</Tag>}
       {item.assignee && (
-        <span className="strata-tasks-assignee">{item.assignee}</span>
+        <span className="opencanvas-tasks-assignee">{item.assignee}</span>
       )}
-      {item.due && <span className="strata-tasks-due">{item.due}</span>}
+      {item.due && <span className="opencanvas-tasks-due">{item.due}</span>}
     </li>
   );
 }

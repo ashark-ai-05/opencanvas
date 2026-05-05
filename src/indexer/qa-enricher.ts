@@ -10,7 +10,7 @@
  * body so keyword recall is unaffected — only the vector subspace
  * changes.
  *
- * Caches results at `~/.strata/cache/qa/<sha256(body[..6000])>.json`.
+ * Caches results at `~/.opencanvas/cache/qa/<sha256(body[..6000])>.json`.
  * Cache hit ⇒ 0 LLM calls (idempotency contract, spec §19).
  *
  * Spec: REPLICATION-PROMPT.md §9 + KNOWLEDGE-BASE.md.
@@ -23,7 +23,7 @@ import { join } from 'node:path';
 import type { LLMProvider } from '../core/provider.js';
 
 const HASH_TRUNCATE = 6000;
-const CACHE_DIR = join(homedir(), '.strata', 'cache', 'qa');
+const CACHE_DIR = join(homedir(), '.opencanvas', 'cache', 'qa');
 const TARGET_QUERY_COUNT = 12;
 const MIN_QUERY_COUNT = 8;
 const MAX_QUERY_COUNT = 24;

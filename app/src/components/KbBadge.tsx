@@ -50,7 +50,7 @@ export function KbBadge({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       aria-label={`Knowledge base — ${total} chunks indexed`}
       title={`Knowledge base — ${total} chunks indexed`}
-      className="relative inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-[12px] font-medium text-zinc-300 hover:text-white border border-white/8 hover:border-white/15 transition-colors strata-kb-badge"
+      className="relative inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-[12px] font-medium text-zinc-300 hover:text-white border border-white/8 hover:border-white/15 transition-colors opencanvas-kb-badge"
       data-pulse-key={pulseKey}
       style={{ background: 'rgba(255,255,255,0.03)' }}
     >

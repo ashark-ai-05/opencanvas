@@ -4,7 +4,7 @@ import type { BackendState } from '../state.js';
 /**
  * POST /v1/index-conversation
  *
- * Strata's compounding-value mechanic: every chat turn that completes
+ * OpenCanvas's compounding-value mechanic: every chat turn that completes
  * gets chunked + embedded into the same SQLite store the document/code
  * indexers use. After enough use, search_kb naturally surfaces hits
  * from your prior conversations alongside hits from your docs/code.

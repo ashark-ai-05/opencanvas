@@ -62,16 +62,16 @@ export async function loadInitialMigrations(): Promise<Migration[]> {
 }
 
 /**
- * Opens the user-default store at `~/.strata/index.sqlite`, creating
+ * Opens the user-default store at `~/.opencanvas/index.sqlite`, creating
  * the directory and running migrations on first call. Override the path
- * with the `STRATA_STORE_PATH` env var (set to `:memory:` for tests).
+ * with the `OPENCANVAS_STORE_PATH` env var (set to `:memory:` for tests).
  */
 export async function openDefaultStore(): Promise<Store> {
-  const override = process.env['STRATA_STORE_PATH'];
+  const override = process.env['OPENCANVAS_STORE_PATH'];
   const path =
     override ??
     (() => {
-      const dir = `${homedir()}/.strata`;
+      const dir = `${homedir()}/.opencanvas`;
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
       return `${dir}/index.sqlite`;
     })();

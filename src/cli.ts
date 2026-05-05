@@ -1,5 +1,5 @@
 /**
- * strata CLI entry point.
+ * opencanvas CLI entry point.
  *
  * Usage:
  *   pnpm cli --profile <name> "<prompt>"   # stream a response
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
     const { activeProfile } = loadConfig(profileOverride);
     if (activeProfile.sources.length === 0) {
       console.log('No sources configured for profile:', activeProfile.name);
-      console.log("Add sources to ~/.strata/config.json under profiles[].sources.");
+      console.log("Add sources to ~/.opencanvas/config.json under profiles[].sources.");
       return;
     }
     console.log(`Sources for profile '${activeProfile.name}':`);
@@ -320,7 +320,7 @@ async function main(): Promise<void> {
     const { openStore, loadInitialMigrations } = await import('./storage/store.js');
     const { migrate } = await import('./storage/migrations.js');
 
-    const dir = join(homedir(), '.strata');
+    const dir = join(homedir(), '.opencanvas');
     const path = join(dir, 'index.sqlite');
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 

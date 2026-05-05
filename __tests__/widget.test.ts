@@ -7,18 +7,18 @@ describe('Widget type contract', () => {
     const w: Widget = {
       id: 'test',
       acceptsKinds: ['text-document'] as ResultKind[],
-      shapeType: 'strata:test',
+      shapeType: 'opencanvas:test',
     };
     expect(w.id).toBe('test');
     expect(w.acceptsKinds).toContain('text-document');
-    expect(w.shapeType).toBe('strata:test');
+    expect(w.shapeType).toBe('opencanvas:test');
   });
 
   it('allows optional actions and refresh', () => {
     const w: Widget = {
       id: 'with-actions',
       acceptsKinds: ['ticket'],
-      shapeType: 'strata:ticket',
+      shapeType: 'opencanvas:ticket',
       actions: [
         { id: 'open-source', label: 'Open in source' },
         { id: 'pin', label: 'Pin' },

@@ -11,12 +11,12 @@ export function StreamingComposerStatus() {
   const busy = useUiStore((s) => s.chatBusy);
   return (
     <div
-      className="strata-composer-status"
+      className="opencanvas-composer-status"
       data-state={busy ? 'streaming' : 'idle'}
       aria-live="polite"
     >
       <Loader2 className="size-3 animate-spin" />
-      Strata is thinking…
+      OpenCanvas is thinking…
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { MarkdownShapeUtil } from '../../app/src/canvas/shapes/markdown';
 
 describe('MarkdownShapeUtil', () => {
   it('declares the namespaced shape type', () => {
-    expect(MarkdownShapeUtil.type).toBe('strata:markdown');
+    expect(MarkdownShapeUtil.type).toBe('opencanvas:markdown');
   });
 
   it('declares the typed props schema', () => {

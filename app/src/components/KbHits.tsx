@@ -40,17 +40,17 @@ export function KbHits({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 4 }}
           transition={{ duration: 0.18 }}
-          className="strata-kb-hits"
+          className="opencanvas-kb-hits"
         >
-          <div className="strata-kb-hits-header">
+          <div className="opencanvas-kb-hits-header">
             <Database className="size-3" />
-            <span className="strata-kb-hits-label">
+            <span className="opencanvas-kb-hits-label">
               {busy ? `Searching KB for “${query}”…` : `KB hits for “${query}”`}
             </span>
             {busy && <Loader2 className="size-3 animate-spin" />}
             <button
               type="button"
-              className="strata-kb-hits-dismiss"
+              className="opencanvas-kb-hits-dismiss"
               title="Hide KB hits"
               aria-label="Hide KB hits"
               onClick={(e) => {
@@ -63,31 +63,31 @@ export function KbHits({
           </div>
 
           {!busy && hits && hits.length === 0 && (
-            <div className="strata-kb-hits-empty">
+            <div className="opencanvas-kb-hits-empty">
               No matches in your local KB. The agent may still answer from
               its model, web search, or external MCP sources.
             </div>
           )}
 
           {hits && hits.length > 0 && (
-            <ul className="strata-kb-hits-list">
+            <ul className="opencanvas-kb-hits-list">
               {hits.map((hit) => {
                 const title = readTitle(hit);
                 const snippet = readSnippet(hit);
                 const uri = hit.provenance?.uri ?? '';
                 const isUrl = /^https?:\/\//.test(uri);
                 return (
-                  <li key={hit.id} className="strata-kb-hits-row">
-                    <div className="strata-kb-hits-row-head">
-                      <span className="strata-kb-hits-row-kind">
+                  <li key={hit.id} className="opencanvas-kb-hits-row">
+                    <div className="opencanvas-kb-hits-row-head">
+                      <span className="opencanvas-kb-hits-row-kind">
                         {hit.kind}
                       </span>
-                      <span className="strata-kb-hits-row-title">{title}</span>
+                      <span className="opencanvas-kb-hits-row-title">{title}</span>
                     </div>
                     {snippet && (
-                      <div className="strata-kb-hits-row-snippet">{snippet}</div>
+                      <div className="opencanvas-kb-hits-row-snippet">{snippet}</div>
                     )}
-                    <div className="strata-kb-hits-row-actions">
+                    <div className="opencanvas-kb-hits-row-actions">
                       <button
                         type="button"
                         title="Place on canvas"
@@ -106,7 +106,7 @@ export function KbHits({
                           <ExternalLink className="size-3" /> Open
                         </a>
                       )}
-                      <span className="strata-kb-hits-row-source">
+                      <span className="opencanvas-kb-hits-row-source">
                         {hit.sourceId}
                       </span>
                     </div>

@@ -21,7 +21,7 @@ type Event = {
 };
 
 export type TimelineShape = TLBaseShape<
-  'strata:timeline',
+  'opencanvas:timeline',
   {
     w: number;
     h: number;
@@ -42,7 +42,7 @@ const KIND_DOT: Record<EventKind, string> = {
 };
 
 export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
-  static override type = 'strata:timeline' as const;
+  static override type = 'opencanvas:timeline' as const;
 
   static override props: RecordProps<TimelineShape> = {
     w: T.number,

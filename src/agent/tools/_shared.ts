@@ -3,7 +3,7 @@
  *
  * Two cross-cutting concerns:
  *
- * 1. `TextOnlyCallToolResult` — every strata tool returns single-text
+ * 1. `TextOnlyCallToolResult` — every opencanvas tool returns single-text
  *    content (never images or embedded resources). Narrowing the SDK's
  *    `CallToolResult` to this shape lets callers do `r.content[0].text`
  *    without union narrowing.

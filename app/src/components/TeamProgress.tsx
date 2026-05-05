@@ -34,7 +34,7 @@ export function TeamProgress({ messages }: { messages: UIMessage[] }) {
           animate={{ opacity: 1, y: 0, height: 'auto' }}
           exit={{ opacity: 0, y: -8, height: 0 }}
           transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-          className="strata-glass border-b border-white/5 overflow-hidden"
+          className="opencanvas-glass border-b border-white/5 overflow-hidden"
         >
           <div className="px-5 py-3 flex items-center gap-3">
             <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
@@ -70,7 +70,7 @@ export function TeamProgress({ messages }: { messages: UIMessage[] }) {
                   style={{
                     background: activeTint ?? 'var(--color-accent)',
                     boxShadow: `0 0 6px 0 ${activeTint ?? 'var(--color-accent)'}`,
-                    animation: 'strata-team-pulse 1.4s ease-in-out infinite',
+                    animation: 'opencanvas-team-pulse 1.4s ease-in-out infinite',
                   }}
                 />
                 <span className="text-zinc-500">
@@ -169,7 +169,7 @@ function PhaseDot({ status, tint }: { status: PhaseStatus; tint: string }) {
   if (status === 'active') {
     return (
       <span
-        className="inline-flex items-center justify-center size-5 rounded-full strata-team-dot-active"
+        className="inline-flex items-center justify-center size-5 rounded-full opencanvas-team-dot-active"
         style={{ background: tint, color: '#0a0a0a' }}
       >
         <Loader className="size-3 animate-spin" />
@@ -343,14 +343,14 @@ export function TeamHandoff({
       initial={{ opacity: 0, scale: 0.94, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.32, ease: [0.16, 1.2, 0.3, 1] }}
-      className="my-3 strata-handoff"
+      className="my-3 opencanvas-handoff"
       style={{
         background: `linear-gradient(90deg, color-mix(in oklab, ${fromTint} 14%, transparent), color-mix(in oklab, ${toTint} 14%, transparent))`,
       }}
     >
       <div className="flex items-center gap-2 mb-1.5">
         <PhasePill label={fromLabel} tint={fromTint} done />
-        <ArrowRight className="size-3.5 text-zinc-500 strata-handoff-arrow" />
+        <ArrowRight className="size-3.5 text-zinc-500 opencanvas-handoff-arrow" />
         <PhasePill label={toLabel} tint={toTint} />
         <span className="ml-auto text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
           handoff

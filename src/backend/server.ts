@@ -247,7 +247,7 @@ app.post('/v1/query', async (c) => {
 }
 
 // Out-of-process MCP backing endpoints (used by src/mcp-server/index.ts
-// when Strata runs under the Amp profile and the agent's tools are
+// when OpenCanvas runs under the Amp profile and the agent's tools are
 // hosted in a separate stdio process). These are thin proxies over the
 // existing services.
 {
@@ -325,10 +325,10 @@ export async function start(port: number): Promise<void> {
   const { serve } = await import('@hono/node-server');
   const s = await getState();
   serve({ fetch: app.fetch, port });
-  console.log(`[strata backend] listening on http://127.0.0.1:${port}`);
-  console.log(`[strata backend] profile: ${s.profileName}`);
-  console.log(`[strata backend] llm:     ${s.getLLMProvider().id}`);
-  console.log(`[strata backend] embed:   ${s.getEmbedder().id}`);
+  console.log(`[opencanvas backend] listening on http://127.0.0.1:${port}`);
+  console.log(`[opencanvas backend] profile: ${s.profileName}`);
+  console.log(`[opencanvas backend] llm:     ${s.getLLMProvider().id}`);
+  console.log(`[opencanvas backend] embed:   ${s.getEmbedder().id}`);
 }
 
 // Run via `pnpm tsx src/backend/server.ts` or `pnpm backend`.
@@ -339,9 +339,9 @@ const isMainModule =
   process.argv[1] === fileURLToPath(import.meta.url);
 
 if (isMainModule) {
-  const port = Number(process.env['STRATA_BACKEND_PORT'] ?? 3457);
+  const port = Number(process.env['OPENCANVAS_BACKEND_PORT'] ?? 3457);
   start(port).catch((e) => {
-    console.error('[strata backend] fatal:', e);
+    console.error('[opencanvas backend] fatal:', e);
     process.exit(1);
   });
 }

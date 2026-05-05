@@ -44,7 +44,7 @@ describe('canvas templates', () => {
 
   it('TellMeAboutX: places code-symbol in the code zone (left column)', () => {
     const placements = TEMPLATES_BY_ID['tell-me-about-x'].layout(fakeResults(), VIEWPORT);
-    const codePlacement = placements.find((p) => p.shapeType === 'strata:code-block');
+    const codePlacement = placements.find((p) => p.shapeType === 'opencanvas:code-block');
     expect(codePlacement).toBeDefined();
     // Code zone is at x=0 relative; with padding originX=80, expect roughly there
     expect(codePlacement!.x).toBeLessThan(200);
@@ -67,7 +67,7 @@ describe('canvas templates', () => {
     expect(placements).toHaveLength(4);
     // The centre placeholder is a key-value-card
     const subjects = placements.filter(
-      (p) => p.shapeType === 'strata:key-value-card' && (p.props as { title?: string }).title === 'Subject'
+      (p) => p.shapeType === 'opencanvas:key-value-card' && (p.props as { title?: string }).title === 'Subject'
     );
     expect(subjects).toHaveLength(1);
   });

@@ -1,7 +1,7 @@
 /**
  * Tests for config schema validation and loader behavior.
  *
- * The loader is tested with a temp file to avoid touching ~/.strata/config.json.
+ * The loader is tested with a temp file to avoid touching ~/.opencanvas/config.json.
  * We use environment variable injection to redirect the config path.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -124,19 +124,19 @@ describe('loadConfig', () => {
   let originalEnv: string | undefined;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), `strata-test-${Date.now()}`);
+    tmpDir = join(tmpdir(), `opencanvas-test-${Date.now()}`);
     mkdirSync(tmpDir, { recursive: true });
     configPath = join(tmpDir, 'config.json');
-    originalEnv = process.env['STRATA_CONFIG'];
-    process.env['STRATA_CONFIG'] = configPath;
+    originalEnv = process.env['OPENCANVAS_CONFIG'];
+    process.env['OPENCANVAS_CONFIG'] = configPath;
   });
 
   afterEach(() => {
     rmSync(tmpDir, { recursive: true, force: true });
     if (originalEnv === undefined) {
-      delete process.env['STRATA_CONFIG'];
+      delete process.env['OPENCANVAS_CONFIG'];
     } else {
-      process.env['STRATA_CONFIG'] = originalEnv;
+      process.env['OPENCANVAS_CONFIG'] = originalEnv;
     }
   });
 

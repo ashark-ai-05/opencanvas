@@ -21,8 +21,11 @@ app/dist/
 release/
 dist-backend/
 
-# Per-user Strata cache + DB (when devving from inside a clone of the repo)
-.strata/
+# Per-user OpenCanvas cache + DB (when devving from inside a clone of the repo)
+.opencanvas/
 
 # Test environment artifacts
 __tests__/app/.cache/
+
+# demo recorder intermediate frames (the produced docs/demo.gif IS committed)
+docs/demo-frames/

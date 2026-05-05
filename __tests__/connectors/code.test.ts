@@ -6,7 +6,7 @@ import { CodeConnector } from '../../src/connectors/code.js';
 
 describe('CodeConnector', () => {
   it('walks source files in sorted order, yielding RawDocuments', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'strata-code-'));
+    const root = await mkdtemp(join(tmpdir(), 'opencanvas-code-'));
     try {
       await writeFile(join(root, 'a.ts'), 'export const a = 1;\n');
       await mkdir(join(root, 'sub'));
@@ -40,7 +40,7 @@ describe('CodeConnector', () => {
   });
 
   it('cursor advances and re-running with the cursor yields nothing', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'strata-code-'));
+    const root = await mkdtemp(join(tmpdir(), 'opencanvas-code-'));
     try {
       await writeFile(join(root, 'a.ts'), 'a');
       await writeFile(join(root, 'b.ts'), 'b');

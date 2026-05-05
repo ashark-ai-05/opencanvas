@@ -9,7 +9,7 @@ import { T } from 'tldraw';
 import { CardBody, CardFrame, CardHeader, CardTitle } from './shared';
 
 export type TextNoteShape = TLBaseShape<
-  'strata:text-note',
+  'opencanvas:text-note',
   {
     w: number;
     h: number;
@@ -18,7 +18,7 @@ export type TextNoteShape = TLBaseShape<
 >;
 
 export class TextNoteShapeUtil extends ShapeUtil<TextNoteShape> {
-  static override type = 'strata:text-note' as const;
+  static override type = 'opencanvas:text-note' as const;
 
   static override props: RecordProps<TextNoteShape> = {
     w: T.number,

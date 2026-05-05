@@ -95,7 +95,7 @@ export function SourcesPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 340, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-            className="strata-glass fixed right-0 top-0 bottom-0 z-40 w-[340px] flex flex-col border-l border-white/8"
+            className="opencanvas-glass fixed right-0 top-0 bottom-0 z-40 w-[340px] flex flex-col border-l border-white/8"
             style={{ background: 'rgba(10, 10, 13, 0.92)' }}
           >
             <div className="flex items-center justify-between px-4 h-12 border-b border-white/5">
@@ -141,7 +141,7 @@ export function SourcesPanel({
                   <p>No sources indexed yet.</p>
                   <p className="mt-2 text-zinc-600 leading-relaxed">
                     Run <span className="font-mono text-zinc-400">pnpm cli --index ./docs</span> or
-                    chat with Strata — every conversation indexes back here.
+                    chat with OpenCanvas — every conversation indexes back here.
                   </p>
                 </div>
               )}

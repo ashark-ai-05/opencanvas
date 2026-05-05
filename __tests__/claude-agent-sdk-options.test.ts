@@ -77,7 +77,7 @@ describe('claude-agent-sdk options', () => {
     expect((opts.abortController as AbortController).signal.aborted).toBe(true);
   });
 
-  it('wires the 11 agent tools as MCP server with allowedTools mcp__strata__*', async () => {
+  it('wires the 11 agent tools as MCP server with allowedTools mcp__opencanvas__*', async () => {
     const adapter = new ClaudeAgentSdkAdapter();
     for await (const _ of adapter.query({
       prompt: 'hi',
@@ -90,15 +90,15 @@ describe('claude-agent-sdk options', () => {
     ).options;
     const allowed = opts.allowedTools as string[];
     expect(allowed.length).toBe(11);
-    expect(allowed.every((t) => t.startsWith('mcp__strata__'))).toBe(true);
+    expect(allowed.every((t) => t.startsWith('mcp__opencanvas__'))).toBe(true);
     // Sanity: known tool names appear
-    expect(allowed).toContain('mcp__strata__search_kb');
-    expect(allowed).toContain('mcp__strata__web_search');
-    expect(allowed).toContain('mcp__strata__place_widget');
-    expect(allowed).toContain('mcp__strata__update_widget');
+    expect(allowed).toContain('mcp__opencanvas__search_kb');
+    expect(allowed).toContain('mcp__opencanvas__web_search');
+    expect(allowed).toContain('mcp__opencanvas__place_widget');
+    expect(allowed).toContain('mcp__opencanvas__update_widget');
     expect(opts.mcpServers).toBeDefined();
     expect(
-      (opts.mcpServers as Record<string, unknown>)['strata'],
+      (opts.mcpServers as Record<string, unknown>)['opencanvas'],
     ).toBeDefined();
   });
 

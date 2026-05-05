@@ -42,7 +42,7 @@ export class BackendState {
   private sessionIds = new Map<string, string>();
   /**
    * Last canvas snapshot the frontend mirrored via `/v1/chat`. The
-   * out-of-process Strata MCP server (Amp profile) reads this to back
+   * out-of-process OpenCanvas MCP server (Amp profile) reads this to back
    * `read_canvas` / `read_widget` requests without a round-trip to the
    * browser.
    */
@@ -187,7 +187,7 @@ export class BackendState {
 }
 
 /**
- * Convert our `SourceConfig` (configured via ~/.strata/config.json) into the
+ * Convert our `SourceConfig` (configured via ~/.opencanvas/config.json) into the
  * shape the Claude Agent SDK's `mcpServers` option expects. The fields are
  * mostly identical; we reshape transport/url/command for the SDK's union.
  */

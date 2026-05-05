@@ -11,7 +11,7 @@ import { resizeBox } from 'tldraw';
 import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, CopyAction } from './shared';
 
 export type TicketCardShape = TLBaseShape<
-  'strata:ticket',
+  'opencanvas:ticket',
   {
     w: number;
     h: number;
@@ -35,7 +35,7 @@ const STATUS_PALETTE: Record<string, { bg: string; fg: string; border: string }>
 };
 
 export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
-  static override type = 'strata:ticket' as const;
+  static override type = 'opencanvas:ticket' as const;
 
   static override props: RecordProps<TicketCardShape> = {
     w: T.number,
@@ -75,13 +75,13 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
       <HTMLContainer>
         <CardFrame shape={shape}>
           <CardHeader>
-            <span className="strata-tag" style={{ fontFamily: 'ui-monospace, monospace' }}>
+            <span className="opencanvas-tag" style={{ fontFamily: 'ui-monospace, monospace' }}>
               {shape.props.ticketId}
             </span>
             <CardTitle>{shape.props.title}</CardTitle>
             {status && (
               <span
-                className="strata-tag"
+                className="opencanvas-tag"
                 style={
                   palette
                     ? { background: palette.bg, color: palette.fg, borderColor: palette.border }

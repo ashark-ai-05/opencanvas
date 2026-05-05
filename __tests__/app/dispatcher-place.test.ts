@@ -27,7 +27,7 @@ describe('applyToolDirective — place', () => {
     applyToolDirective(editor, d, 'ask-anything');
     const calls = (editor as unknown as { calls: { type: string; props: Record<string, unknown> }[] }).calls;
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.type).toBe('strata:markdown');
+    expect(calls[0]!.type).toBe('opencanvas:markdown');
     expect(calls[0]!.props.title).toBe('t');
     expect(calls[0]!.props.body).toBe('b');
   });
@@ -61,11 +61,11 @@ describe('applyToolDirective — place', () => {
   it('maps each WidgetKind to its tldraw shape type', () => {
     const editor = makeEditor();
     const kinds: Array<{ kind: WidgetKind; expected: string }> = [
-      { kind: 'markdown', expected: 'strata:markdown' },
-      { kind: 'code-block', expected: 'strata:code-block' },
-      { kind: 'ticket', expected: 'strata:ticket' },
-      { kind: 'web-embed', expected: 'strata:web-embed' },
-      { kind: 'key-value-card', expected: 'strata:key-value-card' },
+      { kind: 'markdown', expected: 'opencanvas:markdown' },
+      { kind: 'code-block', expected: 'opencanvas:code-block' },
+      { kind: 'ticket', expected: 'opencanvas:ticket' },
+      { kind: 'web-embed', expected: 'opencanvas:web-embed' },
+      { kind: 'key-value-card', expected: 'opencanvas:key-value-card' },
     ];
     for (const { kind, expected } of kinds) {
       const calls = (editor as unknown as { calls: unknown[] }).calls;

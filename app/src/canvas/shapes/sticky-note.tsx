@@ -23,7 +23,7 @@ export type StickyColour =
   | 'orange';
 
 export type StickyNoteShape = TLBaseShape<
-  'strata:sticky-note',
+  'opencanvas:sticky-note',
   {
     w: number;
     h: number;
@@ -36,7 +36,7 @@ export type StickyNoteShape = TLBaseShape<
 >;
 
 export class StickyNoteShapeUtil extends ShapeUtil<StickyNoteShape> {
-  static override type = 'strata:sticky-note' as const;
+  static override type = 'opencanvas:sticky-note' as const;
 
   static override props: RecordProps<StickyNoteShape> = {
     w: T.number,
@@ -64,19 +64,19 @@ export class StickyNoteShapeUtil extends ShapeUtil<StickyNoteShape> {
     return (
       <HTMLContainer>
         <div
-          className="strata-sticky"
+          className="opencanvas-sticky"
           data-colour={shape.props.colour ?? 'yellow'}
           style={{ width: shape.props.w, height: shape.props.h }}
         >
-          <div className="strata-sticky-actions">
+          <div className="opencanvas-sticky-actions">
             <CardActions
               shape={shape}
               extras={<CopyAction text={shape.props.body} label="note" />}
             />
           </div>
-          <div className="strata-sticky-body">{shape.props.body}</div>
+          <div className="opencanvas-sticky-body">{shape.props.body}</div>
           {shape.props.author && (
-            <div className="strata-sticky-author">— {shape.props.author}</div>
+            <div className="opencanvas-sticky-author">— {shape.props.author}</div>
           )}
         </div>
       </HTMLContainer>

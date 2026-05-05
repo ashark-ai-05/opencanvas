@@ -49,7 +49,7 @@ export type CompositeSection = {
 };
 
 export type CompositeShape = TLBaseShape<
-  'strata:composite',
+  'opencanvas:composite',
   {
     w: number;
     h: number;
@@ -61,7 +61,7 @@ export type CompositeShape = TLBaseShape<
 >;
 
 export class CompositeShapeUtil extends ShapeUtil<CompositeShape> {
-  static override type = 'strata:composite' as const;
+  static override type = 'opencanvas:composite' as const;
 
   static override props: RecordProps<CompositeShape> = {
     w: T.number,
@@ -104,11 +104,11 @@ export class CompositeShapeUtil extends ShapeUtil<CompositeShape> {
             />
           </CardHeader>
           <CardBody>
-            <div className="strata-composite">
+            <div className="opencanvas-composite">
               {sections.map((section, i) => (
-                <div key={i} className="strata-composite-section">
+                <div key={i} className="opencanvas-composite-section">
                   {section.heading && (
-                    <div className="strata-composite-section-heading">
+                    <div className="opencanvas-composite-section-heading">
                       {section.heading}
                     </div>
                   )}
@@ -167,7 +167,7 @@ function SectionRenderer({ section }: { section: CompositeSection }) {
   switch (section.kind) {
     case 'markdown':
       return (
-        <div className="strata-markdown">
+        <div className="opencanvas-markdown">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {String(p['body'] ?? '')}
           </ReactMarkdown>
@@ -175,22 +175,22 @@ function SectionRenderer({ section }: { section: CompositeSection }) {
       );
     case 'code-block':
       return (
-        <pre className="strata-codeblock">
+        <pre className="opencanvas-codeblock">
           <code>{String(p['code'] ?? '')}</code>
         </pre>
       );
     case 'ticket':
       return (
-        <div className="strata-composite-ticket">
+        <div className="opencanvas-composite-ticket">
           <strong>{String(p['ticketId'] ?? '')}</strong> —{' '}
           <span>{String(p['title'] ?? '')}</span>
-          <div className="strata-tag-row">
+          <div className="opencanvas-tag-row">
             <Tag>{String(p['status'] ?? '')}</Tag>
             {p['priority'] !== undefined && <Tag>{String(p['priority'])}</Tag>}
             {p['assignee'] !== undefined && <Tag>{String(p['assignee'])}</Tag>}
           </div>
           {p['description'] !== undefined && (
-            <div className="strata-markdown">
+            <div className="opencanvas-markdown">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {String(p['description'])}
               </ReactMarkdown>
@@ -201,14 +201,14 @@ function SectionRenderer({ section }: { section: CompositeSection }) {
     case 'key-value-card': {
       const fields = Array.isArray(p['fields']) ? p['fields'] : [];
       return (
-        <table className="strata-kv">
+        <table className="opencanvas-kv">
           <tbody>
             {fields.map((f, i) => {
               const fr = f as { key: string; value: string; url?: string };
               return (
                 <tr key={i}>
-                  <td className="strata-kv-key">{fr.key}</td>
-                  <td className="strata-kv-value">
+                  <td className="opencanvas-kv-key">{fr.key}</td>
+                  <td className="opencanvas-kv-value">
                     {fr.url ? (
                       <a href={fr.url} target="_blank" rel="noopener noreferrer">
                         {fr.value}
@@ -227,7 +227,7 @@ function SectionRenderer({ section }: { section: CompositeSection }) {
     case 'web-embed':
       return (
         <a
-          className="strata-web-embed-link"
+          className="opencanvas-web-embed-link"
           href={String(p['url'] ?? '#')}
           target="_blank"
           rel="noopener noreferrer"
@@ -237,7 +237,7 @@ function SectionRenderer({ section }: { section: CompositeSection }) {
       );
     default:
       return (
-        <pre className="strata-composite-fallback">
+        <pre className="opencanvas-composite-fallback">
           {JSON.stringify(p, null, 2)}
         </pre>
       );

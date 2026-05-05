@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * External Strata MCP server.
+ * External OpenCanvas MCP server.
  *
  * Exists for the `amp` profile path: Sourcegraph Amp can't host
- * in-process MCP tools the way the Claude SDK can, so Strata also ships
+ * in-process MCP tools the way the Claude SDK can, so OpenCanvas also ships
  * an external MCP stdio server that proxies the same tool surface back
  * to the running backend via `/v1/fetch`, `/v1/web-search`,
  * `/v1/canvas-snapshot`.
@@ -13,7 +13,7 @@
  * Run via: `pnpm mcp` (the Amp adapter spawns this as a stdio child).
  *
  * Required env:
- *   STRATA_BACKEND_URL  default http://127.0.0.1:3457
+ *   OPENCANVAS_BACKEND_URL  default http://127.0.0.1:3457
  */
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -23,7 +23,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-const BACKEND_URL = process.env['STRATA_BACKEND_URL'] ?? 'http://127.0.0.1:3457';
+const BACKEND_URL = process.env['OPENCANVAS_BACKEND_URL'] ?? 'http://127.0.0.1:3457';
 
 const SearchKbArgs = z.object({
   query: z.string(),
@@ -43,7 +43,7 @@ async function backendGet(path: string): Promise<unknown> {
   const res = await fetch(`${BACKEND_URL}${path}`);
   if (!res.ok) {
     throw new Error(
-      `Strata backend GET ${path} → ${res.status} ${res.statusText}`,
+      `OpenCanvas backend GET ${path} → ${res.status} ${res.statusText}`,
     );
   }
   return res.json();
@@ -57,14 +57,14 @@ async function backendPost(path: string, body: unknown): Promise<unknown> {
   });
   if (!res.ok) {
     throw new Error(
-      `Strata backend POST ${path} → ${res.status} ${res.statusText}`,
+      `OpenCanvas backend POST ${path} → ${res.status} ${res.statusText}`,
     );
   }
   return res.json();
 }
 
 const server = new Server(
-  { name: 'strata', version: '0.1.0' },
+  { name: 'opencanvas', version: '0.1.0' },
   { capabilities: { tools: {} } },
 );
 

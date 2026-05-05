@@ -1,5 +1,5 @@
 {
-  "name": "strata",
+  "name": "opencanvas",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -74,7 +74,9 @@
     "concurrently": "^9.0.0",
     "electron": "^39.8.5",
     "electron-builder": "^26.0.0",
+    "ffmpeg-static": "^5.3.0",
     "jsdom": "^25.0.0",
+    "playwright": "^1.59.1",
     "tailwindcss": "^4.0.0",
     "tsx": "*",
     "typescript": "*",
@@ -96,8 +98,8 @@
     }
   },
   "build": {
-    "appId": "com.strata.app",
-    "productName": "Strata",
+    "appId": "com.opencanvas.app",
+    "productName": "OpenCanvas",
     "directories": {
       "output": "release"
     },
@@ -112,19 +114,40 @@
     ],
     "mac": {
       "target": [
-        { "target": "dmg", "arch": ["arm64", "x64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
       ],
       "category": "public.app-category.developer-tools"
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "linux": {
       "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "deb", "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "category": "Development"
     }

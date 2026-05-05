@@ -74,7 +74,7 @@ export function HeaderIconButton({
       aria-label={title}
       aria-pressed={pressed ? 'true' : undefined}
       data-pressed={pressed ? 'true' : undefined}
-      className="strata-header-btn"
+      className="opencanvas-header-btn"
     >
       {children}
     </button>

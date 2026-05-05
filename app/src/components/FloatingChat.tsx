@@ -94,11 +94,11 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
       data-fullmode={chatWindow.fullMode}
       data-dragging={dragging ? 'true' : 'false'}
       data-streaming={chatBusy ? 'true' : 'false'}
-      className="strata-chat-floating"
+      className="opencanvas-chat-floating"
     >
       <ChatStatusBar />
       <header
-        className="strata-chat-titlebar"
+        className="opencanvas-chat-titlebar"
         onPointerDown={(e) => {
           // Only start a drag if the pointer isn't on a button —
           // otherwise the close/minimize buttons require a steady hand.
@@ -119,15 +119,15 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           setChatWindow({ dragX: 0, dragY: 0 });
         }}
       >
-        <span className="strata-chat-titlebar-grip">
+        <span className="opencanvas-chat-titlebar-grip">
           <GripVertical className="size-3.5" />
         </span>
-        <span className="strata-chat-titlebar-title">Strata</span>
-        <div className="strata-chat-titlebar-actions">
+        <span className="opencanvas-chat-titlebar-title">OpenCanvas</span>
+        <div className="opencanvas-chat-titlebar-actions">
           <ChatOptionsMenu />
           <button
             type="button"
-            className="strata-chat-titlebar-btn"
+            className="opencanvas-chat-titlebar-btn"
             title={chatWindow.fullMode === 'full' ? 'Restore size' : 'Expand'}
             // stopPropagation so rapid clicks don't bubble up to the
             // title bar's pointer-down (drag start) or onDoubleClick
@@ -146,7 +146,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           </button>
           <button
             type="button"
-            className="strata-chat-titlebar-btn"
+            className="opencanvas-chat-titlebar-btn"
             title={chatWindow.mode === 'minimized' ? 'Expand' : 'Minimize'}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
@@ -160,7 +160,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           </button>
           <button
             type="button"
-            className="strata-chat-titlebar-btn"
+            className="opencanvas-chat-titlebar-btn"
             data-danger="true"
             title="Hide chat (launcher bubble stays)"
             onPointerDown={(e) => e.stopPropagation()}
@@ -173,7 +173,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           </button>
         </div>
       </header>
-      <div className="strata-chat-body">
+      <div className="opencanvas-chat-body">
         <Chat key={chatKey} />
       </div>
     </motion.aside>
@@ -190,7 +190,7 @@ export function FloatingChatLauncher() {
   return (
     <button
       type="button"
-      className="strata-chat-launcher"
+      className="opencanvas-chat-launcher"
       onClick={() => setChatWindow({ mode: 'open' })}
     >
       <span
@@ -198,7 +198,7 @@ export function FloatingChatLauncher() {
         className="size-2 rounded-full"
         style={{ background: 'var(--color-accent)' }}
       />
-      Open Strata
+      Open OpenCanvas
     </button>
   );
 }

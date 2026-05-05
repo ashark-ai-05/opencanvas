@@ -31,7 +31,7 @@ export function ChatOptionsMenu() {
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         type="button"
-        className="strata-chat-titlebar-btn"
+        className="opencanvas-chat-titlebar-btn"
         title="More"
         aria-label="More chat options"
         onClick={(e) => {
@@ -43,7 +43,7 @@ export function ChatOptionsMenu() {
       </button>
       {open && (
         <div
-          className="strata-glass"
+          className="opencanvas-glass"
           role="menu"
           style={{
             position: 'absolute',
@@ -61,7 +61,7 @@ export function ChatOptionsMenu() {
             label="Conversation history"
             onClick={() => {
               setOpen(false);
-              window.dispatchEvent(new Event('strata:open-history'));
+              window.dispatchEvent(new Event('opencanvas:open-history'));
             }}
           />
           <MenuRow
@@ -77,7 +77,7 @@ export function ChatOptionsMenu() {
             label="MCP servers"
             onClick={() => {
               setOpen(false);
-              window.dispatchEvent(new Event('strata:open-mcp'));
+              window.dispatchEvent(new Event('opencanvas:open-mcp'));
             }}
           />
         </div>

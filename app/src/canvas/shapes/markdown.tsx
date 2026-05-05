@@ -21,7 +21,7 @@ import {
 } from './shared';
 
 export type MarkdownShape = TLBaseShape<
-  'strata:markdown',
+  'opencanvas:markdown',
   {
     w: number;
     h: number;
@@ -34,7 +34,7 @@ export type MarkdownShape = TLBaseShape<
 >;
 
 export class MarkdownShapeUtil extends ShapeUtil<MarkdownShape> {
-  static override type = 'strata:markdown' as const;
+  static override type = 'opencanvas:markdown' as const;
 
   static override props: RecordProps<MarkdownShape> = {
     w: T.number,
@@ -71,7 +71,7 @@ export class MarkdownShapeUtil extends ShapeUtil<MarkdownShape> {
             />
           </CardHeader>
           <CardBody>
-            <div className="strata-markdown">
+            <div className="opencanvas-markdown">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{shape.props.body}</ReactMarkdown>
             </div>
           </CardBody>

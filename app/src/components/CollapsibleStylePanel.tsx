@@ -19,10 +19,10 @@ export function CollapsibleStylePanel() {
   if (!styles && !open) return null;
 
   return (
-    <div className="strata-style-panel" data-open={open ? 'true' : 'false'}>
+    <div className="opencanvas-style-panel" data-open={open ? 'true' : 'false'}>
       <button
         type="button"
-        className="strata-style-panel-toggle"
+        className="opencanvas-style-panel-toggle"
         title={open ? 'Hide style panel' : 'Show style panel'}
         onClick={() => setOpen((v) => !v)}
       >

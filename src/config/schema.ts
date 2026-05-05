@@ -1,8 +1,8 @@
 /**
- * Zod schemas for the strata config file.
+ * Zod schemas for the opencanvas config file.
  *
- * Config lives at ~/.strata/config.json by default, or at the path
- * pointed to by the STRATA_CONFIG environment variable.
+ * Config lives at ~/.opencanvas/config.json by default, or at the path
+ * pointed to by the OPENCANVAS_CONFIG environment variable.
  */
 import { z } from 'zod';
 

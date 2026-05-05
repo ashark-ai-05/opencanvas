@@ -32,7 +32,7 @@ export type UiState = {
   handToolActive: boolean;
   setHandToolActive: (active: boolean) => void;
   /**
-   * When true, wheel events outside `.strata-card-body` are swallowed at
+   * When true, wheel events outside `.opencanvas-card-body` are swallowed at
    * the document level so trackpad scroll inside a card doesn't pan the
    * canvas. `Canvas.tsx` installs the listener; this flag toggles it.
    */

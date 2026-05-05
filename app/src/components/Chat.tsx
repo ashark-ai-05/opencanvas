@@ -78,7 +78,7 @@ function truncate(s: string, max: number): string {
 }
 
 /**
- * Fire-and-forget POST to /v1/index-conversation. Strata's compounding-
+ * Fire-and-forget POST to /v1/index-conversation. OpenCanvas's compounding-
  * value mechanic — every assistant turn becomes searchable for future
  * search_kb calls. Toasts the indexed chunk count on success so the user
  * sees the KB literally growing as they use the product.
@@ -326,7 +326,7 @@ export function Chat() {
       <AnimatePresence>
         {isStreaming && (
           <motion.div
-            className="strata-header-pulse absolute top-0 left-0 right-0 z-10"
+            className="opencanvas-header-pulse absolute top-0 left-0 right-0 z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -348,9 +348,9 @@ export function Chat() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mt-12 px-6"
           >
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full strata-glass">
+            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full opencanvas-glass">
               <Sparkles className="size-3 text-violet-400" />
-              <span className="text-[11px] tracking-wide text-zinc-400">Strata · agent-driven canvas</span>
+              <span className="text-[11px] tracking-wide text-zinc-400">OpenCanvas · agent-driven canvas</span>
             </div>
             <p className="text-[15px] text-zinc-200 font-medium tracking-tight">Ask anything about your knowledge.</p>
             <p className="text-[13px] text-zinc-500 mt-1.5">
@@ -372,7 +372,7 @@ export function Chat() {
               className="flex flex-col gap-1.5"
             >
               <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
-                {m.role === 'user' ? 'you' : 'strata'}
+                {m.role === 'user' ? 'you' : 'opencanvas'}
               </div>
               {/* Reasoning ("Show thinking") — collapsible per-message
                   block. Concatenates every reasoning part the message
@@ -402,7 +402,7 @@ export function Chat() {
               <div
                 className={
                   m.role === 'user'
-                    ? 'whitespace-pre-wrap text-zinc-50 leading-relaxed text-[14px] strata-glass rounded-xl px-4 py-3'
+                    ? 'whitespace-pre-wrap text-zinc-50 leading-relaxed text-[14px] opencanvas-glass rounded-xl px-4 py-3'
                     : 'whitespace-pre-wrap text-zinc-100 leading-relaxed text-[14px]'
                 }
               >
@@ -436,7 +436,7 @@ export function Chat() {
                           key={i}
                           className="block text-[12px] text-zinc-400 mt-2"
                         >
-                          <span className="strata-tool-spinner" />
+                          <span className="opencanvas-tool-spinner" />
                           <span>calling </span>
                           <span className="font-mono text-violet-300/80">{toolPartName(tp)}</span>
                           {preview && (
@@ -485,7 +485,7 @@ export function Chat() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.14 }}
-            className="absolute left-3 right-3 bottom-[64px] z-20 strata-glass rounded-xl overflow-hidden shadow-2xl"
+            className="absolute left-3 right-3 bottom-[64px] z-20 opencanvas-glass rounded-xl overflow-hidden shadow-2xl"
           >
             <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-zinc-500 border-b border-white/5">
               Slash commands
@@ -547,7 +547,7 @@ export function Chat() {
           });
           const showOverlay = !input.trim() && liveStep !== null;
           return (
-            <div className="strata-chat-input-wrap flex-1 relative">
+            <div className="opencanvas-chat-input-wrap flex-1 relative">
               <input
                 type="text"
                 value={input}
@@ -555,11 +555,11 @@ export function Chat() {
                 placeholder={
                   showOverlay
                     ? ''
-                    : '✨ Ask Strata anything…'
+                    : '✨ Ask OpenCanvas anything…'
                 }
                 disabled={isStreaming}
                 data-busy={isStreaming || kbBusy ? 'true' : 'false'}
-                className="strata-chat-input w-full px-4 py-2.5 rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-zinc-100 placeholder-zinc-500 text-[14px] focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/15 transition-all disabled:opacity-50"
+                className="opencanvas-chat-input w-full px-4 py-2.5 rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-zinc-100 placeholder-zinc-500 text-[14px] focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/15 transition-all disabled:opacity-50"
               />
               {/* Live step rendered INSIDE the input where the placeholder
                   would otherwise be. Absolute-positioned over the input,
@@ -574,16 +574,16 @@ export function Chat() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -2 }}
                     transition={{ duration: 0.16 }}
-                    className="strata-input-step"
+                    className="opencanvas-input-step"
                     aria-hidden
                   >
-                    <span className="strata-input-step-emoji">
+                    <span className="opencanvas-input-step-emoji">
                       {liveStep.emoji}
                     </span>
-                    <span className="strata-input-step-label">
+                    <span className="opencanvas-input-step-label">
                       {liveStep.label}
                     </span>
-                    <span className="strata-live-status-dots">
+                    <span className="opencanvas-live-status-dots">
                       <span /><span /><span />
                     </span>
                   </motion.div>
@@ -607,7 +607,7 @@ export function Chat() {
             type="submit"
             disabled={!input.trim()}
             aria-label="Send"
-            className="px-3.5 py-2.5 rounded-xl strata-btn-accent flex items-center justify-center"
+            className="px-3.5 py-2.5 rounded-xl opencanvas-btn-accent flex items-center justify-center"
           >
             <Send className="size-4" />
           </button>

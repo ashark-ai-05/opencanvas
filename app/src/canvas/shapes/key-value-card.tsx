@@ -13,7 +13,7 @@ import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, Tag } from './
 type KeyValuePair = { key: string; value: string };
 
 export type KeyValueCardShape = TLBaseShape<
-  'strata:key-value-card',
+  'opencanvas:key-value-card',
   {
     w: number;
     h: number;
@@ -26,7 +26,7 @@ export type KeyValueCardShape = TLBaseShape<
 >;
 
 export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
-  static override type = 'strata:key-value-card' as const;
+  static override type = 'opencanvas:key-value-card' as const;
 
   static override props: RecordProps<KeyValueCardShape> = {
     w: T.number,

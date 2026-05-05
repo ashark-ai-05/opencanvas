@@ -34,15 +34,15 @@ export function InlineLiveStep({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -2 }}
           transition={{ duration: 0.16 }}
-          className="strata-inline-step"
+          className="opencanvas-inline-step"
           role="status"
           aria-live="polite"
         >
-          <span className="strata-inline-step-emoji" aria-hidden>
+          <span className="opencanvas-inline-step-emoji" aria-hidden>
             {step.emoji}
           </span>
-          <span className="strata-inline-step-label">{step.label}</span>
-          <span className="strata-live-status-dots" aria-hidden>
+          <span className="opencanvas-inline-step-label">{step.label}</span>
+          <span className="opencanvas-live-status-dots" aria-hidden>
             <span /><span /><span />
           </span>
         </motion.div>
@@ -73,15 +73,15 @@ export function LiveStatus({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -2 }}
           transition={{ duration: 0.18 }}
-          className="strata-live-status"
+          className="opencanvas-live-status"
           role="status"
           aria-live="polite"
         >
-          <span className="strata-live-status-emoji" aria-hidden>
+          <span className="opencanvas-live-status-emoji" aria-hidden>
             {step.emoji}
           </span>
-          <span className="strata-live-status-label">{step.label}</span>
-          <span className="strata-live-status-dots" aria-hidden>
+          <span className="opencanvas-live-status-label">{step.label}</span>
+          <span className="opencanvas-live-status-dots" aria-hidden>
             <span /><span /><span />
           </span>
         </motion.div>
@@ -104,7 +104,7 @@ function isToolPart(p: { type: string }): p is ToolPart {
 
 function toolDisplayName(p: ToolPart): string {
   if (p.type === 'dynamic-tool') return p.toolName ?? 'tool';
-  // tool-mcp__strata__search_kb → search_kb
+  // tool-mcp__opencanvas__search_kb → search_kb
   const raw = p.type.slice('tool-'.length);
   const last = raw.split('__').pop();
   return last && last.length > 0 ? last : raw;

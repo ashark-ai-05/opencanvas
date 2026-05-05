@@ -33,7 +33,7 @@ describe('placeResultsOnCanvas', () => {
       },
     ]);
     const call = editor.createShape.mock.calls[0][0];
-    expect(call.type).toBe('strata:markdown');
+    expect(call.type).toBe('opencanvas:markdown');
     expect(call.props.title).toBe('A');
     expect(call.props.body).toBe('B');
   });
@@ -48,7 +48,7 @@ describe('placeResultsOnCanvas', () => {
       },
     ]);
     const call = editor.createShape.mock.calls[0][0];
-    expect(call.type).toBe('strata:code-block');
+    expect(call.type).toBe('opencanvas:code-block');
     expect(call.props.symbolName).toBe('foo');
     expect(call.props.filePath).toBe('a.ts');
     expect(call.props.language).toBe('typescript');
@@ -64,7 +64,7 @@ describe('placeResultsOnCanvas', () => {
       },
     ]);
     const call = editor.createShape.mock.calls[0][0];
-    expect(call.type).toBe('strata:key-value-card');
+    expect(call.type).toBe('opencanvas:key-value-card');
   });
 
   it('routes log-stream to timeline shape', () => {
@@ -77,7 +77,7 @@ describe('placeResultsOnCanvas', () => {
       },
     ]);
     const call = editor.createShape.mock.calls[0][0];
-    expect(call.type).toBe('strata:timeline');
+    expect(call.type).toBe('opencanvas:timeline');
   });
 
   it('routes table-row-set to table shape', () => {
@@ -90,6 +90,6 @@ describe('placeResultsOnCanvas', () => {
       },
     ]);
     const call = editor.createShape.mock.calls[0][0];
-    expect(call.type).toBe('strata:table');
+    expect(call.type).toBe('opencanvas:table');
   });
 });

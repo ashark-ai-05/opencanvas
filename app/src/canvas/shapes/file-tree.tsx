@@ -19,7 +19,7 @@ type FileNode = {
 };
 
 export type FileTreeShape = TLBaseShape<
-  'strata:file-tree',
+  'opencanvas:file-tree',
   {
     w: number;
     h: number;
@@ -38,7 +38,7 @@ export type FileTreeShape = TLBaseShape<
 const FileNodeRuntime = T.any as never;
 
 export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
-  static override type = 'strata:file-tree' as const;
+  static override type = 'opencanvas:file-tree' as const;
 
   static override props: RecordProps<FileTreeShape> = {
     w: T.number,
@@ -77,7 +77,7 @@ export class FileTreeShapeUtil extends ShapeUtil<FileTreeShape> {
             <Tag>{fileCount} {fileCount === 1 ? 'file' : 'files'}</Tag>
             <CardActions shape={shape} />
           </CardHeader>
-          <div className="strata-card-body" style={{ paddingLeft: 8, paddingRight: 8 }}>
+          <div className="opencanvas-card-body" style={{ paddingLeft: 8, paddingRight: 8 }}>
             <TreeNode node={shape.props.root} depth={0} initiallyOpen />
           </div>
         </CardFrame>

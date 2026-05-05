@@ -3,10 +3,10 @@ import { ChevronDown, Compass } from 'lucide-react';
 import { useUiStore } from '../state/ui-store';
 
 /**
- * Bottom-left minimap. Renders a live SVG thumbnail of every strata
+ * Bottom-left minimap. Renders a live SVG thumbnail of every opencanvas
  * widget on the page (role-tinted), with the current viewport drawn as
  * an outline. Click to pan to the clicked point; double-click to fit
- * the whole content. Hides when the canvas has zero strata widgets.
+ * the whole content. Hides when the canvas has zero opencanvas widgets.
  *
  * Mounted INSIDE <Tldraw> so `useEditor` + `useValue` give us reactive
  * reads against the editor store without manual subscriptions.
@@ -32,14 +32,14 @@ export function CanvasMap() {
   const collapsed = useUiStore((s) => s.canvasMapCollapsed);
   const setCollapsed = useUiStore((s) => s.setCanvasMapCollapsed);
 
-  // Reactive: every page shape that's a strata:* widget. Re-runs when
+  // Reactive: every page shape that's a opencanvas:* widget. Re-runs when
   // shapes are added/moved/resized.
   const widgets = useValue(
-    'strata widgets',
+    'opencanvas widgets',
     () =>
       editor
         .getCurrentPageShapes()
-        .filter((s) => s.type.startsWith('strata:'))
+        .filter((s) => s.type.startsWith('opencanvas:'))
         .map((s) => {
           const bounds = editor.getShapePageBounds(s.id);
           if (!bounds) return null;
@@ -123,17 +123,17 @@ export function CanvasMap() {
 
   return (
     <div
-      className="strata-canvas-map"
+      className="opencanvas-canvas-map"
       data-collapsed={collapsed ? 'true' : 'false'}
       role="region"
       aria-label="Canvas overview"
     >
-      <div className="strata-canvas-map-header">
+      <div className="opencanvas-canvas-map-header">
         <Compass className="size-3" />
         <span>{widgets.length}</span>
         <button
           type="button"
-          className="strata-canvas-map-toggle"
+          className="opencanvas-canvas-map-toggle"
           aria-expanded={!collapsed}
           aria-label={collapsed ? 'Expand minimap' : 'Collapse minimap'}
           title={collapsed ? 'Expand minimap' : 'Collapse minimap'}
@@ -154,7 +154,7 @@ export function CanvasMap() {
         height={H}
         viewBox={`0 0 ${W} ${H}`}
         onClick={handleClick}
-        className="strata-canvas-map-svg"
+        className="opencanvas-canvas-map-svg"
       >
         {/* Widget rects — role-tinted fills, soft. */}
         {widgets.map((w) => {

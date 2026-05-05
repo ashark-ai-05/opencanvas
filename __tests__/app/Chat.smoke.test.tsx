@@ -6,7 +6,7 @@ import { Chat } from '../../app/src/components/Chat';
 describe('Chat (smoke)', () => {
   it('renders input and send button', () => {
     render(<Chat />);
-    expect(screen.getByPlaceholderText(/ask strata anything/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/ask opencanvas anything/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/send/i)).toBeInTheDocument();
   });
 

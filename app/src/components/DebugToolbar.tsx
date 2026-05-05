@@ -46,7 +46,7 @@ export function DebugToolbar() {
     {
       label: 'Markdown',
       onClick: () =>
-        create('strata:markdown', {
+        create('opencanvas:markdown', {
           w: 360,
           h: 240,
           title: 'Auth architecture',
@@ -57,7 +57,7 @@ export function DebugToolbar() {
     {
       label: 'Code',
       onClick: () =>
-        create('strata:code-block', {
+        create('opencanvas:code-block', {
           w: 480,
           h: 280,
           language: 'typescript',
@@ -70,7 +70,7 @@ export function DebugToolbar() {
     {
       label: 'Ticket',
       onClick: () =>
-        create('strata:ticket', {
+        create('opencanvas:ticket', {
           w: 320,
           h: 200,
           ticketId: 'TICKET-101',
@@ -84,7 +84,7 @@ export function DebugToolbar() {
     {
       label: 'Web embed',
       onClick: () =>
-        create('strata:web-embed', {
+        create('opencanvas:web-embed', {
           w: 480,
           h: 360,
           url: 'https://example.com/',
@@ -94,7 +94,7 @@ export function DebugToolbar() {
     {
       label: 'Key/value',
       onClick: () =>
-        create('strata:key-value-card', {
+        create('opencanvas:key-value-card', {
           w: 320,
           h: 200,
           title: 'k8s deployment',
@@ -112,14 +112,14 @@ export function DebugToolbar() {
   const clearAll = () => {
     const ids = editor
       .getCurrentPageShapes()
-      .filter((s) => s.type.startsWith('strata:'))
+      .filter((s) => s.type.startsWith('opencanvas:'))
       .map((s) => s.id);
     if (ids.length > 0) editor.deleteShapes(ids);
   };
 
   return (
     <div
-      className="strata-glass"
+      className="opencanvas-glass"
       style={{
         position: 'absolute',
         top: 60,
@@ -148,7 +148,7 @@ export function DebugToolbar() {
         <button
           key={b.label}
           onClick={b.onClick}
-          className="strata-toolbar-btn"
+          className="opencanvas-toolbar-btn"
           style={{
             padding: '5px 11px',
             fontSize: 12,
@@ -175,7 +175,7 @@ export function DebugToolbar() {
       <span style={{ width: 1, background: 'rgba(63,63,70,0.5)', alignSelf: 'stretch', margin: '2px 4px' }} />
       <button
         onClick={clearAll}
-        title="Remove all Strata widgets from the canvas"
+        title="Remove all OpenCanvas widgets from the canvas"
         style={{
           padding: '5px 11px',
           fontSize: 12,

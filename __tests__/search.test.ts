@@ -38,7 +38,7 @@ describe('SearchService', () => {
   let fixtureDir: string;
 
   beforeAll(() => {
-    fixtureDir = mkdtempSync(join(tmpdir(), 'strata-search-test-'));
+    fixtureDir = mkdtempSync(join(tmpdir(), 'opencanvas-search-test-'));
     writeFileSync(join(fixtureDir, 'apples.md'), 'Apples are red and tasty fruit.');
     writeFileSync(join(fixtureDir, 'oranges.md'), 'Oranges are orange and citrus fruit.');
     writeFileSync(join(fixtureDir, 'cars.md'), 'Cars are vehicles with four wheels.');

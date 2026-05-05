@@ -67,7 +67,7 @@ export function Canvas() {
       // Tldraw editor scope) can apply tool directives via getEditor().
       setEditor(editor);
 
-      // Force dark color scheme — Strata is dark-only by design.
+      // Force dark color scheme — OpenCanvas is dark-only by design.
       editor.user.updateUserPreferences({ colorScheme: 'dark' });
 
       // Persist tldraw snapshot back into the active conversation. Source
@@ -111,7 +111,7 @@ export function Canvas() {
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null;
-      const body = target?.closest('.strata-card-body') as HTMLElement | null;
+      const body = target?.closest('.opencanvas-card-body') as HTMLElement | null;
       if (!body) return;
       // Only lock when the body actually has overflow content. Idle
       // (non-scrolling) bodies — small markdown notes, single-line
@@ -146,7 +146,7 @@ export function Canvas() {
 }
 
 /**
- * Strip tldraw's built-in chrome — Strata renders its own header
+ * Strip tldraw's built-in chrome — OpenCanvas renders its own header
  * controls. The CollapsibleStylePanel replaces tldraw's StylePanel so
  * the right edge stays clear when nothing's selected.
  *

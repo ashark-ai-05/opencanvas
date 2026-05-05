@@ -27,7 +27,7 @@ export type FetchByIdResult = {
 export type SearchOptions = {
   /**
    * When set, filter to chunks whose `meta_json.project` matches. Used by
-   * `pnpm cli --kb-search <name>` and the `mcp__strata__search_kb` tool when
+   * `pnpm cli --kb-search <name>` and the `mcp__opencanvas__search_kb` tool when
    * it forwards a project hint from the agent.
    */
   project?: string;

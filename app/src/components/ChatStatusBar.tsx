@@ -27,7 +27,7 @@ export function ChatStatusBar() {
   return (
     <div
       aria-hidden
-      className={linger ? 'strata-header-pulse' : ''}
+      className={linger ? 'opencanvas-header-pulse' : ''}
       style={{
         height: 2,
         background: linger ? undefined : 'rgba(255,255,255,0.04)',

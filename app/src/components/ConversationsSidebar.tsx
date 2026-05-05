@@ -56,7 +56,7 @@ export function ConversationsSidebar({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -340, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-            className="strata-glass fixed left-0 top-0 bottom-0 z-40 w-[320px] flex flex-col border-r border-white/8"
+            className="opencanvas-glass fixed left-0 top-0 bottom-0 z-40 w-[320px] flex flex-col border-r border-white/8"
             style={{ background: 'rgba(10, 10, 13, 0.92)' }}
           >
             <div className="flex items-center justify-between px-4 h-12 border-b border-white/5">
@@ -83,7 +83,7 @@ export function ConversationsSidebar({
                 createNew();
                 onClose();
               }}
-              className="mx-3 mt-3 mb-1 px-3 h-9 rounded-lg flex items-center gap-2 text-[13px] font-medium strata-btn-accent justify-center"
+              className="mx-3 mt-3 mb-1 px-3 h-9 rounded-lg flex items-center gap-2 text-[13px] font-medium opencanvas-btn-accent justify-center"
             >
               <Plus className="size-3.5" />
               New conversation

@@ -11,7 +11,7 @@ import { resizeBox } from 'tldraw';
 import { CardActions, CardFrame, CardHeader, CardTitle, OpenUrlAction, Tag } from './shared';
 
 export type WebEmbedShape = TLBaseShape<
-  'strata:web-embed',
+  'opencanvas:web-embed',
   {
     w: number;
     h: number;
@@ -24,7 +24,7 @@ export type WebEmbedShape = TLBaseShape<
 >;
 
 export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
-  static override type = 'strata:web-embed' as const;
+  static override type = 'opencanvas:web-embed' as const;
 
   static override props: RecordProps<WebEmbedShape> = {
     w: T.number,
@@ -68,7 +68,7 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
             />
           </CardHeader>
           {showSnippet ? (
-            <div className="strata-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="opencanvas-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <p style={{ margin: 0, color: '#d4d4d8' }}>{shape.props.snippet}</p>
               <a
                 href={shape.props.url}

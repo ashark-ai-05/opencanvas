@@ -16,12 +16,12 @@ export type Conversation = {
   canvasSnapshot?: TLEditorSnapshot;
 };
 
-const CONVERSATIONS_KEY = 'strata:conversations';
-const ACTIVE_ID_KEY = 'strata:active-conversation-id';
+const CONVERSATIONS_KEY = 'opencanvas:conversations';
+const ACTIVE_ID_KEY = 'opencanvas:active-conversation-id';
 // Pre-migration keys (single-conversation era). Read once for migration,
 // then ignored.
-const LEGACY_CHAT_KEY = 'strata:chat-history:default';
-const LEGACY_CANVAS_KEY = 'strata:canvas:default';
+const LEGACY_CHAT_KEY = 'opencanvas:chat-history:default';
+const LEGACY_CANVAS_KEY = 'opencanvas:canvas:default';
 
 type ConversationsStore = {
   conversations: Conversation[];

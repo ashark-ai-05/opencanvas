@@ -29,7 +29,7 @@ describe('CodeIndexer', () => {
   let dir: string;
 
   beforeAll(() => {
-    dir = mkdtempSync(join(tmpdir(), 'strata-code-test-'));
+    dir = mkdtempSync(join(tmpdir(), 'opencanvas-code-test-'));
     writeFileSync(
       join(dir, 'a.ts'),
       `export function add(a: number, b: number) { return a + b; }

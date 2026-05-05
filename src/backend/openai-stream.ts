@@ -1,6 +1,6 @@
 import type { ProviderEvent } from '../core/provider.js';
 
-const MODEL_LABEL = 'strata';
+const MODEL_LABEL = 'opencanvas';
 
 /**
  * Convert our ProviderEvent stream into OpenAI chat-completions SSE

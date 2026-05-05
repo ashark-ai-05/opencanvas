@@ -42,7 +42,7 @@ export type KanbanColumn = {
 };
 
 export type KanbanShape = TLBaseShape<
-  'strata:kanban',
+  'opencanvas:kanban',
   {
     w: number;
     h: number;
@@ -54,7 +54,7 @@ export type KanbanShape = TLBaseShape<
 >;
 
 export class KanbanShapeUtil extends ShapeUtil<KanbanShape> {
-  static override type = 'strata:kanban' as const;
+  static override type = 'opencanvas:kanban' as const;
 
   static override props: RecordProps<KanbanShape> = {
     w: T.number,
@@ -101,24 +101,24 @@ export class KanbanShapeUtil extends ShapeUtil<KanbanShape> {
             <CardActions shape={shape} />
           </CardHeader>
           <CardBody>
-            <div className="strata-kanban">
+            <div className="opencanvas-kanban">
               {columns.map((col, ci) => (
                 <div
                   key={col.id ?? ci}
-                  className="strata-kanban-col"
+                  className="opencanvas-kanban-col"
                   data-colour={col.colour ?? 'neutral'}
                 >
-                  <div className="strata-kanban-col-header">
+                  <div className="opencanvas-kanban-col-header">
                     <span>{col.name}</span>
                     <Tag>{(col.cards ?? []).length}</Tag>
                   </div>
-                  <ul className="strata-kanban-cards">
+                  <ul className="opencanvas-kanban-cards">
                     {(col.cards ?? []).map((card, cdi) => (
                       <li
                         key={card.id ?? cdi}
-                        className="strata-kanban-card"
+                        className="opencanvas-kanban-card"
                       >
-                        <div className="strata-kanban-card-title">
+                        <div className="opencanvas-kanban-card-title">
                           {card.url ? (
                             <a href={card.url} target="_blank" rel="noopener noreferrer">
                               {card.title}
@@ -128,13 +128,13 @@ export class KanbanShapeUtil extends ShapeUtil<KanbanShape> {
                           )}
                         </div>
                         {card.body && (
-                          <div className="strata-kanban-card-body">{card.body}</div>
+                          <div className="opencanvas-kanban-card-body">{card.body}</div>
                         )}
-                        <div className="strata-tag-row">
+                        <div className="opencanvas-tag-row">
                           {card.priority && <Tag>{card.priority}</Tag>}
                           {card.tag && <Tag accent>{card.tag}</Tag>}
                           {card.assignee && (
-                            <span className="strata-kanban-card-assignee">
+                            <span className="opencanvas-kanban-card-assignee">
                               {card.assignee}
                             </span>
                           )}

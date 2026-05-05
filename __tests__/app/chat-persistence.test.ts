@@ -25,26 +25,26 @@ describe('chat-persistence', () => {
   });
 
   it('returns [] for malformed payloads (corrupted localStorage)', () => {
-    localStorage.setItem('strata:chat-history:default', 'not-json');
+    localStorage.setItem('opencanvas:chat-history:default', 'not-json');
     expect(loadChatHistory()).toEqual([]);
   });
 
   it('returns [] for non-array payloads (key collision)', () => {
-    localStorage.setItem('strata:chat-history:default', '{"oops":true}');
+    localStorage.setItem('opencanvas:chat-history:default', '{"oops":true}');
     expect(loadChatHistory()).toEqual([]);
   });
 
   it('saving an empty array clears the storage key (no stale stub)', () => {
     saveChatHistory([{ id: 'm', role: 'user', parts: [] } as never]);
-    expect(localStorage.getItem('strata:chat-history:default')).toBeTruthy();
+    expect(localStorage.getItem('opencanvas:chat-history:default')).toBeTruthy();
     saveChatHistory([]);
-    expect(localStorage.getItem('strata:chat-history:default')).toBeNull();
+    expect(localStorage.getItem('opencanvas:chat-history:default')).toBeNull();
   });
 
   it('clearChatHistory removes the key', () => {
     saveChatHistory([{ id: 'm', role: 'user', parts: [] } as never]);
     clearChatHistory();
-    expect(localStorage.getItem('strata:chat-history:default')).toBeNull();
+    expect(localStorage.getItem('opencanvas:chat-history:default')).toBeNull();
   });
 
   it('collectAppliedToolCallIds finds tool-output-available across all messages', () => {
@@ -54,8 +54,8 @@ describe('chat-persistence', () => {
         role: 'assistant',
         parts: [
           { type: 'text', text: 'hi' },
-          { type: 'tool-mcp__strata__place_widget', state: 'output-available', toolCallId: 'tc-1' },
-          { type: 'tool-mcp__strata__search_kb', state: 'input-available', toolCallId: 'tc-skip' },
+          { type: 'tool-mcp__opencanvas__place_widget', state: 'output-available', toolCallId: 'tc-1' },
+          { type: 'tool-mcp__opencanvas__search_kb', state: 'input-available', toolCallId: 'tc-skip' },
         ],
       },
       {

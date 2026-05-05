@@ -14,7 +14,7 @@ describeIntegration('MCP integration — filesystem server', () => {
   beforeAll(() => {
     // Use realpathSync to resolve macOS /var -> /private/var symlink so the
     // path we pass to the server and the path we use to read match exactly.
-    fixtureDir = realpathSync(mkdtempSync(join(tmpdir(), 'strata-mcp-test-')));
+    fixtureDir = realpathSync(mkdtempSync(join(tmpdir(), 'opencanvas-mcp-test-')));
     writeFileSync(join(fixtureDir, 'hello.txt'), 'Hello from the fixture\n');
   });
 

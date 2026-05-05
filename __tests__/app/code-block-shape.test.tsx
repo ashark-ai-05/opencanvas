@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { CodeBlockShapeUtil } from '../../app/src/canvas/shapes/code-block';
 
 describe('CodeBlockShapeUtil', () => {
-  it('declares strata:code-block', () => {
-    expect(CodeBlockShapeUtil.type).toBe('strata:code-block');
+  it('declares opencanvas:code-block', () => {
+    expect(CodeBlockShapeUtil.type).toBe('opencanvas:code-block');
   });
 
   it('exposes language, code, source + legacy symbolName/filePath in props', () => {

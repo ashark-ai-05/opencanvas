@@ -1,5 +1,5 @@
 /**
- * Strata Electron main process.
+ * OpenCanvas Electron main process.
  *
  * Dev mode: assumes `pnpm dev` already runs Vite (3458) + backend (3457).
  * We poll http://127.0.0.1:3458 until ready (30s timeout) then load it.
@@ -29,13 +29,13 @@ function spawnBackend() {
     env: {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',
-      STRATA_BACKEND_PORT: String(BACKEND_PORT),
-      STRATA_CONFIG: path.join(userDataDir, 'config.json'),
+      OPENCANVAS_BACKEND_PORT: String(BACKEND_PORT),
+      OPENCANVAS_CONFIG: path.join(userDataDir, 'config.json'),
     },
     stdio: 'inherit',
   });
   backendProcess.on('exit', (code) => {
-    console.log(`[strata] bundled backend exited with code ${code}`);
+    console.log(`[opencanvas] bundled backend exited with code ${code}`);
     backendProcess = null;
   });
 }
@@ -96,7 +96,7 @@ async function createWindow() {
       mainWindow.webContents.openDevTools({ mode: 'detach' });
     } catch (err) {
       console.error(
-        `[strata] dev: vite server not reachable on :${APP_PORT}.`,
+        `[opencanvas] dev: vite server not reachable on :${APP_PORT}.`,
         err && err.message ? err.message : err,
       );
       const fallbackHtml =
@@ -111,7 +111,7 @@ async function createWindow() {
     try {
       await pingPort(BACKEND_PORT, 120);
     } catch (err) {
-      console.error('[strata] prod: bundled backend did not start', err);
+      console.error('[opencanvas] prod: bundled backend did not start', err);
     }
     const indexHtml = path.join(__dirname, '..', 'app', 'dist', 'index.html');
     mainWindow.loadFile(indexHtml);

@@ -6,14 +6,14 @@ import { getEditor } from '../../state/editor-ref';
 
 /**
  * Header height when a card is collapsed. Should match the rendered
- * `.strata-card-header` height in globals.css (padding 11+9 + ~22 line + 1
+ * `.opencanvas-card-header` height in globals.css (padding 11+9 + ~22 line + 1
  * border-bottom = ~43px). Rounded up for safety so nothing visually clips.
  */
 const COLLAPSED_HEIGHT = 44;
 
 /**
  * Visual primitives for tldraw shapes. The actual styling lives in
- * `app/src/styles/globals.css` (.strata-card, .strata-card-header, etc.) so
+ * `app/src/styles/globals.css` (.opencanvas-card, .opencanvas-card-header, etc.) so
  * the look-and-feel is changed in one place across all 5 widget kinds.
  *
  * Shapes pass `role` so the card picks up the right left-edge accent color
@@ -101,7 +101,7 @@ export function CardFrame({
 
   return (
     <div
-      className="strata-card"
+      className="opencanvas-card"
       data-role={role}
       data-fresh={fresh ? 'true' : 'false'}
       data-collapsed={collapsed ? 'true' : 'false'}
@@ -128,15 +128,15 @@ function CardSourceFooter({ source }: { source: string }) {
   };
   return (
     <div
-      className="strata-card-footer"
+      className="opencanvas-card-footer"
       onClick={handleClick}
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       style={{ cursor: isUrl ? 'pointer' : 'default' }}
       title={isUrl ? `Open ${source}` : `Source: ${source}`}
     >
-      <span className="strata-card-footer-label">source</span>
-      <span className="strata-card-footer-value">
+      <span className="opencanvas-card-footer-label">source</span>
+      <span className="opencanvas-card-footer-value">
         {isUrl ? new URL(source).host + new URL(source).pathname : source}
       </span>
       {isUrl && <ExternalLink className="size-3 opacity-60" />}
@@ -153,12 +153,12 @@ function CardSourceFooter({ source }: { source: string }) {
 function CardSourcesFooter({ sources }: { sources: SourcePill[] }) {
   return (
     <div
-      className="strata-card-footer strata-card-footer--multi"
+      className="opencanvas-card-footer opencanvas-card-footer--multi"
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <span className="strata-card-footer-label">sources</span>
-      <span className="strata-card-footer-pills">
+      <span className="opencanvas-card-footer-label">sources</span>
+      <span className="opencanvas-card-footer-pills">
         {sources.map((s, i) => {
           const url = typeof s === 'string' ? s : s.url;
           const label =
@@ -169,7 +169,7 @@ function CardSourcesFooter({ sources }: { sources: SourcePill[] }) {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="strata-card-footer-pill"
+              className="opencanvas-card-footer-pill"
               title={url}
               onClick={(e) => e.stopPropagation()}
             >
@@ -193,7 +193,7 @@ function labelFromUrl(url: string): string {
 }
 
 export function CardHeader({ children }: { children: ReactNode }) {
-  return <div className="strata-card-header">{children}</div>;
+  return <div className="opencanvas-card-header">{children}</div>;
 }
 
 export function CardBody({
@@ -204,14 +204,14 @@ export function CardBody({
   children: ReactNode;
 }) {
   return (
-    <div className={mono ? 'strata-card-body strata-card-body--mono' : 'strata-card-body'}>
+    <div className={mono ? 'opencanvas-card-body opencanvas-card-body--mono' : 'opencanvas-card-body'}>
       {children}
     </div>
   );
 }
 
 export function CardTitle({ children }: { children: ReactNode }) {
-  return <span className="strata-card-title">{children}</span>;
+  return <span className="opencanvas-card-title">{children}</span>;
 }
 
 export function Tag({
@@ -222,7 +222,7 @@ export function Tag({
   accent?: boolean;
 }) {
   return (
-    <span className={accent ? 'strata-tag strata-tag--accent' : 'strata-tag'}>{children}</span>
+    <span className={accent ? 'opencanvas-tag opencanvas-tag--accent' : 'opencanvas-tag'}>{children}</span>
   );
 }
 
@@ -255,7 +255,7 @@ export function CardActionButton({
       onPointerDown={(e) => e.stopPropagation()}
       title={title}
       aria-label={title}
-      className="strata-card-action"
+      className="opencanvas-card-action"
     >
       {children}
     </button>
@@ -283,7 +283,7 @@ export function CardActions({
   };
 
   return (
-    <span className="strata-card-actions">
+    <span className="opencanvas-card-actions">
       {extras}
       <ToggleCollapsedAction shapeId={shape.id} collapsed={collapsed} />
       <CardActionButton onClick={handleDelete} title="Remove this widget">

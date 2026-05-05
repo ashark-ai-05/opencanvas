@@ -67,24 +67,24 @@ export function App() {
   useEffect(() => {
     const onOpenHistory = () => setSidebarOpen(true);
     const onOpenMcp = () => setMcpOpen(true);
-    window.addEventListener('strata:open-history', onOpenHistory);
-    window.addEventListener('strata:open-mcp', onOpenMcp);
+    window.addEventListener('opencanvas:open-history', onOpenHistory);
+    window.addEventListener('opencanvas:open-mcp', onOpenMcp);
     return () => {
-      window.removeEventListener('strata:open-history', onOpenHistory);
-      window.removeEventListener('strata:open-mcp', onOpenMcp);
+      window.removeEventListener('opencanvas:open-history', onOpenHistory);
+      window.removeEventListener('opencanvas:open-mcp', onOpenMcp);
     };
   }, []);
 
   return (
     <div className="flex h-full flex-col relative bg-[var(--color-bg)]">
-      <header className="flex items-center justify-between px-4 h-12 shrink-0 strata-glass relative z-20 border-b border-white/5">
+      <header className="flex items-center justify-between px-4 h-12 shrink-0 opencanvas-glass relative z-20 border-b border-white/5">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
             aria-label="Conversations"
             title="Conversations"
-            className="strata-header-btn"
+            className="opencanvas-header-btn"
           >
             <History className="size-3.5" />
           </button>
@@ -98,7 +98,7 @@ export function App() {
             }}
           />
           <h1 className="text-[15px] font-semibold tracking-tight text-zinc-100">
-            Strata
+            OpenCanvas
           </h1>
           {widgetCount > 0 && (
             <span
@@ -118,9 +118,9 @@ export function App() {
               {conversationCount} chats
             </span>
           )}
-          <span className="strata-header-divider" aria-hidden />
+          <span className="opencanvas-header-divider" aria-hidden />
           <HeaderCanvasControls />
-          <span className="strata-header-divider" aria-hidden />
+          <span className="opencanvas-header-divider" aria-hidden />
           <HeaderDrawTools />
           <button
             type="button"
@@ -130,7 +130,7 @@ export function App() {
               const tplId = useTemplateStore.getState().activeTemplateId;
               const widgetCount = editor
                 .getCurrentPageShapes()
-                .filter((s) => s.type.startsWith('strata:')).length;
+                .filter((s) => s.type.startsWith('opencanvas:')).length;
               if (widgetCount === 0) {
                 toast('Canvas is already empty');
                 return;
@@ -145,7 +145,7 @@ export function App() {
             }}
             title="Clear all widgets from the canvas"
             aria-label="Clear canvas"
-            className="strata-header-btn strata-header-btn--danger"
+            className="opencanvas-header-btn opencanvas-header-btn--danger"
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -156,7 +156,7 @@ export function App() {
             type="button"
             onClick={() => setMcpOpen(true)}
             title="MCP servers"
-            className="strata-header-btn"
+            className="opencanvas-header-btn"
             aria-label="MCP servers"
           >
             <ServerCog className="size-3.5" />

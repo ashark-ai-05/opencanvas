@@ -5,7 +5,7 @@ const makeEditor = () => ({
   getCurrentPageShapes: () => [
     {
       id: 'shape:w-1',
-      type: 'strata:markdown',
+      type: 'opencanvas:markdown',
       meta: { role: 'primary' },
       props: { title: 'auth', body: 'body' },
     },
@@ -19,7 +19,7 @@ const makeEditor = () => ({
 });
 
 describe('computeCanvasSnapshot', () => {
-  it('serializes only strata shapes, mapping shape type → kind', () => {
+  it('serializes only opencanvas shapes, mapping shape type → kind', () => {
     const snap = computeCanvasSnapshot(makeEditor() as never, 'ask-anything');
     expect(snap.activeTemplateId).toBe('ask-anything');
     expect(snap.widgets).toHaveLength(1);
@@ -34,7 +34,7 @@ describe('computeCanvasSnapshot', () => {
         getCurrentPageShapes: () => [
           {
             id: 'shape:w-2',
-            type: 'strata:ticket',
+            type: 'opencanvas:ticket',
             meta: {},
             props: { title: 't', ticketId: 'X-1', status: 'open' },
           },
@@ -51,7 +51,7 @@ describe('computeCanvasSnapshot', () => {
         getCurrentPageShapes: () => [
           {
             id: 'shape:abc-123',
-            type: 'strata:markdown',
+            type: 'opencanvas:markdown',
             meta: { role: 'detail' },
             props: { title: 't', body: 'b' },
           },
@@ -77,7 +77,7 @@ describe('computeCanvasSnapshot', () => {
         getCurrentPageShapes: () => [
           {
             id: 'shape:w-x',
-            type: 'strata:web-embed',
+            type: 'opencanvas:web-embed',
             meta: { role: 'reference' },
             props: { url: 'https://example.com' },
           },

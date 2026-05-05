@@ -29,7 +29,7 @@ describe('DocumentIndexer', () => {
   let fixtureDir: string;
 
   beforeAll(() => {
-    fixtureDir = mkdtempSync(join(tmpdir(), 'strata-doc-test-'));
+    fixtureDir = mkdtempSync(join(tmpdir(), 'opencanvas-doc-test-'));
     writeFileSync(join(fixtureDir, 'a.md'), '# Title A\n\nThis is body A with content.');
     writeFileSync(join(fixtureDir, 'b.txt'), 'Plain text body B with different content.');
   });

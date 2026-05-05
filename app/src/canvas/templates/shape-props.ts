@@ -13,11 +13,11 @@ export function shapeProps(
   const base: Record<string, unknown> = { ...result.shape, uri: result.provenance.uri };
 
   switch (shapeType) {
-    case 'strata:markdown':
+    case 'opencanvas:markdown':
       return { w: size.w, h: size.h, ...base };
-    case 'strata:code-block':
+    case 'opencanvas:code-block':
       return { w: size.w, h: size.h, ...base };
-    case 'strata:ticket':
+    case 'opencanvas:ticket':
       return {
         w: size.w,
         h: size.h,
@@ -25,9 +25,9 @@ export function shapeProps(
         title: (result.shape as { title?: string }).title ?? 'Untitled',
         ...base,
       };
-    case 'strata:web-embed':
+    case 'opencanvas:web-embed':
       return { w: size.w, h: size.h, url: (result.shape as { url?: string }).url ?? '', ...base };
-    case 'strata:key-value-card':
+    case 'opencanvas:key-value-card':
     default:
       return {
         w: size.w,
@@ -40,9 +40,9 @@ export function shapeProps(
 }
 
 export const DEFAULT_SIZES: Record<string, { w: number; h: number }> = {
-  'strata:markdown':       { w: 360, h: 240 },
-  'strata:code-block':     { w: 480, h: 280 },
-  'strata:ticket':         { w: 320, h: 200 },
-  'strata:web-embed':      { w: 480, h: 320 },
-  'strata:key-value-card': { w: 320, h: 200 },
+  'opencanvas:markdown':       { w: 360, h: 240 },
+  'opencanvas:code-block':     { w: 480, h: 280 },
+  'opencanvas:ticket':         { w: 320, h: 200 },
+  'opencanvas:web-embed':      { w: 480, h: 320 },
+  'opencanvas:key-value-card': { w: 320, h: 200 },
 };

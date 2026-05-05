@@ -18,7 +18,7 @@ type ProbeResult = {
  * the user clicks "probe") their live tool count + health.
  *
  * Read-only for now — adding/removing requires editing
- * `~/.strata/config.json` directly. The panel surfaces that path so
+ * `~/.opencanvas/config.json` directly. The panel surfaces that path so
  * users know where to look.
  *
  * Spec: REPLICATION-PROMPT.md §13 — `McpSourcesPanel`.
@@ -216,7 +216,7 @@ export function McpSourcesPanel({
                   >
                     profiles[].sources
                   </code>{' '}
-                  in <code>~/.strata/config.json</code>.
+                  in <code>~/.opencanvas/config.json</code>.
                 </div>
               ) : (
                 sources.map((src) => {
@@ -309,7 +309,7 @@ export function McpSourcesPanel({
                 borderTop: '1px solid rgba(255,255,255,0.06)',
               }}
             >
-              Edit <code>~/.strata/config.json</code> under{' '}
+              Edit <code>~/.opencanvas/config.json</code> under{' '}
               <code>profiles[].sources</code> to add or remove servers.
             </footer>
           </motion.aside>

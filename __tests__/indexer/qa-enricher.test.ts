@@ -53,7 +53,7 @@ function buildQaJson(): string {
 
 describe('QaEnricher', () => {
   it('parses 12 queries + response and returns a QA pair', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'strata-qa-'));
+    const dir = await mkdtemp(join(tmpdir(), 'opencanvas-qa-'));
     try {
       const provider = fakeProvider(buildQaJson());
       const enricher = new QaEnricher({ provider, cacheDir: dir });
@@ -69,7 +69,7 @@ describe('QaEnricher', () => {
   });
 
   it('cache hit on identical chunk body costs zero LLM calls', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'strata-qa-'));
+    const dir = await mkdtemp(join(tmpdir(), 'opencanvas-qa-'));
     try {
       const provider = fakeProvider(buildQaJson());
       const enricher = new QaEnricher({ provider, cacheDir: dir });
@@ -85,7 +85,7 @@ describe('QaEnricher', () => {
   });
 
   it('returns null when the LLM emits invalid JSON', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'strata-qa-'));
+    const dir = await mkdtemp(join(tmpdir(), 'opencanvas-qa-'));
     try {
       const provider = fakeProvider('not json at all');
       const enricher = new QaEnricher({ provider, cacheDir: dir });
@@ -97,7 +97,7 @@ describe('QaEnricher', () => {
   });
 
   it('passes rawPrompt: true to the provider', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'strata-qa-'));
+    const dir = await mkdtemp(join(tmpdir(), 'opencanvas-qa-'));
     try {
       const provider = fakeProvider(buildQaJson());
       const enricher = new QaEnricher({ provider, cacheDir: dir });

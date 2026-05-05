@@ -11,7 +11,7 @@ export function CanvasGrid() {
   return (
     <div
       aria-hidden
-      className="strata-canvas-grid"
+      className="opencanvas-canvas-grid"
       style={{
         position: 'absolute',
         inset: 0,

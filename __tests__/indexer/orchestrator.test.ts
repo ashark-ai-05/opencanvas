@@ -122,7 +122,7 @@ describe('KnowledgeBaseOrchestrator', () => {
 
   beforeEach(async () => {
     store = await openTestStore();
-    cacheDir = await mkdtemp(join(tmpdir(), 'strata-orch-'));
+    cacheDir = await mkdtemp(join(tmpdir(), 'opencanvas-orch-'));
   });
   afterEach(async () => {
     store.close();

@@ -4,8 +4,8 @@ import { useTemplateStore } from '../../app/src/state/template-store';
 
 function makeEditor() {
   const shapes: { id: string; type: string }[] = [
-    { id: 'shape:w-1', type: 'strata:markdown' },
-    { id: 'shape:w-2', type: 'strata:ticket' },
+    { id: 'shape:w-1', type: 'opencanvas:markdown' },
+    { id: 'shape:w-2', type: 'opencanvas:ticket' },
     { id: 'shape:other', type: 'geo' },
   ];
   return {
@@ -23,14 +23,14 @@ function makeEditor() {
 }
 
 describe('applyToolDirective — clear & switchTemplate', () => {
-  it('clear directive removes only strata:* shapes', () => {
+  it('clear directive removes only opencanvas:* shapes', () => {
     const editor = makeEditor();
     applyToolDirective(editor as never, { type: 'clear' }, 'ask-anything');
     expect(editor.shapes).toHaveLength(1);
     expect(editor.shapes[0]!.type).toBe('geo');
   });
 
-  it('clear directive is a no-op when no strata shapes are present', () => {
+  it('clear directive is a no-op when no opencanvas shapes are present', () => {
     const editor = {
       shapes: [{ id: 'shape:other', type: 'geo' }],
       getCurrentPageShapes: function () {

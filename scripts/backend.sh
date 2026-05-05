@@ -12,7 +12,7 @@ if [ -f .env ]; then
   set +a
 fi
 
-PORT="${STRATA_BACKEND_PORT:-3457}"
+PORT="${OPENCANVAS_BACKEND_PORT:-3457}"
 
 if [ "${1:-}" = "--smoke" ]; then
   echo "==> Booting backend on :$PORT (smoke)"

@@ -30,8 +30,8 @@ describe('conversations-store — initial hydration', () => {
       updatedAt: 2,
       messages: [],
     };
-    localStorage.setItem('strata:conversations', JSON.stringify([conv]));
-    localStorage.setItem('strata:active-conversation-id', 'conv-x');
+    localStorage.setItem('opencanvas:conversations', JSON.stringify([conv]));
+    localStorage.setItem('opencanvas:active-conversation-id', 'conv-x');
     const store = await freshStore();
     expect(store.getState().conversations[0]!.id).toBe('conv-x');
     expect(store.getState().activeId).toBe('conv-x');
@@ -46,7 +46,7 @@ describe('conversations-store — initial hydration', () => {
       },
     ];
     localStorage.setItem(
-      'strata:chat-history:default',
+      'opencanvas:chat-history:default',
       JSON.stringify(legacyMessages),
     );
     const store = await freshStore();
@@ -58,7 +58,7 @@ describe('conversations-store — initial hydration', () => {
   });
 
   it('falls back gracefully on malformed legacy payloads', async () => {
-    localStorage.setItem('strata:chat-history:default', 'not-json');
+    localStorage.setItem('opencanvas:chat-history:default', 'not-json');
     const store = await freshStore();
     expect(store.getState().conversations).toHaveLength(1);
     expect(store.getState().conversations[0]!.title).toBe('New chat');

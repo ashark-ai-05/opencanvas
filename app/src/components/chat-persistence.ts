@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-const CHAT_STORAGE_KEY = 'strata:chat-history:default';
+const CHAT_STORAGE_KEY = 'opencanvas:chat-history:default';
 
 /**
  * Persist UIMessage[] from useChat to localStorage. Saves are best-effort:

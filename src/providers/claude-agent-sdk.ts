@@ -65,7 +65,7 @@ export type ClaudeAgentSdkDeps = {
 
 /**
  * The full set of Claude Agent SDK built-in tools. We disallow all of them
- * so the only tool surface the model sees is our `mcp__strata__*` namespace.
+ * so the only tool surface the model sees is our `mcp__opencanvas__*` namespace.
  * Without this, the model can fall back to e.g. SDK `WebSearch` when our
  * MCP `web_search` returns empty, which triggers a permission prompt the
  * non-interactive backend can't satisfy.
@@ -96,7 +96,7 @@ const SDK_BUILTIN_TOOLS = [
  *
  * DO NOT paraphrase — short prompts collapse the canvas-vs-chat heuristic.
  */
-const DEFAULT_SYSTEM_PROMPT = `You are Strata, a knowledge assistant. The user has a canvas where you can place widgets to visualize answers spatially, AND a chat panel where you can reply with rich markdown.
+const DEFAULT_SYSTEM_PROMPT = `You are OpenCanvas, a knowledge assistant. The user has a canvas where you can place widgets to visualize answers spatially, AND a chat panel where you can reply with rich markdown.
 
 # Search — do NLP-style retrieval, not literal matching
 ALWAYS call \`search_kb\` first for anything plausibly in the user's index. Do NOT search with the user's raw words alone — that misses paraphrases. Instead, pass:
@@ -192,7 +192,7 @@ Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_resu
  * The SDK's bundled `@anthropic-ai/claude-agent-sdk-linux-x64-musl`
  * package ships a musl-built binary that fails on glibc Linux with a
  * misleading "Claude Code native binary not found" error. We prefer:
- *   1. STRATA_CLAUDE_PATH env override
+ *   1. OPENCANVAS_CLAUDE_PATH env override
  *   2. The user's installed Claude Code on PATH (the common case —
  *      anyone who already runs Claude Code interactively has one)
  * and fall back to letting the SDK pick its own bundled binary.
@@ -203,7 +203,7 @@ let cachedClaudeBinaryPath: string | null | undefined;
 function resolveClaudeBinary(): string | undefined {
   if (cachedClaudeBinaryPath !== undefined) return cachedClaudeBinaryPath ?? undefined;
 
-  const env = process.env['STRATA_CLAUDE_PATH'];
+  const env = process.env['OPENCANVAS_CLAUDE_PATH'];
   if (env && env.length > 0) {
     cachedClaudeBinaryPath = env;
     return env;
@@ -265,7 +265,7 @@ function buildLazyWebSearch(): AgentToolDeps['webSearch'] {
 /**
  * Render a system-prompt section listing the user's externally configured MCP
  * sources and their tool names. Without this the model only knows about
- * strata's built-in tools and won't attempt mcp__<source>__<tool> calls.
+ * opencanvas's built-in tools and won't attempt mcp__<source>__<tool> calls.
  */
 function renderExternalToolsBlock(sources: ExternalMcpSource[]): string {
   const lines = sources.map((s) => {
@@ -324,7 +324,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     // sections (cwd, memory, git status) that can produce empty cache_control
     // text blocks the Anthropic API now rejects.
     // Resolve external MCP sources up front so we can append them to the
-    // system prompt — without that block the model assumes only strata tools
+    // system prompt — without that block the model assumes only opencanvas tools
     // exist and never attempts mcp__<source-name>__<tool> calls.
     const externalSources = this.deps.getExternalMcpSources
       ? await this.deps.getExternalMcpSources().catch((e) => {
@@ -378,7 +378,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
     });
 
     const mcp = createSdkMcpServer({
-      name: 'strata-tools',
+      name: 'opencanvas-tools',
       version: '0.1.0',
       // Eagerly inject all tool schemas into the prompt. Without this the SDK
       // makes the model call the built-in `ToolSearch` first to discover
@@ -413,16 +413,16 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       // No custom agents.
       agents: {},
       // MCP servers exposed to the agent.
-      //   - `strata`: in-process server hosting our 10 agent tools.
+      //   - `opencanvas`: in-process server hosting our 10 agent tools.
       //   - one entry per externally-configured source (filesystem, Confluence,
       //     Jira, etc.) so the agent can call user-defined tools by
       //     `mcp__<source.name>__<tool>`. The SDK manages the process.
       mcpServers: {
-        strata: mcp,
+        opencanvas: mcp,
         ...Object.fromEntries(externalSources.map((s) => [s.name, s.config])),
       },
       allowedTools: [
-        ...tools.map((t) => `mcp__strata__${t.name}`),
+        ...tools.map((t) => `mcp__opencanvas__${t.name}`),
         ...externalSources.flatMap((s) =>
           s.toolNames.map((t) => `mcp__${s.name}__${t}`),
         ),

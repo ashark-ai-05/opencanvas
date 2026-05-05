@@ -31,25 +31,25 @@ export function ShowThinking({
   if (!reasoningText.trim()) return null;
 
   return (
-    <div className="strata-thinking">
+    <div className="opencanvas-thinking">
       <button
         type="button"
-        className="strata-thinking-toggle"
+        className="opencanvas-thinking-toggle"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="strata-thinking-toggle-chevron">
+        <span className="opencanvas-thinking-toggle-chevron">
           <ChevronRight className="size-3" />
         </span>
         <Brain className="size-3" style={{ color: 'var(--color-accent)' }} />
         <span>{open ? 'Hide thinking' : 'Show thinking'}</span>
         {streaming && (
-          <span className="strata-thinking-toggle-streaming">
+          <span className="opencanvas-thinking-toggle-streaming">
             <Loader2 className="size-3 animate-spin" /> still reasoning…
           </span>
         )}
       </button>
-      {open && <div className="strata-thinking-body">{reasoningText}</div>}
+      {open && <div className="opencanvas-thinking-body">{reasoningText}</div>}
     </div>
   );
 }

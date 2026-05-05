@@ -6,22 +6,22 @@ import type {
 } from '../../../src/agent/types';
 
 const SHAPE_TO_KIND: Record<string, WidgetKind> = {
-  'strata:markdown': 'markdown',
-  'strata:code-block': 'code-block',
-  'strata:ticket': 'ticket',
-  'strata:web-embed': 'web-embed',
-  'strata:key-value-card': 'key-value-card',
-  'strata:table': 'table',
-  'strata:timeline': 'timeline',
-  'strata:file-tree': 'file-tree',
+  'opencanvas:markdown': 'markdown',
+  'opencanvas:code-block': 'code-block',
+  'opencanvas:ticket': 'ticket',
+  'opencanvas:web-embed': 'web-embed',
+  'opencanvas:key-value-card': 'key-value-card',
+  'opencanvas:table': 'table',
+  'opencanvas:timeline': 'timeline',
+  'opencanvas:file-tree': 'file-tree',
   // Phase 5 — composite + interactive widgets. Without these the snapshot
   // would silently drop newly-placed cards, widgetCount would stay at 0,
   // and EmptyCanvasHint would keep showing even after the agent placed a
   // composite / tasks / kanban / sticky-note widget.
-  'strata:composite': 'composite',
-  'strata:tasks': 'tasks',
-  'strata:kanban': 'kanban',
-  'strata:sticky-note': 'sticky-note',
+  'opencanvas:composite': 'composite',
+  'opencanvas:tasks': 'tasks',
+  'opencanvas:kanban': 'kanban',
+  'opencanvas:sticky-note': 'sticky-note',
 };
 
 export type CanvasSnapshotShape = {
@@ -40,7 +40,7 @@ export type CanvasSnapshotShape = {
 };
 
 /**
- * Walk page shapes, keep only strata:* widgets, return the snapshot
+ * Walk page shapes, keep only opencanvas:* widgets, return the snapshot
  * the backend expects. Cheap; called per chat submit.
  */
 export function computeCanvasSnapshot(
@@ -65,8 +65,8 @@ export function computeCanvasSnapshot(
     }));
 
   // tldraw exposes selection via editor.getSelectedShapeIds() — strip prefix
-  // and filter to strata:* shapes only (user might have selected a stray
-  // tldraw geo/arrow that isn't a Strata widget).
+  // and filter to opencanvas:* shapes only (user might have selected a stray
+  // tldraw geo/arrow that isn't a OpenCanvas widget).
   const selectedTldrawIds = (
     (editor as unknown as { getSelectedShapeIds?: () => string[] })
       .getSelectedShapeIds?.() ?? []

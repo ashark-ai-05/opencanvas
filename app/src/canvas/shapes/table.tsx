@@ -19,7 +19,7 @@ type Column = {
 };
 
 export type TableShape = TLBaseShape<
-  'strata:table',
+  'opencanvas:table',
   {
     w: number;
     h: number;
@@ -33,7 +33,7 @@ export type TableShape = TLBaseShape<
 >;
 
 export class TableShapeUtil extends ShapeUtil<TableShape> {
-  static override type = 'strata:table' as const;
+  static override type = 'opencanvas:table' as const;
 
   static override props: RecordProps<TableShape> = {
     w: T.number,
@@ -78,7 +78,7 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
               extras={<CopyAction text={tableToCsv(columns, rows)} label="CSV" />}
             />
           </CardHeader>
-          <div className="strata-card-body" style={{ padding: 0 }}>
+          <div className="opencanvas-card-body" style={{ padding: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr>

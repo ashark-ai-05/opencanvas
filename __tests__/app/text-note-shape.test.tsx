@@ -3,7 +3,7 @@ import { TextNoteShapeUtil } from '../../app/src/canvas/shapes/text-note';
 
 describe('TextNoteShapeUtil', () => {
   it('declares the namespaced shape type', () => {
-    expect(TextNoteShapeUtil.type).toBe('strata:text-note');
+    expect(TextNoteShapeUtil.type).toBe('opencanvas:text-note');
   });
 
   it('exposes a typed props schema', () => {

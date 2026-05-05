@@ -30,7 +30,7 @@ export type Widget = {
   id: string;
   acceptsKinds: ResultKind[];
   /**
-   * The tldraw shape type literal, e.g. 'strata:markdown'. Frontend
+   * The tldraw shape type literal, e.g. 'opencanvas:markdown'. Frontend
    * registers this with tldraw's shapeUtils. `unknown` typed here so this
    * file stays framework-free; concrete impls cast at the boundary.
    */

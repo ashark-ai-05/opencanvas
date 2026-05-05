@@ -4,22 +4,22 @@ import type { Widget } from './widget.js';
 const MARKDOWN: Widget = {
   id: 'markdown',
   acceptsKinds: ['text-document', 'wiki-page'],
-  shapeType: 'strata:markdown',
+  shapeType: 'opencanvas:markdown',
 };
 const CODE_BLOCK: Widget = {
   id: 'code-block',
   acceptsKinds: ['code-symbol', 'code-file'],
-  shapeType: 'strata:code-block',
+  shapeType: 'opencanvas:code-block',
 };
 const TICKET: Widget = {
   id: 'ticket',
   acceptsKinds: ['ticket'],
-  shapeType: 'strata:ticket',
+  shapeType: 'opencanvas:ticket',
 };
 const WEB_EMBED: Widget = {
   id: 'web-embed',
   acceptsKinds: ['web-page'],
-  shapeType: 'strata:web-embed',
+  shapeType: 'opencanvas:web-embed',
 };
 const KEY_VALUE_CARD: Widget = {
   id: 'key-value-card',
@@ -34,42 +34,42 @@ const KEY_VALUE_CARD: Widget = {
     'k8s-resource',
     'code-diff',
   ],
-  shapeType: 'strata:key-value-card',
+  shapeType: 'opencanvas:key-value-card',
 };
 const TABLE: Widget = {
   id: 'table',
   acceptsKinds: ['table-row-set'],
-  shapeType: 'strata:table',
+  shapeType: 'opencanvas:table',
 };
 const TIMELINE: Widget = {
   id: 'timeline',
   acceptsKinds: ['log-stream'],
-  shapeType: 'strata:timeline',
+  shapeType: 'opencanvas:timeline',
 };
 const FILE_TREE: Widget = {
   id: 'file-tree',
   acceptsKinds: [],
-  shapeType: 'strata:file-tree',
+  shapeType: 'opencanvas:file-tree',
 };
 const COMPOSITE: Widget = {
   id: 'composite',
   acceptsKinds: [],
-  shapeType: 'strata:composite',
+  shapeType: 'opencanvas:composite',
 };
 const TASKS: Widget = {
   id: 'tasks',
   acceptsKinds: [],
-  shapeType: 'strata:tasks',
+  shapeType: 'opencanvas:tasks',
 };
 const KANBAN: Widget = {
   id: 'kanban',
   acceptsKinds: [],
-  shapeType: 'strata:kanban',
+  shapeType: 'opencanvas:kanban',
 };
 const STICKY_NOTE: Widget = {
   id: 'sticky-note',
   acceptsKinds: [],
-  shapeType: 'strata:sticky-note',
+  shapeType: 'opencanvas:sticky-note',
 };
 
 /**

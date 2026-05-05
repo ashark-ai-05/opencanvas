@@ -49,7 +49,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-1',
             input: { kind: 'markdown', role: 'primary', payload: {} },
@@ -87,7 +87,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-2',
             input: {},
@@ -109,7 +109,7 @@ describe('Chat tool handler', () => {
         parts: [
           {
             type: 'dynamic-tool',
-            toolName: 'mcp__strata__place_widget',
+            toolName: 'mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-dyn',
             input: {},
@@ -137,7 +137,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-3',
             input: {},
@@ -181,7 +181,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'input-available',
             toolCallId: 'tc-input',
             input: { kind: 'markdown' },
@@ -200,7 +200,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-5',
             input: {},
@@ -220,7 +220,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__search_kb',
+            type: 'tool-mcp__opencanvas__search_kb',
             state: 'output-available',
             toolCallId: 'tc-6',
             input: { query: 'a' },
@@ -241,7 +241,7 @@ describe('Chat tool handler', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-7',
             input: {},
@@ -265,7 +265,7 @@ describe('Chat tool indicators', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__search_kb',
+            type: 'tool-mcp__opencanvas__search_kb',
             state: 'input-available',
             toolCallId: 'tc-call',
             input: { query: 'auth' },
@@ -288,7 +288,7 @@ describe('Chat tool indicators', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-error',
             toolCallId: 'tc-err',
             input: {},
@@ -310,7 +310,7 @@ describe('Chat tool indicators', () => {
         role: 'assistant',
         parts: [
           {
-            type: 'tool-mcp__strata__place_widget',
+            type: 'tool-mcp__opencanvas__place_widget',
             state: 'output-available',
             toolCallId: 'tc-out',
             input: {},
@@ -334,7 +334,7 @@ describe('Chat tool indicators', () => {
         parts: [
           { type: 'text', text: 'Looking that up.' },
           {
-            type: 'tool-mcp__strata__fetch_result',
+            type: 'tool-mcp__opencanvas__fetch_result',
             state: 'input-available',
             toolCallId: 'tc-x',
             input: { id: 'x' },

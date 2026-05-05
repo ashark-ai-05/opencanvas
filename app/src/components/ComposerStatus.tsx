@@ -34,11 +34,11 @@ export function ComposerStatus({
   if (!showHitsChip) return null;
 
   return (
-    <div className="strata-composer-status-row">
+    <div className="opencanvas-composer-status-row">
       {showHitsChip && (
         <button
           type="button"
-          className="strata-composer-hits-chip"
+          className="opencanvas-composer-hits-chip"
           aria-expanded={hitsOpen}
           aria-label={`KB hits: ${hitCount ?? '…'}`}
           title={hitsOpen ? 'Hide KB hits' : 'Show KB hits'}
@@ -62,14 +62,14 @@ export function ComposerStatus({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.16 }}
-            className="strata-composer-hits-popover"
+            className="opencanvas-composer-hits-popover"
           >
-            <div className="strata-composer-hits-popover-header">
+            <div className="opencanvas-composer-hits-popover-header">
               <Database className="size-3" />
               <span>KB hits for “{query}”</span>
               <button
                 type="button"
-                className="strata-composer-hits-popover-dismiss"
+                className="opencanvas-composer-hits-popover-dismiss"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDismissHits();
@@ -81,28 +81,28 @@ export function ComposerStatus({
                 <X className="size-3" />
               </button>
             </div>
-            <ul className="strata-composer-hits-list">
+            <ul className="opencanvas-composer-hits-list">
               {hits.map((hit) => {
                 const title = readTitle(hit);
                 const snippet = readSnippet(hit);
                 const uri = hit.provenance?.uri ?? '';
                 const isUrl = /^https?:\/\//.test(uri);
                 return (
-                  <li key={hit.id} className="strata-composer-hits-row">
-                    <div className="strata-composer-hits-row-head">
-                      <span className="strata-composer-hits-row-kind">
+                  <li key={hit.id} className="opencanvas-composer-hits-row">
+                    <div className="opencanvas-composer-hits-row-head">
+                      <span className="opencanvas-composer-hits-row-kind">
                         {hit.kind}
                       </span>
-                      <span className="strata-composer-hits-row-title">
+                      <span className="opencanvas-composer-hits-row-title">
                         {title}
                       </span>
                     </div>
                     {snippet && (
-                      <div className="strata-composer-hits-row-snippet">
+                      <div className="opencanvas-composer-hits-row-snippet">
                         {snippet}
                       </div>
                     )}
-                    <div className="strata-composer-hits-row-actions">
+                    <div className="opencanvas-composer-hits-row-actions">
                       <button
                         type="button"
                         title="Place on canvas"
@@ -124,7 +124,7 @@ export function ComposerStatus({
                           <ExternalLink className="size-3" /> Open
                         </a>
                       )}
-                      <span className="strata-composer-hits-row-source">
+                      <span className="opencanvas-composer-hits-row-source">
                         {hit.sourceId}
                       </span>
                     </div>

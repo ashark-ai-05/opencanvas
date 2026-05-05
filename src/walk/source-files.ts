@@ -90,7 +90,7 @@ const SKIP_DIR_NAMES = new Set<string>([
   '.mvn',
   'release',
   'dist-backend',
-  '.strata',
+  '.opencanvas',
 ]);
 
 export type WalkOptions = {

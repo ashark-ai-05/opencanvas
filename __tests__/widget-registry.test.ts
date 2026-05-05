@@ -3,23 +3,23 @@ import { WIDGET_REGISTRY, ALL_WIDGETS, pickWidgetForKind } from '../src/core/wid
 
 describe('widget registry', () => {
   it('contains all expected widget mappings', () => {
-    expect(WIDGET_REGISTRY['text-document'].shapeType).toBe('strata:markdown');
-    expect(WIDGET_REGISTRY['wiki-page'].shapeType).toBe('strata:markdown');
-    expect(WIDGET_REGISTRY['code-symbol'].shapeType).toBe('strata:code-block');
-    expect(WIDGET_REGISTRY['code-file'].shapeType).toBe('strata:code-block');
-    expect(WIDGET_REGISTRY['ticket'].shapeType).toBe('strata:ticket');
-    expect(WIDGET_REGISTRY['web-page'].shapeType).toBe('strata:web-embed');
+    expect(WIDGET_REGISTRY['text-document'].shapeType).toBe('opencanvas:markdown');
+    expect(WIDGET_REGISTRY['wiki-page'].shapeType).toBe('opencanvas:markdown');
+    expect(WIDGET_REGISTRY['code-symbol'].shapeType).toBe('opencanvas:code-block');
+    expect(WIDGET_REGISTRY['code-file'].shapeType).toBe('opencanvas:code-block');
+    expect(WIDGET_REGISTRY['ticket'].shapeType).toBe('opencanvas:ticket');
+    expect(WIDGET_REGISTRY['web-page'].shapeType).toBe('opencanvas:web-embed');
   });
 
   it('pickWidgetForKind returns a Widget for a known kind', () => {
     const w = pickWidgetForKind('ticket');
-    expect(w.shapeType).toBe('strata:ticket');
+    expect(w.shapeType).toBe('opencanvas:ticket');
     expect(w.acceptsKinds).toContain('ticket');
   });
 
   it('pickWidgetForKind returns the fallback for unknown kinds', () => {
     const w = pickWidgetForKind('image' as never);
-    expect(w.shapeType).toBe('strata:key-value-card');
+    expect(w.shapeType).toBe('opencanvas:key-value-card');
   });
 
   it('every widget id is unique', () => {

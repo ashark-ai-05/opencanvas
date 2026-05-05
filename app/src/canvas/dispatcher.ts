@@ -30,18 +30,18 @@ export function placeResultsOnCanvas(
 }
 
 const KIND_TO_SHAPE: Record<WidgetKind, string> = {
-  markdown: 'strata:markdown',
-  'code-block': 'strata:code-block',
-  ticket: 'strata:ticket',
-  'web-embed': 'strata:web-embed',
-  'key-value-card': 'strata:key-value-card',
-  table: 'strata:table',
-  timeline: 'strata:timeline',
-  'file-tree': 'strata:file-tree',
-  composite: 'strata:composite',
-  tasks: 'strata:tasks',
-  kanban: 'strata:kanban',
-  'sticky-note': 'strata:sticky-note',
+  markdown: 'opencanvas:markdown',
+  'code-block': 'opencanvas:code-block',
+  ticket: 'opencanvas:ticket',
+  'web-embed': 'opencanvas:web-embed',
+  'key-value-card': 'opencanvas:key-value-card',
+  table: 'opencanvas:table',
+  timeline: 'opencanvas:timeline',
+  'file-tree': 'opencanvas:file-tree',
+  composite: 'opencanvas:composite',
+  tasks: 'opencanvas:tasks',
+  kanban: 'opencanvas:kanban',
+  'sticky-note': 'opencanvas:sticky-note',
 };
 
 /** Sensible default size per kind so wide tables don't get cropped at 320×200. */
@@ -61,7 +61,7 @@ const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
 };
 
 /**
- * After this many strata widgets are on the canvas, new placements start
+ * After this many opencanvas widgets are on the canvas, new placements start
  * collapsed so dense canvases don't visually overflow. Spec §12.
  */
 const COLLAPSE_THRESHOLD = 3;
@@ -93,7 +93,7 @@ export function applyToolDirective(
       const w = Math.max(slot.w, def.w);
       const h = Math.max(slot.h, def.h);
 
-      // Resolve overlap with already-placed strata widgets. Templates are
+      // Resolve overlap with already-placed opencanvas widgets. Templates are
       // role-aware but blind to actual canvas state — when the agent fans
       // out across roles in quick succession, slots calculated from
       // occupancy can collide with adjacent roles' slots OR with shapes
@@ -101,10 +101,10 @@ export function applyToolDirective(
       // spot near the template's preferred position.
       const { x, y } = findFreePosition(editor, slot.x, slot.y, w, h);
 
-      const totalStrata = editor
+      const totalOpenCanvas = editor
         .getCurrentPageShapes()
-        .filter((s) => s.type.startsWith('strata:')).length;
-      const startCollapsed = totalStrata >= COLLAPSE_THRESHOLD;
+        .filter((s) => s.type.startsWith('opencanvas:')).length;
+      const startCollapsed = totalOpenCanvas >= COLLAPSE_THRESHOLD;
 
       // sources / sourceLabel: peeled into `meta` so the shape props stay
       // payload-pure. CardFrame reads either `props.sources` or
@@ -178,7 +178,7 @@ export function applyToolDirective(
     case 'clear': {
       const ids = editor
         .getCurrentPageShapes()
-        .filter((s) => s.type.startsWith('strata:'))
+        .filter((s) => s.type.startsWith('opencanvas:'))
         .map((s) => s.id);
       if (ids.length > 0) editor.deleteShapes(ids as never[]);
       return;
@@ -249,13 +249,13 @@ function countByRole(editor: Editor, role: string): number {
   }>;
   return shapes.filter(
     (s) =>
-      s.type.startsWith('strata:') && (s.meta?.['role'] as string) === role,
+      s.type.startsWith('opencanvas:') && (s.meta?.['role'] as string) === role,
   ).length;
 }
 
 /**
  * Find a placement near (preferX, preferY) that doesn't overlap any
- * existing strata widget. Walks a coarse grid below + right of the
+ * existing opencanvas widget. Walks a coarse grid below + right of the
  * template's preferred slot. 16px gap between cards.
  *
  * The search prefers downward motion (continues the visual reading order)
@@ -275,7 +275,7 @@ function findFreePosition(
     x: number;
     y: number;
     props?: { w?: number; h?: number };
-  }>).filter((s) => s.type.startsWith('strata:'));
+  }>).filter((s) => s.type.startsWith('opencanvas:'));
 
   const overlaps = (x: number, y: number): boolean => {
     for (const s of placed) {
