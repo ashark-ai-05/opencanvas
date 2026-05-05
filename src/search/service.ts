@@ -8,12 +8,12 @@ import { titleFromUri } from './title.js';
  * `buildAgentTools` directly with no adapter.
  */
 export type SearchResult = {
-  id: string;       // String(chunks.id)
-  kind: string;     // chunks.kind
-  title: string;    // meta.title ?? titleFromUri(uri)
-  snippet: string;  // body truncated to ~200 chars
-  score: number;    // RRF score
-  source: string;  // chunks.source_id
+  id: string; // String(chunks.id)
+  kind: string; // chunks.kind
+  title: string; // meta.title ?? titleFromUri(uri)
+  snippet: string; // body truncated to ~200 chars
+  score: number; // RRF score
+  source: string; // chunks.source_id
 };
 
 export type FetchByIdResult = {
@@ -24,15 +24,24 @@ export type FetchByIdResult = {
   source: string;
 };
 
+export type SearchOptions = {
+  /**
+   * When set, filter to chunks whose `meta_json.project` matches. Used by
+   * `pnpm cli --kb-search <name>` and the `mcp__strata__search_kb` tool when
+   * it forwards a project hint from the agent.
+   */
+  project?: string;
+};
+
 export type SearchServiceOptions = {
   store: Store;
   embedder: EmbeddingProvider;
 };
 
-const RRF_K = 60;
-const DEFAULT_LIMIT = 10;
-const CANDIDATE_LIMIT = 50;
-const SNIPPET_LEN = 200;
+export const RRF_K = 60;
+export const DEFAULT_LIMIT = 10;
+export const CANDIDATE_LIMIT = 50;
+export const SNIPPET_LEN = 200;
 
 type ChunkRow = {
   chunk_id: number;
@@ -58,40 +67,76 @@ export class SearchService {
    *  - sqlite-vec MATCH for vector similarity
    *  - merged via reciprocal rank fusion (RRF, k=60)
    *
-   * Returns the agent-tool shape directly (no adapter needed).
+   * When `options.project` is set, both branches are scoped to that
+   * project via `json_extract(meta_json, '$.project')`. The vector branch
+   * over-fetches and post-filters because vec0 cannot AND with regular
+   * predicates inside its MATCH clause.
    */
-  async search(query: string, limit: number = DEFAULT_LIMIT): Promise<SearchResult[]> {
-    // BM25 rank (FTS5 returns negative bm25; lower is better → invert order)
+  async search(
+    query: string,
+    limit: number = DEFAULT_LIMIT,
+    options: SearchOptions = {},
+  ): Promise<SearchResult[]> {
+    const ftsExpr = escapeFtsQuery(query);
+
+    // BM25 rank (FTS5 returns negative bm25; lower is better).
     let ftsRows: ChunkRow[] = [];
-    try {
-      ftsRows = this.store.db
-        .prepare(
-          `SELECT chunks.id AS chunk_id, chunks.source_id, chunks.kind,
-                  chunks.uri, chunks.body, chunks.meta_json
-           FROM fts JOIN chunks ON chunks.id = fts.rowid
-           WHERE fts MATCH ?
-           ORDER BY bm25(fts)
-           LIMIT ?`
-        )
-        .all(this.escapeFtsQuery(query), CANDIDATE_LIMIT) as ChunkRow[];
-    } catch {
-      // FTS query may fail on special tokens; fall through to vector-only
+    if (ftsExpr.length > 0) {
+      try {
+        if (options.project) {
+          ftsRows = this.store.db
+            .prepare(
+              `SELECT chunks.id AS chunk_id, chunks.source_id, chunks.kind,
+                      chunks.uri, chunks.body, chunks.meta_json
+               FROM fts JOIN chunks ON chunks.id = fts.rowid
+               WHERE fts MATCH ?
+                 AND json_extract(chunks.meta_json, '$.project') = ?
+               ORDER BY bm25(fts)
+               LIMIT ?`,
+            )
+            .all(ftsExpr, options.project, CANDIDATE_LIMIT) as ChunkRow[];
+        } else {
+          ftsRows = this.store.db
+            .prepare(
+              `SELECT chunks.id AS chunk_id, chunks.source_id, chunks.kind,
+                      chunks.uri, chunks.body, chunks.meta_json
+               FROM fts JOIN chunks ON chunks.id = fts.rowid
+               WHERE fts MATCH ?
+               ORDER BY bm25(fts)
+               LIMIT ?`,
+            )
+            .all(ftsExpr, CANDIDATE_LIMIT) as ChunkRow[];
+        }
+      } catch {
+        // FTS query may fail on special tokens; fall through to vector-only.
+      }
     }
 
-    // Vector rank
+    // Vector rank.
     const [queryVec] = await this.embedder.embed([query]);
-    const vecRows = this.store.db
+    const vecLimit = options.project ? CANDIDATE_LIMIT * 4 : CANDIDATE_LIMIT;
+    const vecRowsRaw = this.store.db
       .prepare(
         `SELECT embeddings.chunk_id, chunks.source_id, chunks.kind,
                 chunks.uri, chunks.body, chunks.meta_json, distance
          FROM embeddings JOIN chunks ON chunks.id = embeddings.chunk_id
          WHERE embedding MATCH ?
            AND k = ?
-         ORDER BY distance`
+         ORDER BY distance`,
       )
-      .all(Buffer.from(queryVec.buffer), CANDIDATE_LIMIT) as (ChunkRow & {
-        distance: number;
-      })[];
+      .all(Buffer.from(queryVec.buffer), vecLimit) as (ChunkRow & {
+      distance: number;
+    })[];
+
+    let vecRows: ChunkRow[] = vecRowsRaw;
+    if (options.project) {
+      vecRows = vecRows
+        .filter((row) => {
+          const meta = parseMeta(row.meta_json);
+          return meta['project'] === options.project;
+        })
+        .slice(0, CANDIDATE_LIMIT);
+    }
 
     // RRF: score = sum(1 / (RRF_K + rank))
     const fusedScores = new Map<number, { score: number; row: ChunkRow }>();
@@ -113,7 +158,8 @@ export class SearchService {
       .slice(0, limit)
       .map(({ score, row }) => {
         const meta = parseMeta(row.meta_json);
-        const metaTitle = typeof meta['title'] === 'string' ? (meta['title'] as string) : undefined;
+        const metaTitle =
+          typeof meta['title'] === 'string' ? (meta['title'] as string) : undefined;
         return {
           id: String(row.chunk_id),
           kind: row.kind,
@@ -138,7 +184,7 @@ export class SearchService {
     const row = this.store.db
       .prepare(
         `SELECT id, source_id, kind, uri, body, meta_json
-         FROM chunks WHERE id = ?`
+         FROM chunks WHERE id = ?`,
       )
       .get(numericId) as
       | {
@@ -154,7 +200,8 @@ export class SearchService {
     if (!row) return null;
 
     const meta = parseMeta(row.meta_json);
-    const metaTitle = typeof meta['title'] === 'string' ? (meta['title'] as string) : undefined;
+    const metaTitle =
+      typeof meta['title'] === 'string' ? (meta['title'] as string) : undefined;
     return {
       id: String(row.id),
       kind: row.kind,
@@ -163,24 +210,31 @@ export class SearchService {
       source: row.source_id,
     };
   }
+}
 
-  /**
-   * FTS5 has special characters that must be quoted to be treated as
-   * literals. For v1 we simply quote the entire query as a phrase
-   * (preserves all characters); accuracy gains from term-level escaping
-   * can come in 3a.1 if needed.
-   */
-  private escapeFtsQuery(query: string): string {
-    // Replace any double-quote with two double-quotes (FTS5 escape), then wrap.
-    return `"${query.replace(/"/g, '""')}"`;
-  }
+/**
+ * Tokenise the user query into FTS5-safe terms.
+ * Strategy: lowercase, run-of-`[a-z0-9_]{2,}` tokens, double-quote each, OR them.
+ * Empty / no-token queries return '' so the caller can skip the FTS branch
+ * cleanly (vector-only fallback).
+ *
+ * Spec reference: REPLICATION-PROMPT.md §5.
+ */
+export function escapeFtsQuery(query: string): string {
+  const tokens = query
+    .toLowerCase()
+    .match(/[a-z0-9_]{2,}/g);
+  if (!tokens || tokens.length === 0) return '';
+  return tokens.map((t) => `"${t}"`).join(' OR ');
 }
 
 function parseMeta(metaJson: string | null): Record<string, unknown> {
   if (!metaJson) return {};
   try {
     const parsed = JSON.parse(metaJson);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+    return parsed && typeof parsed === 'object'
+      ? (parsed as Record<string, unknown>)
+      : {};
   } catch {
     return {};
   }

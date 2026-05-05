@@ -16,14 +16,17 @@ import {
   ConfigFileSchema,
   ProfileSchema,
   DEFAULT_CONFIG,
+  KbProjectSchema,
   type Profile,
   type ConfigFile,
+  type KbProject,
 } from './schema.js';
 
 export type LoadedConfig = {
   activeProfile: Profile;
   allProfiles: Profile[];
   configPath: string;
+  knowledgeBase: { projects: KbProject[] };
 };
 
 function defaultConfigPath(): string {
@@ -90,5 +93,36 @@ export function loadConfig(profileOverride?: string): LoadedConfig {
     activeProfile: ProfileSchema.parse(activeProfile),
     allProfiles: config.profiles,
     configPath,
+    knowledgeBase: config.knowledgeBase ?? { projects: [] },
   };
 }
+
+/**
+ * Persist a partial config update. Round-trips the entire file through Zod
+ * so a half-edited file by hand still validates. Used by `--kb-init` to
+ * append a new project without disturbing existing profiles.
+ */
+export function saveConfig(update: (cfg: ConfigFile) => ConfigFile): ConfigFile {
+  const configPath = resolveConfigPath();
+  const raw = existsSync(configPath)
+    ? readFileSync(configPath, 'utf-8')
+    : null;
+  const current: ConfigFile = raw
+    ? parseConfig(raw, configPath)
+    : DEFAULT_CONFIG;
+  const next = ConfigFileSchema.parse(update(current));
+  mkdirSync(dirname(configPath), { recursive: true });
+  writeFileSync(configPath, JSON.stringify(next, null, 2) + '\n', 'utf-8');
+  return next;
+}
+
+export function loadKbProjects(): KbProject[] {
+  return loadConfig().knowledgeBase.projects;
+}
+
+export function findKbProject(name: string): KbProject | undefined {
+  return loadKbProjects().find((p) => p.name === name);
+}
+
+// Re-export KbProjectSchema so callers can use it for ad-hoc validation.
+export { KbProjectSchema };

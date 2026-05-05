@@ -17,5 +17,12 @@ customware/
 app/dist/
 .vite/
 
+# Electron-builder output + bundled backend
+release/
+dist-backend/
+
+# Per-user Strata cache + DB (when devving from inside a clone of the repo)
+.strata/
+
 # Test environment artifacts
 __tests__/app/.cache/

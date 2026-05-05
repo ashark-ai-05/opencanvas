@@ -62,6 +62,8 @@ export const ProfileSchema = z.object({
     }),
     z.object({
       provider: z.literal('amp'),
+      mode: z.enum(['smart', 'rush', 'large', 'deep']).optional(),
+      cwd: z.string().optional(),
     }),
     z.object({
       provider: z.literal('anthropic-direct'),
@@ -101,15 +103,67 @@ export const ProfileSchema = z.object({
     }),
 });
 
+/**
+ * Per-project knowledge-base config — describes which connectors run when
+ * the user invokes `pnpm cli --kb-ingest <name>`. Secrets are NEVER read
+ * from this file (only env vars). When `enrich` is false the orchestrator
+ * skips QA enrichment entirely and embeds raw chunk bodies.
+ */
+export const KbProjectSchema = z.object({
+  name: z
+    .string()
+    .regex(/^[a-z0-9_-]+$/, 'project name must be kebab/snake-case ASCII'),
+  enrich: z.boolean().default(true),
+  code: z
+    .object({
+      rootPath: z.string(),
+    })
+    .optional(),
+  confluence: z
+    .object({
+      baseUrl: z.string().url(),
+      spaceKeys: z.array(z.string()).min(1),
+    })
+    .optional(),
+  jira: z
+    .object({
+      baseUrl: z.string().url(),
+      projectKeys: z.array(z.string()).min(1),
+    })
+    .optional(),
+  stash: z
+    .object({
+      baseUrl: z.string().url(),
+      repos: z
+        .array(
+          z.object({
+            projectKey: z.string(),
+            repoSlug: z.string(),
+          }),
+        )
+        .min(1),
+    })
+    .optional(),
+});
+
+export type KbProject = z.infer<typeof KbProjectSchema>;
+
+export const KnowledgeBaseSchema = z
+  .object({
+    projects: z.array(KbProjectSchema).default([]),
+  })
+  .default({ projects: [] });
+
 export const ConfigFileSchema = z.object({
   activeProfile: z.string(),
   profiles: z.array(ProfileSchema).min(1),
+  knowledgeBase: KnowledgeBaseSchema,
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;
 export type ConfigFile = z.infer<typeof ConfigFileSchema>;
 
-/** Default config written when no config file is found */
+/** Default config written when no config file is found. */
 export const DEFAULT_CONFIG: ConfigFile = {
   activeProfile: 'claude-sdk',
   profiles: [
@@ -120,4 +174,5 @@ export const DEFAULT_CONFIG: ConfigFile = {
       sources: [],
     },
   ],
+  knowledgeBase: { projects: [] },
 };

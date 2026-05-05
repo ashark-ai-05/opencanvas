@@ -50,8 +50,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export async function loadInitialMigrations(): Promise<Migration[]> {
-  const sql = await readFile(join(__dirname, 'migrations', '001_initial.sql'), 'utf8');
-  return [{ id: '001_initial', sql }];
+  const sql001 = await readFile(join(__dirname, 'migrations', '001_initial.sql'), 'utf8');
+  const sql002 = await readFile(
+    join(__dirname, 'migrations', '002_qa_and_source_state.sql'),
+    'utf8',
+  );
+  return [
+    { id: '001_initial', sql: sql001 },
+    { id: '002_qa_and_source_state', sql: sql002 },
+  ];
 }
 
 /**

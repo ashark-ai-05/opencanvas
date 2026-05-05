@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "cli": "tsx src/cli.ts",
+    "mcp": "tsx src/mcp-server/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -13,7 +15,14 @@
     "dev": "concurrently --names 'backend,app' --kill-others --kill-others-on-fail 'pnpm backend' 'pnpm app'",
     "app": "vite --config app/vite.config.ts",
     "app:build": "vite build --config app/vite.config.ts",
-    "app:preview": "vite preview --config app/vite.config.ts"
+    "app:preview": "vite preview --config app/vite.config.ts",
+    "electron": "electron .",
+    "electron:dev": "concurrently --names 'dev,electron' --kill-others --kill-others-on-fail 'pnpm dev' 'electron .'",
+    "electron:rebuild": "electron-builder install-app-deps",
+    "dist": "pnpm app:build && electron-builder",
+    "dist:mac": "pnpm app:build && electron-builder --mac",
+    "dist:win": "pnpm app:build && electron-builder --win",
+    "dist:linux": "pnpm app:build && electron-builder --linux"
   },
   "engines": {
     "node": ">=24"
@@ -25,23 +34,28 @@
     "@hono/node-server": "^1.10.0",
     "@huggingface/transformers": "^4.0.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@sourcegraph/amp-sdk": "*",
     "ai": "^6.0.0",
     "better-sqlite3": "^11.0.0",
     "framer-motion": "^12.38.0",
     "hono": "^4.0.0",
     "lucide-react": "^0.460.0",
+    "mammoth": "^1.12.0",
     "ollama": "*",
     "onnxruntime-node": "^1.20.0",
     "openai": "*",
+    "pdf-parse": "^2.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.0.0",
     "remark-gfm": "^4.0.0",
+    "shiki": "^4.0.0",
     "sonner": "^2.0.7",
     "sqlite-vec": "^0.1.6",
     "tldraw": "^3.0.0",
     "tree-sitter-typescript": "^0.23.0",
     "web-tree-sitter": "^0.24.0",
+    "xlsx": "^0.18.0",
     "yaml": "^2.8.3",
     "zod": "*",
     "zustand": "^5.0.0"
@@ -58,6 +72,8 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "concurrently": "^9.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
     "jsdom": "^25.0.0",
     "tailwindcss": "^4.0.0",
     "tsx": "*",
@@ -71,7 +87,42 @@
       "esbuild",
       "onnxruntime-node",
       "protobufjs",
-      "sharp"
+      "sharp",
+      "electron"
     ]
+  },
+  "build": {
+    "appId": "com.strata.app",
+    "productName": "Strata",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "app/dist/**/*",
+      "dist-backend/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/node_modules/{better-sqlite3,onnxruntime-node,sqlite-vec,web-tree-sitter,tree-sitter-typescript}/**"
+    ],
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] }
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "category": "Development"
+    }
   }
 }
