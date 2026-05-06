@@ -707,9 +707,10 @@
      alone, not from a clipped overflow. */
   overflow: visible;
   backdrop-filter: blur(18px);
-  box-shadow:
-    0 20px 60px -20px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(167, 139, 250, 0.05) inset;
+  /* Drop shadow only — no inset shadow that would paint over the inner
+     edge of the conic gradient border. The animated border ring is the
+     visible accent, not a concentric ring. */
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.6);
   transition: width 200ms ease, height 200ms ease, border-color 240ms ease;
 }
 .opencanvas-chat-floating[data-fullmode='full'] {
@@ -728,12 +729,15 @@
   height: auto;
   overflow: visible;
 }
+/* Streaming: brighter outer glow only. Don't override border-color
+   (the border is `solid transparent` so the conic gradient shows
+   through) and don't add an inset shadow that would cover the conic's
+   inner edge. The faster spin is set further down beside the
+   conic-gradient declaration. */
 .opencanvas-chat-floating[data-streaming='true'] {
-  border-color: rgba(167, 139, 250, 0.34);
   box-shadow:
-    0 20px 60px -20px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(167, 139, 250, 0.18) inset,
-    0 0 32px -8px rgba(167, 139, 250, 0.25);
+    0 24px 70px -22px rgba(0, 0, 0, 0.65),
+    0 0 32px -8px rgba(167, 139, 250, 0.3);
 }
 .opencanvas-chat-floating[data-dragging='true'] {
   cursor: grabbing;
@@ -1311,19 +1315,13 @@ header [aria-hidden].size-5.rounded-md {
     box-shadow 240ms ease,
     transform 200ms ease;
 }
+/* Streaming: keep the conic-spin animation; only speed it up. Setting
+   `animation-duration` alone preserves the `animation-name` from the
+   base rule. (The previous version overrode `animation:` shorthand
+   here, which clobbered the conic-spin and froze the gradient — that
+   showed up as a "stuck" lower border in the user-reported bug.) */
 .opencanvas-chat-floating[data-streaming='true'] {
   animation-duration: 3.2s;
-}
-.opencanvas-chat-floating[data-streaming='true'] {
-  box-shadow:
-    0 24px 70px -22px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(167, 139, 250, 0.22) inset,
-    0 0 42px -6px rgba(240, 171, 252, 0.32);
-  animation: opencanvas-chat-glow 2.4s ease-in-out infinite;
-}
-@keyframes opencanvas-chat-glow {
-  0%, 100% { filter: saturate(1) brightness(1); }
-  50%      { filter: saturate(1.12) brightness(1.06); }
 }
 
 /* Chat title bar — animated gradient sweep while streaming. */
@@ -1353,16 +1351,18 @@ header [aria-hidden].size-5.rounded-md {
   to   { background-position: -140% 0; }
 }
 
-/* Composer input — gradient focus ring instead of flat violet. */
+/* Composer input — only the BORDER is colored (animated conic). The
+   inside stays a flat dark fill at all times, including focus, so the
+   text area never looks tinted. The focus signal is a brighter outer
+   glow + faster spin; everything else stays the same. */
 .opencanvas-chat-body input[type='text'] {
-  transition: border-color 160ms ease, box-shadow 200ms ease, background 160ms ease;
+  transition: box-shadow 200ms ease;
 }
 .opencanvas-chat-body input[type='text']:focus {
-  border-color: rgba(167, 139, 250, 0.55) !important;
-  background: rgba(167, 139, 250, 0.04) !important;
-  box-shadow:
-    0 0 0 3px rgba(167, 139, 250, 0.16),
-    0 0 24px -6px rgba(240, 171, 252, 0.35) !important;
+  /* No background tint, no inset ring — the animated conic border IS
+     the focus indicator. Outer glow only. */
+  background: var(--color-bg-2) !important;
+  box-shadow: 0 0 24px -6px rgba(167, 139, 250, 0.45) !important;
 }
 
 /* Send button — vibrant gradient pill with hover lift. The Chat.tsx
@@ -2409,46 +2409,38 @@ header button:hover {
 }
 
 /* ──────────────────────────────────────────────────────────────────
- * Animated conic border on the chat composer input + ambient glow.
+ * Animated conic border on the chat composer input.
  *
- * Strategy: wrap the input visually with a conic-gradient applied to
- * a `::before` pseudo-element on the input-wrap. Always-on (slow,
- * subtle); brighter + faster on focus-within. The input itself keeps
- * a transparent border so the pseudo's gradient sits exactly at the
- * input's border position via inset:-1px + mask.
+ * Same recipe as the chat panel: the conic gradient sits in the
+ * border-box layer of `background:`, paired with a flat dark fill in
+ * the padding-box layer. The 1.5px transparent border lets the conic
+ * show through. Result: ONLY the border is colored — the inside of
+ * the text area is always a flat dark fill, even on focus.
+ *
+ * Focus signal: animation speeds up + outer drop-shadow brightens.
+ * No inner tint, no ring, no fight with caret/text.
  * ──────────────────────────────────────────────────────────────────*/
 @property --opencanvas-input-angle {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
-.opencanvas-chat-input-wrap {
-  position: relative;
-  isolation: isolate;
-}
-.opencanvas-chat-input-wrap::before {
-  content: '';
-  position: absolute;
-  inset: -1.5px;
-  z-index: -1;
-  border-radius: 14px;
-  background: conic-gradient(
-    from var(--opencanvas-input-angle, 0deg),
-    rgba(167, 139, 250, 0.5) 0deg,
-    rgba(240, 171, 252, 0.5) 90deg,
-    rgba(103, 232, 249, 0.5) 180deg,
-    rgba(240, 171, 252, 0.5) 270deg,
-    rgba(167, 139, 250, 0.5) 360deg
-  );
-  opacity: 0.55;
+.opencanvas-chat-input {
+  background:
+    linear-gradient(var(--color-bg-2), var(--color-bg-2)) padding-box,
+    conic-gradient(
+      from var(--opencanvas-input-angle, 0deg),
+      #a78bfa 0deg,
+      #f0abfc 90deg,
+      #67e8f9 180deg,
+      #f0abfc 270deg,
+      #a78bfa 360deg
+    )
+      border-box !important;
+  border: 1.5px solid transparent !important;
   animation: opencanvas-input-border-spin 9s linear infinite;
-  pointer-events: none;
-  transition: opacity 240ms ease, filter 240ms ease;
 }
-.opencanvas-chat-input-wrap:focus-within::before {
-  opacity: 1;
-  filter: brightness(1.15)
-    drop-shadow(0 0 14px rgba(167, 139, 250, 0.45));
+.opencanvas-chat-input:focus {
   animation-duration: 4.5s;
 }
 @keyframes opencanvas-input-border-spin {
