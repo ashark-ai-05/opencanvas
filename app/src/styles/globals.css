@@ -1977,3 +1977,253 @@ header button:hover {
     rgba(244, 114, 182, 0.14) 100%
   ) !important;
 }
+
+/* ----------------------------------------------------------------------
+ * Markdown rendering — used by:
+ *   - chat assistant messages (.opencanvas-markdown wrapper around
+ *     ReactMarkdown output)
+ *   - markdown shape body
+ *   - composite section body / ticket description
+ * One central style so all surfaces look consistent.
+ * ---------------------------------------------------------------------- */
+.opencanvas-markdown {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-fg-2);
+  word-break: break-word;
+}
+.opencanvas-markdown > * + * { margin-top: 8px; }
+.opencanvas-markdown > *:first-child { margin-top: 0; }
+.opencanvas-markdown > *:last-child  { margin-bottom: 0; }
+
+.opencanvas-markdown h1,
+.opencanvas-markdown h2,
+.opencanvas-markdown h3,
+.opencanvas-markdown h4 {
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--color-fg);
+  margin: 14px 0 4px;
+  line-height: 1.3;
+}
+.opencanvas-markdown h1 { font-size: 17px; }
+.opencanvas-markdown h2 { font-size: 15px; }
+.opencanvas-markdown h3 { font-size: 14px; }
+.opencanvas-markdown h4 { font-size: 13px; color: var(--color-fg-2); }
+
+.opencanvas-markdown p { margin: 0; }
+
+.opencanvas-markdown strong { color: var(--color-fg); font-weight: 600; }
+.opencanvas-markdown em     { color: var(--color-fg); font-style: italic; }
+
+.opencanvas-markdown a {
+  color: #c4b5fd;
+  text-decoration: underline;
+  text-decoration-color: rgba(167, 139, 250, 0.4);
+  text-underline-offset: 2px;
+  transition: color 120ms ease, text-decoration-color 120ms ease;
+}
+.opencanvas-markdown a:hover {
+  color: #ddd6fe;
+  text-decoration-color: rgba(167, 139, 250, 0.8);
+}
+
+.opencanvas-markdown ul,
+.opencanvas-markdown ol {
+  padding-left: 22px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.opencanvas-markdown ul { list-style: disc; }
+.opencanvas-markdown ol { list-style: decimal; }
+.opencanvas-markdown li::marker { color: var(--color-muted); }
+
+.opencanvas-markdown blockquote {
+  margin: 6px 0;
+  padding: 6px 12px;
+  border-left: 3px solid rgba(167, 139, 250, 0.55);
+  background: rgba(167, 139, 250, 0.06);
+  border-radius: 6px;
+  color: var(--color-fg-2);
+}
+
+.opencanvas-markdown code {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: #ede9fe;
+}
+.opencanvas-markdown pre {
+  margin: 6px 0;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.opencanvas-markdown pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e4e4e7;
+}
+
+.opencanvas-markdown hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 12px 0;
+}
+
+.opencanvas-markdown table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+  margin: 6px 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.opencanvas-markdown th,
+.opencanvas-markdown td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.opencanvas-markdown th {
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+.opencanvas-markdown tr:last-child td { border-bottom: none; }
+
+/* ----------------------------------------------------------------------
+ * Idle dynamic glow — when the chat is NOT streaming, gently pulse a
+ * faint multi-stop halo around the shell border. Slower + lower-amplitude
+ * than the streaming animation; reads as "alive but at rest."
+ * ---------------------------------------------------------------------- */
+@keyframes opencanvas-chat-idle-breathe {
+  0%, 100% {
+    box-shadow:
+      0 20px 60px -20px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(167, 139, 250, 0.04) inset,
+      0 0 18px -4px rgba(167, 139, 250, 0.10);
+  }
+  50% {
+    box-shadow:
+      0 22px 64px -18px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(240, 171, 252, 0.10) inset,
+      0 0 32px -2px rgba(240, 171, 252, 0.18);
+  }
+}
+.opencanvas-chat-floating[data-streaming='false'][data-mode='open'] {
+  animation: opencanvas-chat-idle-breathe 6.4s ease-in-out infinite;
+}
+
+/* ----------------------------------------------------------------------
+ * Empty-state banner — slimmer, animated, contextual content.
+ * ---------------------------------------------------------------------- */
+.opencanvas-empty-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 18px 8px;
+  text-align: center;
+}
+.opencanvas-empty-banner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgba(10, 10, 13, 0.6), rgba(10, 10, 13, 0.6)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ddd6fe;
+  font-weight: 500;
+  box-shadow: 0 0 16px -6px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-empty-banner-pill svg {
+  filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.6));
+  animation: opencanvas-banner-icon-spin 12s linear infinite;
+}
+@keyframes opencanvas-banner-icon-spin {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  85% { transform: rotate(-12deg); }
+  92% { transform: rotate(12deg); }
+}
+.opencanvas-empty-banner-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 220% 100%;
+  animation: opencanvas-banner-shimmer 6s linear infinite;
+}
+@keyframes opencanvas-banner-shimmer {
+  from { background-position: 0% 0; }
+  to   { background-position: 220% 0; }
+}
+.opencanvas-empty-banner-stats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.opencanvas-empty-banner-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--color-fg-2);
+  font-size: 11px;
+}
+.opencanvas-empty-banner-stat strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+.opencanvas-empty-banner-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 2px;
+}
+.opencanvas-empty-banner-suggestion {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--color-fg-2);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+.opencanvas-empty-banner-suggestion:hover {
+  background: rgba(167, 139, 250, 0.10);
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #fafafa;
+  transform: translateY(-1px);
+}

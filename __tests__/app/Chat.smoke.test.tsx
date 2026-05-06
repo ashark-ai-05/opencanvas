@@ -10,8 +10,15 @@ describe('Chat (smoke)', () => {
     expect(screen.getByLabelText(/send/i)).toBeInTheDocument();
   });
 
-  it('shows the welcome message when there are no messages', () => {
+  it('shows the welcome banner when there are no messages', () => {
     render(<Chat />);
-    expect(screen.getByText(/Ask anything about your knowledge/i)).toBeInTheDocument();
+    // EmptyChatBanner displays one of two contextual titles depending
+    // on whether the KB has been indexed yet. On a fresh instance it
+    // renders the "get started" variant.
+    expect(
+      screen.getByText(
+        /Ask anything to get started|Pick up where you left off/i,
+      ),
+    ).toBeInTheDocument();
   });
 });

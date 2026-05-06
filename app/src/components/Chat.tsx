@@ -1,9 +1,11 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Send, Square, Sparkles } from 'lucide-react';
+import { Send, Square } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { applyToolDirective } from '../canvas/dispatcher';
 import { getLatestSnapshot } from '../state/snapshot-ref';
 import { getEditor } from '../state/editor-ref';
@@ -17,6 +19,7 @@ import { search as searchKb, type SearchResult } from '../api/search';
 import { deriveStep } from './LiveStatus';
 import { ShowThinking } from './ShowThinking';
 import { ComposerStatus } from './ComposerStatus';
+import { EmptyChatBanner } from './EmptyChatBanner';
 import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
@@ -343,20 +346,7 @@ export function Chat() {
         className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-5"
       >
         {messages.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mt-12 px-6"
-          >
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full opencanvas-glass">
-              <Sparkles className="size-3 text-violet-400" />
-              <span className="text-[11px] tracking-wide text-zinc-400">OpenCanvas · agent-driven canvas</span>
-            </div>
-            <p className="text-[15px] text-zinc-200 font-medium tracking-tight">Ask anything about your knowledge.</p>
-            <p className="text-[13px] text-zinc-500 mt-1.5">
-              Search, drill in, place widgets. The canvas reshapes around your question.
-            </p>
-          </motion.div>
+          <EmptyChatBanner onSuggestion={(s) => setInput(s)} />
         )}
 
         <AnimatePresence initial={false}>
@@ -403,7 +393,7 @@ export function Chat() {
                 className={
                   m.role === 'user'
                     ? 'whitespace-pre-wrap text-zinc-50 leading-relaxed text-[14px] opencanvas-glass rounded-xl px-4 py-3'
-                    : 'whitespace-pre-wrap text-zinc-100 leading-relaxed text-[14px]'
+                    : 'text-zinc-100 leading-relaxed text-[14px] opencanvas-markdown'
                 }
               >
                 {(m.parts as Array<{ type: string }>).map((p, i) => {
@@ -414,7 +404,20 @@ export function Chat() {
                     return null;
                   }
                   if (p.type === 'text') {
-                    return <span key={i}>{(p as unknown as { text: string }).text}</span>;
+                    const text = (p as unknown as { text: string }).text;
+                    // User messages stay as plain pre-wrap (their typed
+                    // input shouldn't be reinterpreted as markdown).
+                    if (m.role === 'user') return <span key={i}>{text}</span>;
+                    // Assistant messages render through ReactMarkdown +
+                    // remarkGfm so headings, lists, fenced code, tables,
+                    // links all show properly. Streaming-friendly: we
+                    // re-render on every chunk; ReactMarkdown is fine
+                    // with that scale of churn at chat volume.
+                    return (
+                      <ReactMarkdown key={i} remarkPlugins={[remarkGfm]}>
+                        {text}
+                      </ReactMarkdown>
+                    );
                   }
                   if (p.type === 'data-team-handoff') {
                     const h = (p as unknown as {

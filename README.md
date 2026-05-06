@@ -37,11 +37,41 @@ Or run headless without Electron and open in a browser:
 pnpm dev                   # backend on :3457, app on :3458 → http://127.0.0.1:3458
 ```
 
-### LLM auth
+### Pick any LLM
 
-Default profile uses the **Claude Agent SDK** with OAuth via your existing Claude Code login — no API key needed if you already use Claude Code interactively. Otherwise set `ANTHROPIC_API_KEY` in `.env`.
+OpenCanvas is **model-agnostic**. Six provider adapters ship out of the box; pick whichever matches your account or runs locally on your machine. Set the corresponding env var in `.env` and switch by editing `~/.opencanvas/config.json` (or pass `--profile <name>` on the CLI):
 
-Other providers (OpenAI, OpenRouter, Ollama, Anthropic direct, Sourcegraph Amp) are available via config; see `.env.example` for the keys.
+| Provider | Config `llm.provider` | Auth | Notes |
+| --- | --- | --- | --- |
+| Claude Agent SDK | `claude-agent-sdk` | OAuth via Claude Code, or `ANTHROPIC_API_KEY` | In-process MCP tool surface — fastest agent loop |
+| Anthropic direct | `anthropic-direct` | `ANTHROPIC_API_KEY` | Plain API; specify any Claude model |
+| OpenAI | `openai` | `OPENAI_API_KEY` | GPT-4o, GPT-4.1, etc. |
+| OpenRouter | `openrouter` | `OPENROUTER_API_KEY` | One key, hundreds of models incl. Llama, Mistral, DeepSeek |
+| Ollama | `ollama` | none — local | Any model you've pulled (`llama3`, `qwen2.5-coder`, `gpt-oss`, …) |
+| Sourcegraph Amp | `amp` | `AMP_API_KEY` | Agent loop with their hosted models |
+
+Config example with **Ollama running locally**:
+
+```jsonc
+{
+  "activeProfile": "local",
+  "profiles": [{
+    "name": "local",
+    "llm": { "provider": "ollama", "model": "llama3.1:8b", "baseUrl": "http://localhost:11434" },
+    "embed": { "provider": "ollama", "model": "nomic-embed-text" },
+    "sources": []
+  }]
+}
+```
+
+Embedders are also pluggable: bundled ONNX (`BAAI/bge-small-en-v1.5`, runs offline), OpenAI, Voyage, or Ollama. See `.env.example` for keys.
+
+Health-check whatever you picked:
+
+```bash
+pnpm cli --probe                                  # active profile
+pnpm cli --profile local --probe                  # named profile
+```
 
 ### Web search
 
@@ -49,14 +79,14 @@ Set `TAVILY_API_KEY` in `.env` (free tier: 1000 searches/month at <https://app.t
 
 ### MCP sources
 
-Add servers under `profiles[].sources` in `~/.opencanvas/config.json`:
+Add servers under `profiles[].sources` in `~/.opencanvas/config.json` (works with any LLM provider — the agent calls them via tool-use whether it's Claude, GPT, Llama, or anything else):
 
 ```jsonc
 {
-  "activeProfile": "claude-sdk",
+  "activeProfile": "default",
   "profiles": [{
-    "name": "claude-sdk",
-    "llm": { "provider": "claude-agent-sdk" },
+    "name": "default",
+    "llm": { /* any of the providers above */ },
     "sources": [{
       "id": "dev-filesystem",
       "name": "Development directory",
@@ -118,11 +148,11 @@ Conversations index back into the same store automatically after every assistant
 │  Vite + React + tldraw │   /v1/chat     │  Hono backend           │
 │  app on :3458          │ ─────────────→ │  (provider abstraction) │
 │                        │   /v1/team     │                         │
-│  • Floating chat       │ ─────────────→ │  ClaudeAgentSdkAdapter  │
-│  • tldraw canvas       │                │       │                 │
-│  • Conversations       │                │       ▼                 │
-│  • Sources panel       │                │  Claude Agent SDK       │
-│  • Mini-map            │ ←─── UIMS ──── │  (in-process MCP)       │
+│  • Floating chat       │ ─────────────→ │  LLMProvider adapter    │
+│  • tldraw canvas       │                │  (Claude / GPT /        │
+│  • Conversations       │                │   Llama / Ollama / …)   │
+│  • Sources panel       │                │       │                 │
+│  • Mini-map            │ ←─── UIMS ──── │       ▼                 │
 │                        │                │       │                 │
 └────────────────────────┘                │       ▼                 │
                                           │  11 in-process tools    │
@@ -134,7 +164,7 @@ Conversations index back into the same store automatically after every assistant
                                           └─────────────────────────┘
 ```
 
-**Backend** (`src/`): Hono routes (`/v1/chat`, `/v1/team`, `/v1/search`, `/v1/index-conversation`, `/v1/sources/list`, `/v1/health`, …). Provider abstraction (`LLMProvider` interface) supports Claude Agent SDK, OpenAI, OpenRouter, Ollama, Anthropic direct, Sourcegraph Amp. `SearchService` is hybrid BM25 + sqlite-vec with reciprocal rank fusion (k=60). KB pipeline owns chunking + QA enrichment + per-project source state.
+**Backend** (`src/`): Hono routes (`/v1/chat`, `/v1/team`, `/v1/search`, `/v1/index-conversation`, `/v1/sources/list`, `/v1/health`, …). The `LLMProvider` interface is a thin streaming contract; six adapters implement it (Claude SDK, Anthropic direct, OpenAI, OpenRouter, Ollama, Sourcegraph Amp), and adding a seventh is one file. `SearchService` is hybrid BM25 + sqlite-vec with reciprocal rank fusion (k=60). KB pipeline owns chunking + QA enrichment + per-project source state.
 
 **Frontend** (`app/`): tldraw 3 with custom shape utils for each widget kind. Zustand stores for conversations, templates, canvas stats, UI flags. AI SDK 6 `useChat` for chat streaming over the UI Message Stream protocol; live tool events drive the canvas dispatcher.
 
