@@ -70,7 +70,12 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
               }}
             >
               {shape.props.fields.map((p, i) => (
-                <Row key={i} k={p.key} v={p.value} />
+                <Row
+                  key={i}
+                  k={p.key}
+                  v={p.value}
+                  url={(p as { url?: string }).url}
+                />
               ))}
             </dl>
           </CardBody>
@@ -92,7 +97,7 @@ export class KeyValueCardShapeUtil extends ShapeUtil<KeyValueCardShape> {
   }
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, v, url }: { k: string; v: string; url?: string }) {
   return (
     <>
       <dt
@@ -106,7 +111,24 @@ function Row({ k, v }: { k: string; v: string }) {
       >
         {k}
       </dt>
-      <dd style={{ margin: 0, color: '#fafafa', wordBreak: 'break-word' }}>{v}</dd>
+      <dd style={{ margin: 0, color: '#fafafa', wordBreak: 'break-word' }}>
+        {url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="opencanvas-row-link"
+            title={`Open ${url}`}
+          >
+            {v}
+          </a>
+        ) : (
+          v
+        )}
+      </dd>
     </>
   );
 }

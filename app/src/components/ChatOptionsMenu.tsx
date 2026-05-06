@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MoreHorizontal, History, Database, Sparkles } from 'lucide-react';
+import { MoreHorizontal, History, Database, Sparkles, Eraser } from 'lucide-react';
 import { useUiStore } from '../state/ui-store';
 
 /**
@@ -78,6 +78,17 @@ export function ChatOptionsMenu() {
             onClick={() => {
               setOpen(false);
               window.dispatchEvent(new Event('opencanvas:open-mcp'));
+            }}
+          />
+          <MenuRow
+            icon={<Eraser className="size-3.5" />}
+            label="Clear messages"
+            onClick={() => {
+              setOpen(false);
+              // Clears the CURRENT conversation's messages without
+              // creating a new conversation. Chat.tsx listens for this
+              // event and calls useChat's setMessages([]).
+              window.dispatchEvent(new Event('opencanvas:clear-chat'));
             }}
           />
         </div>

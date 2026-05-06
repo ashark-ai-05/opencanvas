@@ -584,7 +584,11 @@
   background: rgba(10, 10, 13, 0.84);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  overflow: hidden;
+  /* `overflow: visible` so the ChatOptionsMenu dropdown can escape the
+     shell. The inner .opencanvas-chat-body manages its own clipping
+     (overflow:hidden) and the rounded corners come from border-radius
+     alone, not from a clipped overflow. */
+  overflow: visible;
   backdrop-filter: blur(18px);
   box-shadow:
     0 20px 60px -20px rgba(0, 0, 0, 0.6),
@@ -595,14 +599,17 @@
   width: min(720px, 92vw);
   height: min(80vh, 800px);
 }
-/* Minimized must win the height race against [data-fullmode='full']
-   regardless of source order. Compound selector pushes specificity to
-   (0, 2, 1) so a minimized full-mode panel still collapses to 48px
-   instead of rendering as a tall empty title-bar panel. */
+/* Minimized = title bar + composer (no message list). Lets users keep
+   typing without the full scroll surface taking up screen real estate.
+   Compound selector wins the specificity race against [data-fullmode='full'].
+   Height fits the title bar (~36px) + composer (~64px) + status row.
+   `overflow: visible` on the shell here so the ChatOptionsMenu popover
+   can extend beyond the chat box. */
 .opencanvas-chat-floating[data-mode='minimized'],
 .opencanvas-chat-floating[data-mode='minimized'][data-fullmode='full'],
 .opencanvas-chat-floating[data-mode='minimized'][data-fullmode='normal'] {
-  height: 48px;
+  height: auto;
+  overflow: visible;
 }
 .opencanvas-chat-floating[data-streaming='true'] {
   border-color: rgba(167, 139, 250, 0.34);
@@ -682,7 +689,13 @@
   display: flex;
   flex-direction: column;
 }
-.opencanvas-chat-floating[data-mode='minimized'] .opencanvas-chat-body {
+/* Minimized mode: keep the body around so the composer (form) and the
+   status overlay (KB hits chip) stay reachable. Hide only the message
+   scroll-area + the empty banner inside it. The composer + status row
+   sit AFTER the scroll-area in DOM order, so display:none on the
+   scroller alone gives us "title bar + composer" without losing
+   anything else. */
+.opencanvas-chat-floating[data-mode='minimized'] .opencanvas-chat-scroll {
   display: none;
 }
 
@@ -2226,4 +2239,203 @@ header button:hover {
   border-color: rgba(167, 139, 250, 0.4);
   color: #fafafa;
   transform: translateY(-1px);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Source-link affordances inside widgets (rows, fields, events).
+ * `.opencanvas-row-link` is the inline-text variant used inside
+ * key-value-card and timeline. `.opencanvas-table-row--linked` lights
+ * up the whole table row on hover so it reads as clickable.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-row-link {
+  color: #a5b4fc;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(165, 180, 252, 0.35);
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.opencanvas-row-link:hover {
+  color: #c7d2fe;
+  border-bottom-color: rgba(199, 210, 254, 0.7);
+}
+.opencanvas-table-row--linked {
+  transition: background 120ms ease;
+}
+.opencanvas-table-row--linked:hover {
+  background: rgba(165, 180, 252, 0.06);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Chat → widget anchor chip. Rendered inline beneath an assistant
+ * message whenever the LLM placed a widget on the canvas. Clicking
+ * re-focuses that shape via `applyToolDirective({ type: 'focus' })`.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-widget-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 6px 0 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.15),
+    rgba(56, 189, 248, 0.15)
+  );
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  color: #e4e4e7;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 160ms ease;
+}
+.opencanvas-widget-anchor:hover {
+  transform: translateY(-1px);
+  border-color: rgba(167, 139, 250, 0.7);
+  box-shadow: 0 4px 14px -6px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-widget-anchor > span:nth-child(2) {
+  color: #a78bfa;
+  text-transform: lowercase;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.opencanvas-widget-anchor > span:nth-child(3) {
+  color: #fafafa;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * KB hits inside the show-thinking panel. Each <li> is one hit with
+ * a head row (kind + title), an optional snippet, and an actions row
+ * (Place button, optional Open link, source pill).
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-thinking-reasoning {
+  margin: 0 0 8px 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-fg-2);
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.opencanvas-thinking-divider {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 4px 0;
+  color: #a78bfa;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.opencanvas-thinking-query {
+  color: #71717a;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: inherit;
+}
+.opencanvas-thinking-hit-count {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  background: rgba(167, 139, 250, 0.15);
+  color: #c4b5fd;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: 0.04em;
+}
+.opencanvas-thinking-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.opencanvas-thinking-hit {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: normal;
+}
+.opencanvas-thinking-hit:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(167, 139, 250, 0.25);
+}
+.opencanvas-thinking-hit-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.opencanvas-thinking-hit-kind {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a78bfa;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  flex-shrink: 0;
+}
+.opencanvas-thinking-hit-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #fafafa;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opencanvas-thinking-hit-snippet {
+  font-size: 11px;
+  color: #a1a1aa;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+}
+.opencanvas-thinking-hit-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+.opencanvas-thinking-hit-actions > button,
+.opencanvas-thinking-hit-actions > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e4e4e7;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.opencanvas-thinking-hit-actions > button:hover,
+.opencanvas-thinking-hit-actions > a:hover {
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.4);
+}
+.opencanvas-thinking-hit-source {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: #71717a;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

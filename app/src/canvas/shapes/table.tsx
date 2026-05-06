@@ -74,7 +74,7 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
   }
 
   override component(shape: TableShape) {
-    const { columns, rows } = shape.props;
+    const { columns, rows, rowLinks } = shape.props;
     return (
       <HTMLContainer>
         <CardFrame shape={shape}>
@@ -113,32 +113,50 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, ri) => (
-                  <tr
-                    key={ri}
-                    style={{
-                      borderBottom: '1px solid var(--color-line)',
-                    }}
-                  >
-                    {columns.map((c, ci) => (
-                      <td
-                        key={ci}
-                        style={{
-                          padding: '7px 12px',
-                          textAlign: (c.align as 'left' | 'right' | 'center' | undefined) ?? 'left',
-                          fontFamily: c.mono
-                            ? 'JetBrains Mono, ui-monospace, monospace'
-                            : 'inherit',
-                          fontSize: c.mono ? 11.5 : 12.5,
-                          color: '#e4e4e7',
-                          verticalAlign: 'top',
-                        }}
-                      >
-                        {row[ci] ?? ''}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {rows.map((row, ri) => {
+                  const link =
+                    Array.isArray(rowLinks) && typeof rowLinks[ri] === 'string'
+                      ? (rowLinks[ri] as string)
+                      : null;
+                  const handleRowClick = (e: React.MouseEvent) => {
+                    if (!link) return;
+                    e.stopPropagation();
+                    window.open(link, '_blank', 'noopener,noreferrer');
+                  };
+                  return (
+                    <tr
+                      key={ri}
+                      onClick={handleRowClick}
+                      onMouseDown={(e) => link && e.stopPropagation()}
+                      onPointerDown={(e) => link && e.stopPropagation()}
+                      title={link ? `Open ${link}` : undefined}
+                      className={link ? 'opencanvas-table-row--linked' : undefined}
+                      style={{
+                        borderBottom: '1px solid var(--color-line)',
+                        cursor: link ? 'pointer' : undefined,
+                      }}
+                    >
+                      {columns.map((c, ci) => (
+                        <td
+                          key={ci}
+                          style={{
+                            padding: '7px 12px',
+                            textAlign:
+                              (c.align as 'left' | 'right' | 'center' | undefined) ?? 'left',
+                            fontFamily: c.mono
+                              ? 'JetBrains Mono, ui-monospace, monospace'
+                              : 'inherit',
+                            fontSize: c.mono ? 11.5 : 12.5,
+                            color: '#e4e4e7',
+                            verticalAlign: 'top',
+                          }}
+                        >
+                          {row[ci] ?? ''}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

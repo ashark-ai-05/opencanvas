@@ -42,6 +42,93 @@ type ToolPart = {
   errorText?: string;
 };
 
+/** Per-widget-kind emoji used in the chat anchor chip. */
+const ANCHOR_EMOJI: Record<string, string> = {
+  markdown: '📝',
+  'code-block': '💻',
+  ticket: '🎫',
+  'web-embed': '🌐',
+  'key-value-card': '🔑',
+  table: '📊',
+  timeline: '⏳',
+  'file-tree': '🌳',
+  composite: '🧩',
+  tasks: '✅',
+  kanban: '📋',
+  'sticky-note': '📒',
+};
+
+/**
+ * Peel the place_widget tool-result envelope and return the anchor data
+ * we need to render a clickable chip. Returns null if the result wasn't
+ * a successful place directive (e.g. update / focus / clear / link, or
+ * a different tool's output entirely).
+ *
+ * Output shape from place_widget (src/agent/tools/place-widget.ts):
+ *   { content: [{ type: 'text', text: '{ ok: true, id, directive: {...} }' }] }
+ *
+ * Various transports nest this inside output{} or content[] envelopes;
+ * peel up to 5 layers to be safe.
+ */
+function describePlaceAnchor(part: ToolPart): {
+  id: string;
+  kind: string;
+  title: string;
+} | null {
+  // Only render anchors for tools that actually placed a widget.
+  const name = toolPartName(part);
+  if (name !== 'place_widget') return null;
+  let cur: unknown = part.output;
+  for (let i = 0; i < 6; i++) {
+    if (cur === null || cur === undefined) return null;
+    if (typeof cur === 'string') {
+      try {
+        cur = JSON.parse(cur);
+        continue;
+      } catch {
+        return null;
+      }
+    }
+    if (typeof cur !== 'object') return null;
+    const obj = cur as Record<string, unknown>;
+    if (
+      typeof obj['id'] === 'string' &&
+      obj['directive'] &&
+      typeof obj['directive'] === 'object'
+    ) {
+      const d = obj['directive'] as Record<string, unknown>;
+      const id = (d['id'] as string) || (obj['id'] as string);
+      const kind = (d['kind'] as string) || 'widget';
+      const payload = (d['payload'] as Record<string, unknown>) ?? {};
+      const title =
+        (typeof payload['title'] === 'string' && (payload['title'] as string)) ||
+        (typeof payload['ticketId'] === 'string' && (payload['ticketId'] as string)) ||
+        (typeof payload['body'] === 'string'
+          ? (payload['body'] as string).slice(0, 40)
+          : kind);
+      return { id, kind, title };
+    }
+    if ('content' in obj && Array.isArray(obj['content'])) {
+      const text = (obj['content'] as Array<{ type?: string; text?: string }>)
+        .filter((c) => c.type === 'text')
+        .map((c) => c.text ?? '')
+        .join('');
+      cur = text;
+      continue;
+    }
+    if ('output' in obj) {
+      cur = obj['output'];
+      continue;
+    }
+    if ('directive' in obj) {
+      cur = { id: obj['id'], directive: obj['directive'] };
+      continue;
+    }
+    return null;
+  }
+  return null;
+}
+
 function isToolPart(p: { type: string }): p is ToolPart {
   return p.type === 'dynamic-tool' || p.type.startsWith('tool-');
 }
@@ -153,7 +240,7 @@ export function Chat() {
     return { activeId: conv.id, initialMessages: conv.messages };
   }, []);
 
-  const { messages, sendMessage, status, stop, error } = useChat({
+  const { messages, sendMessage, status, stop, error, setMessages } = useChat({
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: '/v1/chat',
@@ -308,6 +395,25 @@ export function Chat() {
     return () => setSendTeam(null);
   }, [setSendTeam, sendMessage]);
 
+  // "Clear messages" — fired by ChatOptionsMenu via window event so the
+  // menu doesn't need a prop drill. Wipes the current conversation's
+  // useChat state AND its persisted entry in conversations-store, but
+  // keeps the conversation itself (no new thread is created — that's
+  // what the +New button does). Canvas widgets are left alone.
+  useEffect(() => {
+    const onClear = () => {
+      setMessages([]);
+      // Reset KB-hits panel state so a stale chip doesn't linger.
+      setKbHits(null);
+      setKbQuery(null);
+      // Persist the wipe so a re-mount doesn't restore the old messages.
+      useConversationsStore.getState().saveMessages(activeId, []);
+      toast('Messages cleared');
+    };
+    window.addEventListener('opencanvas:clear-chat', onClear);
+    return () => window.removeEventListener('opencanvas:clear-chat', onClear);
+  }, [setMessages, activeId]);
+
   // Self-improving KB: when a turn finishes (status returns to 'ready'
   // after streaming) and the last message is from the assistant, index
   // the conversation back into the SQLite store. Search_kb naturally
@@ -343,7 +449,7 @@ export function Chat() {
 
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-5"
+        className="opencanvas-chat-scroll flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-5"
       >
         {messages.length === 0 && (
           <EmptyChatBanner onSuggestion={(s) => setInput(s)} />
@@ -364,10 +470,13 @@ export function Chat() {
               <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-semibold">
                 {m.role === 'user' ? 'you' : 'opencanvas'}
               </div>
-              {/* Reasoning ("Show thinking") — collapsible per-message
-                  block. Concatenates every reasoning part the message
-                  carries; AI SDK v6 emits them with type 'reasoning'
-                  and an incremental `text` while state === 'streaming'. */}
+              {/* "Show thinking + sources" — collapsible per-message
+                  panel that surfaces both reasoning chunks (type
+                  'reasoning' parts from AI SDK v6) AND the KB hits the
+                  agent considered for this turn. KB hits attach to the
+                  LATEST assistant message only — older messages stay
+                  clean since the ranked-list state isn't snapshotted
+                  per-turn. */}
               {m.role === 'assistant' &&
                 (() => {
                   const reasoningParts = (m.parts as Array<{
@@ -375,17 +484,36 @@ export function Chat() {
                     text?: string;
                     state?: string;
                   }>).filter((p) => p.type === 'reasoning');
-                  if (reasoningParts.length === 0) return null;
                   const text = reasoningParts
                     .map((p) => p.text ?? '')
                     .join('\n\n');
                   const stillStreaming = reasoningParts.some(
                     (p) => p.state === 'streaming',
                   );
+                  // Only the most recent assistant message gets the
+                  // current KB hits attached.
+                  const isLatest =
+                    m.id ===
+                    [...messages].reverse().find((x) => x.role === 'assistant')
+                      ?.id;
                   return (
                     <ShowThinking
                       reasoningText={text}
                       streaming={stillStreaming}
+                      kbHits={isLatest ? kbHits : null}
+                      kbQuery={isLatest ? kbQuery : null}
+                      onPlaceHit={(hit) => {
+                        const editor = getEditor();
+                        if (!editor) return;
+                        import('../canvas/dispatcher')
+                          .then((mod) =>
+                            mod.placeResultsOnCanvas(editor, [hit]),
+                          )
+                          .catch((e) => {
+                            console.error('[chat] place from KB failed:', e);
+                            toast.error('Could not place from KB');
+                          });
+                      }}
                     />
                   );
                 })()}
@@ -461,7 +589,49 @@ export function Chat() {
                         </span>
                       );
                     }
-                    // output-available: directive applied silently in the useEffect.
+                    // output-available: the directive was already applied
+                    // to the canvas in the useEffect above. Render a
+                    // clickable anchor chip so the user can click back
+                    // to that widget on the canvas later in the
+                    // conversation. Anchors are derived from the
+                    // tool-result envelope (5-layer peel) so they stay
+                    // accurate across team-route nested envelopes.
+                    if (tp.state === 'output-available') {
+                      const anchor = describePlaceAnchor(tp);
+                      if (!anchor) return null;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          className="opencanvas-widget-anchor"
+                          title={`Focus ${anchor.kind} on canvas`}
+                          onClick={() => {
+                            const editor = getEditor();
+                            if (!editor) return;
+                            try {
+                              applyToolDirective(
+                                editor,
+                                { type: 'focus', id: anchor.id },
+                                useTemplateStore.getState().activeTemplateId,
+                              );
+                            } catch (e) {
+                              console.warn('[chat] focus failed:', e);
+                              toast('Widget no longer on the canvas');
+                            }
+                          }}
+                        >
+                          <span className="opencanvas-widget-anchor-emoji">
+                            {ANCHOR_EMOJI[anchor.kind] ?? '🎨'}
+                          </span>
+                          <span className="opencanvas-widget-anchor-kind">
+                            {anchor.kind}
+                          </span>
+                          <span className="opencanvas-widget-anchor-title">
+                            {anchor.title}
+                          </span>
+                        </button>
+                      );
+                    }
                     return null;
                   }
                   return null;

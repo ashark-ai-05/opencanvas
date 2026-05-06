@@ -16,6 +16,9 @@ type FileNode = {
   type: 'file' | 'directory';
   children?: FileNode[];
   meta?: string;
+  /** Optional source URL — when present on a file node, the row becomes
+   *  a clickable link that opens the source in a new tab. */
+  url?: string;
 };
 
 export type FileTreeShape = TLBaseShape<
@@ -116,17 +119,33 @@ function TreeNode({
   const [open, setOpen] = useState(initiallyOpen ?? depth < 2);
   const children = isDir ? node.children ?? [] : [];
 
+  const fileUrl = !isDir && typeof node.url === 'string' ? node.url : null;
+  const handleRowClick = (e: React.MouseEvent) => {
+    if (isDir) {
+      setOpen((o) => !o);
+      return;
+    }
+    if (fileUrl) {
+      e.stopPropagation();
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+  const interactive = isDir || !!fileUrl;
+
   return (
     <div style={{ paddingLeft: depth === 0 ? 0 : 12 }}>
       <div
-        onClick={isDir ? () => setOpen((o) => !o) : undefined}
+        onClick={interactive ? handleRowClick : undefined}
+        onMouseDown={fileUrl ? (e) => e.stopPropagation() : undefined}
+        onPointerDown={fileUrl ? (e) => e.stopPropagation() : undefined}
+        title={fileUrl ?? undefined}
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 6,
           padding: '2px 4px',
           borderRadius: 4,
-          cursor: isDir ? 'pointer' : 'default',
+          cursor: interactive ? 'pointer' : 'default',
           fontSize: 12.5,
           color: isDir ? '#fafafa' : '#d4d4d8',
           fontFamily: 'JetBrains Mono, ui-monospace, monospace',
@@ -134,10 +153,10 @@ function TreeNode({
           transition: 'background 100ms ease',
         }}
         onMouseEnter={(e) => {
-          if (isDir) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+          if (interactive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
         }}
         onMouseLeave={(e) => {
-          if (isDir) e.currentTarget.style.background = 'transparent';
+          if (interactive) e.currentTarget.style.background = 'transparent';
         }}
       >
         <span
@@ -155,11 +174,24 @@ function TreeNode({
         <span style={{ color: isDir ? '#a78bfa' : '#71717a', fontSize: 11 }}>
           {isDir ? '📁' : '📄'}
         </span>
-        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            color: fileUrl ? '#a5b4fc' : undefined,
+          }}
+        >
           {node.name}
         </span>
         {node.meta && (
           <span style={{ fontSize: 10.5, color: '#52525b' }}>{node.meta}</span>
+        )}
+        {fileUrl && (
+          <span aria-hidden style={{ fontSize: 10, color: '#71717a' }}>
+            ↗
+          </span>
         )}
       </div>
       {isDir && open && children.length > 0 && (

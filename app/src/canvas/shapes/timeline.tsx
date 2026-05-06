@@ -18,6 +18,8 @@ type Event = {
   /** kind comes through tldraw's runtime as `string | undefined` (T.string),
    *  we narrow to EventKind at render time for the styling lookup. */
   kind?: string;
+  /** Optional source URL surfaced as a per-event open-link affordance. */
+  url?: string;
 };
 
 export type TimelineShape = TLBaseShape<
@@ -54,6 +56,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
         label: T.string,
         body: T.optional(T.string),
         kind: T.optional(T.string),
+        url: T.optional(T.string),
       }),
     ),
     uri: T.optional(T.string),
@@ -137,7 +140,22 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
                       )}
                     </div>
                     <div style={{ fontWeight: 500, color: '#fafafa', marginTop: 2 }}>
-                      {e.label}
+                      {e.url ? (
+                        <a
+                          href={e.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(ev) => ev.stopPropagation()}
+                          onMouseDown={(ev) => ev.stopPropagation()}
+                          onPointerDown={(ev) => ev.stopPropagation()}
+                          className="opencanvas-row-link"
+                          title={`Open ${e.url}`}
+                        >
+                          {e.label}
+                        </a>
+                      ) : (
+                        e.label
+                      )}
                     </div>
                     {e.body && (
                       <div style={{ fontSize: 12.5, color: '#a1a1aa', marginTop: 3, lineHeight: 1.5 }}>
