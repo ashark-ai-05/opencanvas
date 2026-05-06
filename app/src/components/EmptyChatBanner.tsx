@@ -45,7 +45,14 @@ export function EmptyChatBanner({
       className="opencanvas-empty-banner"
     >
       <div className="opencanvas-empty-banner-pill">
-        <Sparkles className="size-3" />
+        <motion.span
+          aria-hidden
+          style={{ display: 'inline-flex' }}
+          animate={{ rotate: [0, -8, 6, 0], scale: [1, 1.1, 0.96, 1] }}
+          transition={{ duration: 4.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <Sparkles className="size-3" />
+        </motion.span>
         OpenCanvas · agent-driven canvas
       </div>
 
@@ -71,15 +78,20 @@ export function EmptyChatBanner({
       </div>
 
       <div className="opencanvas-empty-banner-suggestions">
-        {suggestions.map((s) => (
-          <button
+        {suggestions.map((s, i) => (
+          <motion.button
             key={s}
             type="button"
             className="opencanvas-empty-banner-suggestion"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + i * 0.07, duration: 0.32, ease: [0.2, 0.8, 0.2, 1] }}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => onSuggestion(s)}
           >
             {s}
-          </button>
+          </motion.button>
         ))}
       </div>
     </motion.div>

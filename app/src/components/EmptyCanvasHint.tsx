@@ -51,7 +51,22 @@ export function EmptyCanvasHint() {
                 marginBottom: 12,
               }}
             >
-              <Sparkles className="size-3" style={{ color: '#c4b5fd' }} />
+              <motion.span
+                aria-hidden
+                style={{ display: 'inline-flex', color: '#c4b5fd' }}
+                animate={{
+                  rotate: [0, -10, 8, 0],
+                  scale: [1, 1.18, 0.92, 1],
+                  filter: [
+                    'drop-shadow(0 0 0 rgba(196,181,253,0))',
+                    'drop-shadow(0 0 6px rgba(196,181,253,0.7))',
+                    'drop-shadow(0 0 0 rgba(196,181,253,0))',
+                  ],
+                }}
+                transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <Sparkles className="size-3" />
+              </motion.span>
               <span style={{ fontSize: 11, color: '#c4b5fd', letterSpacing: 0.02 }}>
                 empty canvas
               </span>

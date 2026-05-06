@@ -649,11 +649,21 @@ export function Chat() {
                       const anchor = describePlaceAnchor(tp);
                       if (!anchor) return null;
                       return (
-                        <button
+                        <motion.button
                           key={i}
                           type="button"
                           className="opencanvas-widget-anchor"
                           title={`Focus ${anchor.kind} on canvas`}
+                          initial={{ opacity: 0, y: 6, scale: 0.92 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 360,
+                            damping: 24,
+                            delay: 0.04 * i,
+                          }}
+                          whileHover={{ y: -1 }}
+                          whileTap={{ scale: 0.96 }}
                           onClick={() => {
                             const editor = getEditor();
                             if (!editor) return;
@@ -678,7 +688,7 @@ export function Chat() {
                           <span className="opencanvas-widget-anchor-title">
                             {anchor.title}
                           </span>
-                        </button>
+                        </motion.button>
                       );
                     }
                     return null;

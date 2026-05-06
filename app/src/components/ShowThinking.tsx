@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ChevronRight, Database, Loader2, Plus, ExternalLink } from 'lucide-react';
 import type { SearchResult } from '../api/search';
 
@@ -77,8 +78,20 @@ export function ShowThinking({
           </span>
         )}
       </button>
-      {open && (
-        <div className="opencanvas-thinking-body">
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="thinking-body"
+            className="opencanvas-thinking-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{
+              height: { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] },
+              opacity: { duration: 0.18 },
+            }}
+            style={{ overflow: 'hidden' }}
+          >
           {hasReasoning && (
             <pre className="opencanvas-thinking-reasoning">{reasoningText}</pre>
           )}
@@ -139,8 +152,9 @@ export function ShowThinking({
               })}
             </ul>
           )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
