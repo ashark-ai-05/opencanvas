@@ -2242,6 +2242,141 @@ header button:hover {
 }
 
 /* ──────────────────────────────────────────────────────────────────
+ * Animated conic-gradient border for the chat panel.
+ *
+ * Strategy: place a `::before` pseudo-element behind the panel, sized
+ * 1px larger on every side, filled with a rotating conic gradient. The
+ * panel's own (transparent) border sits over the centre, leaving a thin
+ * coloured ring around the rounded rect that drifts continuously.
+ *
+ * `@property --opencanvas-chat-angle` lets the conic gradient's angle
+ * animate smoothly (without it, browsers can only animate the WHOLE
+ * background, not a single gradient parameter).
+ *
+ * Subtle by default; brighter + 2× faster while streaming.
+ * ──────────────────────────────────────────────────────────────────*/
+@property --opencanvas-chat-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.opencanvas-chat-floating::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--opencanvas-chat-angle),
+    rgba(167, 139, 250, 0.55) 0deg,
+    rgba(240, 171, 252, 0.55) 90deg,
+    rgba(103, 232, 249, 0.55) 180deg,
+    rgba(167, 139, 250, 0.55) 270deg,
+    rgba(240, 171, 252, 0.55) 360deg
+  );
+  /* Mask the inside so only the 1px ring shows. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.55;
+  animation: opencanvas-chat-border-spin 8s linear infinite;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+.opencanvas-chat-floating[data-streaming='true']::before {
+  opacity: 0.95;
+  animation-duration: 3.6s;
+}
+@keyframes opencanvas-chat-border-spin {
+  to { --opencanvas-chat-angle: 360deg; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Larger composer input — taller hit-target + slightly larger text.
+ * Tailwind `py-2.5 text-[14px]` were the originals; this overrides to
+ * give it more vertical breathing room and a touch more weight.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-chat-input {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  font-size: 15px !important;
+  line-height: 1.45 !important;
+  min-height: 46px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Animated brand mark inside the chat title bar.
+ *
+ * Two stacked layers: a soft conic-gradient ring that slowly rotates,
+ * and a brighter inner core that breathes. Combined with the
+ * framer-motion scale animation on the wrapper, the mark feels alive
+ * without ever drawing focus away from content.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-chat-brand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-right: -2px;
+}
+.opencanvas-chat-brand-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--opencanvas-chat-angle, 0deg),
+    #a78bfa 0deg,
+    #f0abfc 120deg,
+    #67e8f9 240deg,
+    #a78bfa 360deg
+  );
+  filter: blur(0.4px);
+  animation: opencanvas-chat-brand-spin 6s linear infinite;
+  opacity: 0.85;
+}
+.opencanvas-chat-brand[data-active='true'] .opencanvas-chat-brand-ring {
+  animation-duration: 2.6s;
+  opacity: 1;
+  filter: blur(0px) drop-shadow(0 0 6px rgba(167, 139, 250, 0.55));
+}
+.opencanvas-chat-brand-core {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fafafa 0%,
+    #ddd6fe 60%,
+    #a78bfa 100%
+  );
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.55);
+  animation: opencanvas-chat-brand-pulse 3.2s ease-in-out infinite;
+}
+.opencanvas-chat-brand[data-active='true'] .opencanvas-chat-brand-core {
+  animation-duration: 1.6s;
+  box-shadow: 0 0 10px rgba(240, 171, 252, 0.7);
+}
+@keyframes opencanvas-chat-brand-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes opencanvas-chat-brand-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* ──────────────────────────────────────────────────────────────────
  * Source-link affordances inside widgets (rows, fields, events).
  * `.opencanvas-row-link` is the inline-text variant used inside
  * key-value-card and timeline. `.opencanvas-table-row--linked` lights

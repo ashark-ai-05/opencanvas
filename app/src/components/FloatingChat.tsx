@@ -1,6 +1,7 @@
 import { motion, useMotionValue, useDragControls } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { GripVertical, Maximize2, Minimize2, Minus, X } from 'lucide-react';
+import { ChatBrandMark } from './ChatBrandMark';
 import { Chat } from './Chat';
 import { ChatStatusBar } from './ChatStatusBar';
 import { ChatOptionsMenu } from './ChatOptionsMenu';
@@ -122,6 +123,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
         <span className="opencanvas-chat-titlebar-grip">
           <GripVertical className="size-3.5" />
         </span>
+        <ChatBrandMark active={chatBusy} />
         <span className="opencanvas-chat-titlebar-title">OpenCanvas</span>
         <div className="opencanvas-chat-titlebar-actions">
           <ChatOptionsMenu />
