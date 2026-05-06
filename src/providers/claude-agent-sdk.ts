@@ -375,6 +375,9 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       search,
       webSearch,
       getSnapshot: () => snapshot,
+      streamBus: (request.streamBus as
+        | import('../agent/widget-stream-bus.js').WidgetStreamBus
+        | undefined) ?? null,
     });
 
     const mcp = createSdkMcpServer({

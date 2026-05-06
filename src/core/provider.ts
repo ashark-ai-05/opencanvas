@@ -60,6 +60,15 @@ export type QueryRequest = {
    * which expects a plain JSON answer rather than a tool-loop reply.
    */
   rawPrompt?: boolean;
+  /**
+   * Per-turn widget-stream bus. When the chat route owns the SSE writer
+   * (i.e. /v1/chat, NOT /v1/query/openai), it creates a fresh bus per
+   * request and threads it through to the agent's tool surface so
+   * `stream_widget` can emit data-widget-stream-* parts on the same
+   * connection. Typed as `unknown` here to avoid a circular import on
+   * src/agent — the provider casts to WidgetStreamBus when consuming.
+   */
+  streamBus?: unknown;
 };
 
 export type ProbeResult = {

@@ -92,4 +92,60 @@ export type ToolDirective =
     }
   | { type: 'focus'; id: string }
   | { type: 'clear' }
-  | { type: 'switchTemplate'; id: TemplateId };
+  | { type: 'switchTemplate'; id: TemplateId }
+  | {
+      /**
+       * Open a new streaming widget — places a scaffold shape on the
+       * canvas and flips its meta.streaming flag on. Subsequent
+       * `stream-op` directives mutate this widget's payload in place.
+       * Renderers read meta.streaming to show streaming-state visuals
+       * (caret, skeleton row, etc.).
+       */
+      type: 'stream-start';
+      id: string;
+      kind: WidgetKind;
+      role: Role;
+      scaffold: Record<string, unknown>;
+    }
+  | {
+      /**
+       * Apply a single op to a streaming widget. `seq` is monotonic per
+       * id; the dispatcher drops out-of-order/duplicate ops.
+       */
+      type: 'stream-op';
+      id: string;
+      seq: number;
+      op: WidgetStreamOp;
+    }
+  | {
+      /**
+       * Close a streaming widget. Flips meta.streaming off so renderers
+       * drop streaming chrome. `ok=false` + `error` keeps the partial
+       * payload but adds a meta.streamingError badge.
+       */
+      type: 'stream-end';
+      id: string;
+      ok: boolean;
+      error?: string;
+    };
+
+/**
+ * Mutation operations for streaming widgets. Each op is idempotent
+ * under sequence ordering; the client mutator (app/src/canvas/
+ * stream-mutator.ts) applies them to the current shape props.
+ *
+ * The op surface is intentionally narrow — append-text/rows/field cover
+ * the streaming-friendly block types (markdown / table / kv); set-prop
+ * is the catchall for arbitrary patches; replace-block is finalization.
+ */
+export type WidgetStreamOp =
+  | { kind: 'append-text'; blockIndex: number; text: string }
+  | { kind: 'append-rows'; blockIndex: number; rows: string[][] }
+  | {
+      kind: 'append-field';
+      blockIndex: number;
+      field: { key: string; value: string; url?: string };
+    }
+  | { kind: 'append-block'; block: Record<string, unknown> }
+  | { kind: 'replace-block'; blockIndex: number; block: Record<string, unknown> }
+  | { kind: 'set-prop'; path: ReadonlyArray<string | number>; value: unknown };

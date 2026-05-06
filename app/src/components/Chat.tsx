@@ -24,7 +24,12 @@ import { useChatActions } from '../state/chat-actions-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { useUiStore } from '../state/ui-store';
-import type { ToolDirective } from '../../../src/agent/types';
+import type {
+  ToolDirective,
+  WidgetKind,
+  Role,
+  WidgetStreamOp,
+} from '../../../src/agent/types';
 
 /**
  * AI SDK 6 surfaces UIMS tool chunks as parts shaped:
@@ -166,6 +171,60 @@ function describeToolInput(input: unknown): string | null {
 
 function truncate(s: string, max: number): string {
   return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+}
+
+/**
+ * Convert one data-widget-stream-* part (as parsed by AI SDK from
+ * UIMS) into the corresponding ToolDirective. Returns null when the
+ * part lacks the expected fields (defensive — a malformed part should
+ * NOT crash the dispatcher).
+ *
+ * Wire format reminder (from src/backend/routes/chat.ts):
+ *   data-widget-stream-start: { id, kind, role, scaffold }
+ *   data-widget-stream-op:    { id, seq, op }
+ *   data-widget-stream-end:   { id, ok, error? }
+ */
+function streamPartToDirective(part: { type: string; data?: unknown }): ToolDirective | null {
+  const data = part.data;
+  if (!data || typeof data !== 'object') return null;
+  const d = data as Record<string, unknown>;
+  if (part.type === 'data-widget-stream-start') {
+    if (
+      typeof d['id'] !== 'string' ||
+      typeof d['kind'] !== 'string' ||
+      typeof d['role'] !== 'string' ||
+      !d['scaffold']
+    )
+      return null;
+    return {
+      type: 'stream-start',
+      id: d['id'],
+      kind: d['kind'] as WidgetKind,
+      role: d['role'] as Role,
+      scaffold: d['scaffold'] as Record<string, unknown>,
+    };
+  }
+  if (part.type === 'data-widget-stream-op') {
+    if (
+      typeof d['id'] !== 'string' ||
+      typeof d['seq'] !== 'number' ||
+      !d['op']
+    )
+      return null;
+    return {
+      type: 'stream-op',
+      id: d['id'],
+      seq: d['seq'],
+      op: d['op'] as WidgetStreamOp,
+    };
+  }
+  if (part.type === 'data-widget-stream-end') {
+    if (typeof d['id'] !== 'string' || typeof d['ok'] !== 'boolean') return null;
+    const out: ToolDirective = { type: 'stream-end', id: d['id'], ok: d['ok'] };
+    if (typeof d['error'] === 'string') out.error = d['error'];
+    return out;
+  }
+  return null;
 }
 
 /**
@@ -363,11 +422,38 @@ export function Chat() {
   }, [messages]);
 
   // Apply any directive that arrived in the stream to the tldraw canvas.
+  // Two sources:
+  //   - Tool-output parts (place_widget, update_widget, etc.) — directive
+  //     embedded in the tool result envelope.
+  //   - Data-widget-stream-* parts — emitted by the chat route's bus when
+  //     the agent's stream_widget tool runs. These arrive at high rate
+  //     (per op) so the dedupe key is the part's `id` (set per chunk on
+  //     the server) rather than a tool-call id.
   useEffect(() => {
     const editor = getEditor();
     if (!editor) return;
+    const tplId = useTemplateStore.getState().activeTemplateId;
     for (const m of messages) {
-      for (const p of m.parts as Array<{ type: string }>) {
+      for (const p of m.parts as Array<{ type: string; id?: string }>) {
+        // Stream parts: applied per part-id.
+        if (
+          p.type === 'data-widget-stream-start' ||
+          p.type === 'data-widget-stream-op' ||
+          p.type === 'data-widget-stream-end'
+        ) {
+          const partId = p.id;
+          if (!partId || appliedRef.current.has(partId)) continue;
+          const directive = streamPartToDirective(p);
+          if (directive) {
+            try {
+              applyToolDirective(editor, directive, tplId);
+            } catch (e) {
+              console.error('[chat] stream directive failed:', e);
+            }
+          }
+          appliedRef.current.add(partId);
+          continue;
+        }
         if (!isToolPart(p)) continue;
         const op = p as ToolPart;
         if (op.state !== 'output-available') continue;
@@ -378,7 +464,6 @@ export function Chat() {
           appliedRef.current.add(op.toolCallId);
           continue;
         }
-        const tplId = useTemplateStore.getState().activeTemplateId;
         try {
           applyToolDirective(editor, parsed.directive, tplId);
         } catch (e) {

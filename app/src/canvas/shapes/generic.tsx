@@ -10,7 +10,15 @@ import {
 import { resizeBox } from 'tldraw';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { CardActions, CardBody, CardFrame, CardHeader, CardTitle, Tag } from './shared';
+import {
+  CardActions,
+  CardBody,
+  CardFrame,
+  CardHeader,
+  CardTitle,
+  Tag,
+  readStreaming,
+} from './shared';
 
 /**
  * Universal fallback widget. Renders a list of typed blocks (markdown,
@@ -91,12 +99,21 @@ export class GenericShapeUtil extends ShapeUtil<GenericShape> {
 
   override component(shape: GenericShape) {
     const blocks = Array.isArray(shape.props.blocks) ? shape.props.blocks : [];
+    const streaming = readStreaming(shape.meta);
+    const liveCount = streaming.active ? liveCounterFor(blocks) : null;
     return (
       <HTMLContainer>
         <CardFrame shape={shape}>
           <CardHeader>
             <CardTitle>{shape.props.title}</CardTitle>
-            <Tag>{labelForBlocks(blocks)}</Tag>
+            {streaming.active ? (
+              <Tag>
+                <span className="opencanvas-generic-streaming-pulse" />
+                streaming{liveCount ? ` · ${liveCount}` : '…'}
+              </Tag>
+            ) : (
+              <Tag>{labelForBlocks(blocks)}</Tag>
+            )}
             <CardActions shape={shape} />
           </CardHeader>
           <CardBody>
@@ -105,9 +122,22 @@ export class GenericShapeUtil extends ShapeUtil<GenericShape> {
                 {shape.props.subtitle}
               </div>
             )}
-            <div className="opencanvas-generic-blocks">
+            {streaming.error && (
+              <div className="opencanvas-generic-error" title={streaming.error}>
+                ⚠ stream interrupted — partial content shown
+              </div>
+            )}
+            <div
+              className="opencanvas-generic-blocks"
+              data-streaming={streaming.active ? 'true' : 'false'}
+            >
               {blocks.map((b, i) => (
-                <BlockRenderer key={i} block={b} />
+                <BlockRenderer
+                  key={i}
+                  block={b}
+                  streaming={streaming.active}
+                  isLast={i === blocks.length - 1}
+                />
               ))}
             </div>
           </CardBody>
@@ -135,18 +165,53 @@ function labelForBlocks(blocks: GenericBlock[]): string {
   return `${blocks.length} blocks`;
 }
 
-function BlockRenderer({ block }: { block: GenericBlock }) {
+/**
+ * Tiny progress hint shown in the header while streaming. Picks the
+ * most informative metric from the most-recently-touched block.
+ */
+function liveCounterFor(blocks: GenericBlock[]): string | null {
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i]!;
+    if (b.type === 'markdown') {
+      const len = b.content?.length ?? 0;
+      if (len > 0) return `${len} chars`;
+    } else if (b.type === 'table') {
+      return `${b.rows?.length ?? 0} rows`;
+    } else if (b.type === 'kv') {
+      return `${b.fields?.length ?? 0} fields`;
+    }
+  }
+  return null;
+}
+
+function BlockRenderer({
+  block,
+  streaming,
+  isLast,
+}: {
+  block: GenericBlock;
+  streaming: boolean;
+  isLast: boolean;
+}) {
   switch (block.type) {
     case 'markdown':
       return (
-        <div className="opencanvas-generic-block opencanvas-markdown">
+        <div
+          className="opencanvas-generic-block opencanvas-markdown"
+          data-streaming={streaming && isLast ? 'true' : 'false'}
+        >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
+          {streaming && isLast && (
+            <span className="opencanvas-generic-caret" aria-hidden>
+              ▍
+            </span>
+          )}
         </div>
       );
     case 'table':
-      return <TableBlock block={block} />;
+      return <TableBlock block={block} streaming={streaming && isLast} />;
     case 'kv':
-      return <KVBlock block={block} />;
+      return <KVBlock block={block} streaming={streaming && isLast} />;
     case 'embed':
       return <EmbedBlock block={block} />;
     case 'json':
@@ -160,8 +225,10 @@ function BlockRenderer({ block }: { block: GenericBlock }) {
 
 function TableBlock({
   block,
+  streaming = false,
 }: {
   block: Extract<GenericBlock, { type: 'table' }>;
+  streaming?: boolean;
 }) {
   const { columns, rows, rowLinks } = block;
   return (
@@ -224,15 +291,33 @@ function TableBlock({
               </tr>
             );
           })}
+          {streaming && (
+            <tr className="opencanvas-generic-table-skeleton" aria-hidden>
+              {columns.map((_, ci) => (
+                <td key={ci}>
+                  <span className="opencanvas-generic-skeleton-bar" />
+                </td>
+              ))}
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   );
 }
 
-function KVBlock({ block }: { block: Extract<GenericBlock, { type: 'kv' }> }) {
+function KVBlock({
+  block,
+  streaming = false,
+}: {
+  block: Extract<GenericBlock, { type: 'kv' }>;
+  streaming?: boolean;
+}) {
   return (
-    <dl className="opencanvas-generic-block opencanvas-generic-kv">
+    <dl
+      className="opencanvas-generic-block opencanvas-generic-kv"
+      data-streaming={streaming ? 'true' : 'false'}
+    >
       {block.fields.map((f, i) => (
         <div key={i} className="opencanvas-generic-kv-row">
           <dt>{f.key}</dt>

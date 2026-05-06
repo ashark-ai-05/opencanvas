@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
 import { providerEventsToUIMS, UIMS_HEADERS } from '../uims-stream.js';
 import { parseCanvasSnapshot } from '../../agent/canvas-snapshot.js';
+import { WidgetStreamBus } from '../../agent/widget-stream-bus.js';
 import type { BackendState } from '../state.js';
 import type { HistoryMessage, ProviderEvent } from '../../core/provider.js';
 
@@ -130,6 +131,15 @@ export function chatRoute(state: BackendState): Hono {
         { once: true },
       );
 
+      // Per-turn widget-stream bus — see ARCHITECTURE in widget-stream-bus.ts.
+      // The agent's `stream_widget` tool emits start/op/end events on
+      // this bus. We drain them in parallel with the provider stream
+      // and write data-widget-stream-* parts onto the same SSE.
+      const bus = new WidgetStreamBus();
+      // Track widget-ids the bus owns so /v1/cancel-stream/:id can find
+      // the right bus to cancel against.
+      const ownedWidgetIds = new Set<string>();
+
       const provider = state.getLLMProvider();
       const events = provider.query({
         prompt,
@@ -138,12 +148,13 @@ export function chatRoute(state: BackendState): Hono {
         sessionId: priorSessionId,
         canvasSnapshot,
         abortSignal: abortController.signal,
+        streamBus: bus,
       });
 
       // Wrap the provider stream so we can sniff session-started events
       // without consuming or reordering them — UIMS swallows it but the
       // chat route must persist the id for the next turn's `resume:`.
-      async function* tap(): AsyncIterable<ProviderEvent> {
+      async function* tapProvider(): AsyncIterable<ProviderEvent> {
         for await (const ev of events) {
           if (ev.type === 'session-started' && conversationId) {
             state.setSessionId(conversationId, ev.sessionId);
@@ -152,10 +163,91 @@ export function chatRoute(state: BackendState): Hono {
         }
       }
 
-      for await (const sseLine of providerEventsToUIMS(tap())) {
-        await s.write(sseLine);
+      // Drain provider stream and bus concurrently. When provider
+      // finishes, close the bus (which lets `for-await-of bus` end).
+      const providerDone = (async () => {
+        try {
+          for await (const sseLine of providerEventsToUIMS(tapProvider())) {
+            await s.write(sseLine);
+          }
+        } finally {
+          // Best-effort: if any tool is still streaming when the
+          // provider stream ends, give it 200ms to drain naturally
+          // before forcing the bus closed. Most streams complete
+          // before/right when the provider's tool-call returns.
+          if (!bus.isIdle()) {
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          bus.close();
+        }
+      })();
+
+      const busDone = (async () => {
+        for await (const event of bus) {
+          if (event.kind === 'start') {
+            ownedWidgetIds.add(event.id);
+            state.registerStreamWidget(event.id, bus);
+            await s.write(
+              `data: ${JSON.stringify({
+                type: 'data-widget-stream-start',
+                id: `wstream-start-${event.id}`,
+                data: {
+                  id: event.id,
+                  kind: event.widgetKind,
+                  role: event.role,
+                  scaffold: event.scaffold,
+                },
+              })}\n\n`,
+            );
+          } else if (event.kind === 'op') {
+            await s.write(
+              `data: ${JSON.stringify({
+                type: 'data-widget-stream-op',
+                id: `wstream-op-${event.id}-${event.seq}`,
+                data: { id: event.id, seq: event.seq, op: event.op },
+              })}\n\n`,
+            );
+          } else {
+            const data: Record<string, unknown> = {
+              id: event.id,
+              ok: event.ok,
+            };
+            if (event.error) data['error'] = event.error;
+            await s.write(
+              `data: ${JSON.stringify({
+                type: 'data-widget-stream-end',
+                id: `wstream-end-${event.id}`,
+                data,
+              })}\n\n`,
+            );
+            state.unregisterStreamWidget(event.id);
+            ownedWidgetIds.delete(event.id);
+          }
+        }
+      })();
+
+      try {
+        await Promise.all([providerDone, busDone]);
+      } finally {
+        // Defensive: clear any still-registered ids (e.g. provider
+        // crashed mid-stream so end was never emitted).
+        for (const id of ownedWidgetIds) state.unregisterStreamWidget(id);
       }
     });
+  });
+
+  /**
+   * Cancel an in-flight streaming widget by id. The tool handler
+   * polls `bus.isCancelled(id)` between ops and stops early when it
+   * sees true; the bus then emits a stream-end with `ok=false,
+   * error='cancelled by user'`. Returns 404 if the id isn't tracked
+   * (already complete, or never started).
+   */
+  r.post('/v1/cancel-stream/:id', async (c) => {
+    const id = c.req.param('id');
+    if (!id) return c.json({ ok: false, error: 'missing id' }, 400);
+    const cancelled = state.cancelStreamWidget(id);
+    return c.json({ ok: cancelled });
   });
 
   return r;

@@ -2,7 +2,13 @@ import type { Editor } from 'tldraw';
 import type { SearchResult } from '../api/search';
 import { TEMPLATES_BY_ID } from './templates';
 import { useTemplateStore } from '../state/template-store';
-import type { ToolDirective, TemplateId, WidgetKind } from '../../../src/agent/types';
+import type {
+  ToolDirective,
+  TemplateId,
+  WidgetKind,
+  WidgetStreamOp,
+} from '../../../src/agent/types';
+import { applyOps } from './stream-mutator';
 
 /**
  * Place results on the canvas using the active template's layout.
@@ -67,6 +73,68 @@ const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
  * collapsed so dense canvases don't visually overflow. Spec §12.
  */
 const COLLAPSE_THRESHOLD = 3;
+
+/**
+ * Per-widget streaming state.
+ *  - lastSeq:    sequence number of the most recently APPLIED op
+ *  - pending:    ops queued for the next animation frame, in arrival order
+ *  - rafHandle:  outstanding requestAnimationFrame handle, if any
+ *
+ * Buffering rationale: when streamed text deltas arrive at 30+/sec the
+ * dispatcher would otherwise issue 30+ tldraw updateShape calls per
+ * second. Coalescing per-frame keeps tldraw history clean (one entry
+ * per frame) and avoids React render thrash.
+ */
+type StreamState = {
+  lastSeq: number;
+  pending: WidgetStreamOp[];
+  rafHandle: number | null;
+};
+const streams = new Map<string, StreamState>();
+
+function ensureStream(id: string): StreamState {
+  let s = streams.get(id);
+  if (!s) {
+    s = { lastSeq: 0, pending: [], rafHandle: null };
+    streams.set(id, s);
+  }
+  return s;
+}
+
+function flushStream(editor: Editor, id: string): void {
+  const s = streams.get(id);
+  if (!s || s.pending.length === 0) return;
+  const ops = s.pending;
+  s.pending = [];
+  s.rafHandle = null;
+
+  const shapeId = ('shape:' + id) as never;
+  const target = editor.getShape(shapeId) as
+    | { type: string; props: Record<string, unknown> }
+    | undefined;
+  if (!target) {
+    // Shape was deleted mid-stream (user dismissed the card). Drop ops
+    // silently — no canvas to mutate.
+    return;
+  }
+
+  const nextProps = applyOps(target.props, ops);
+  if (!nextProps) return;
+
+  editor.batch(() => {
+    editor.updateShape({
+      id: shapeId,
+      type: target.type as never,
+      props: nextProps as never,
+    } as never);
+  });
+}
+
+function scheduleFlush(editor: Editor, id: string): void {
+  const s = ensureStream(id);
+  if (s.rafHandle !== null) return;
+  s.rafHandle = requestAnimationFrame(() => flushStream(editor, id));
+}
 
 /**
  * Apply a directive coming from a backend tool to the tldraw editor.
@@ -200,6 +268,81 @@ export function applyToolDirective(
         inset: 80,
         animation: { duration: 200 },
       } as never);
+      return;
+    }
+    case 'stream-start': {
+      // Same placement path as 'place', plus meta.streaming=true so
+      // renderers can show streaming-state visuals. Reuses the
+      // template's slot resolver and overlap avoidance.
+      const tpl = TEMPLATES_BY_ID[templateId];
+      if (!tpl) throw new Error(`unknown template: ${templateId}`);
+      const occupancy = countByRole(editor, directive.role);
+      const slot = tpl.slotForRole(
+        directive.role,
+        occupancy,
+        editor.getViewportPageBounds(),
+      );
+      const def = DEFAULT_SIZE[directive.kind] ?? { w: 320, h: 200 };
+      const w = Math.max(slot.w, def.w);
+      const h = Math.max(slot.h, def.h);
+      const { x, y } = findFreePosition(editor, slot.x, slot.y, w, h);
+
+      const meta: Record<string, unknown> = {
+        role: directive.role,
+        streaming: true,
+      };
+      editor.createShape({
+        id: ('shape:' + directive.id) as never,
+        type: KIND_TO_SHAPE[directive.kind] as never,
+        x,
+        y,
+        meta: meta as never,
+        props: { ...directive.scaffold, w, h } as never,
+      } as never);
+
+      // Initialise the per-stream buffer so subsequent ops route here.
+      ensureStream(directive.id);
+      return;
+    }
+    case 'stream-op': {
+      const s = ensureStream(directive.id);
+      // Drop dupes / out-of-order ops. We don't request resync in V1 —
+      // UIMS over a single SSE connection is reliable in practice; we'll
+      // wire resync when we observe a real gap.
+      if (directive.seq <= s.lastSeq) {
+        console.warn(
+          `[dispatcher] stream-op out-of-order: id=${directive.id} ` +
+            `seq=${directive.seq} lastSeq=${s.lastSeq}`,
+        );
+        return;
+      }
+      s.lastSeq = directive.seq;
+      s.pending.push(directive.op);
+      scheduleFlush(editor, directive.id);
+      return;
+    }
+    case 'stream-end': {
+      // Flush any pending ops synchronously so the final frame contains
+      // everything that arrived before the close.
+      flushStream(editor, directive.id);
+
+      const shapeId = ('shape:' + directive.id) as never;
+      const shape = editor.getShape(shapeId) as
+        | { type: string; meta?: Record<string, unknown> }
+        | undefined;
+      if (shape) {
+        const meta: Record<string, unknown> = { ...(shape.meta ?? {}) };
+        meta['streaming'] = false;
+        if (!directive.ok) {
+          meta['streamingError'] = directive.error ?? 'stream interrupted';
+        }
+        editor.updateShape({
+          id: shapeId,
+          type: shape.type as never,
+          meta: meta as never,
+        } as never);
+      }
+      streams.delete(directive.id);
       return;
     }
     case 'link': {

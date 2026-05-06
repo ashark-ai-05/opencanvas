@@ -173,6 +173,38 @@ export class BackendState {
     this.sessionIds.delete(conversationId);
   }
 
+  /**
+   * Live widget-stream buses, keyed by widget id. The chat route
+   * registers each id when stream-start is emitted; the
+   * /v1/cancel-stream/:id route looks the id up here to call
+   * `bus.cancel(id)`. Entries are removed when the chat turn that
+   * owned the bus completes.
+   */
+  private streamBusesByWidgetId = new Map<
+    string,
+    import('../agent/widget-stream-bus.js').WidgetStreamBus
+  >();
+  registerStreamWidget(
+    widgetId: string,
+    bus: import('../agent/widget-stream-bus.js').WidgetStreamBus,
+  ): void {
+    this.streamBusesByWidgetId.set(widgetId, bus);
+  }
+  unregisterStreamWidget(widgetId: string): void {
+    this.streamBusesByWidgetId.delete(widgetId);
+  }
+  /**
+   * Mark a streaming widget as cancelled. Tool handlers poll
+   * `bus.isCancelled(id)` between ops and stop early. Returns false
+   * when the id isn't tracked (already finished, or never started).
+   */
+  cancelStreamWidget(widgetId: string): boolean {
+    const bus = this.streamBusesByWidgetId.get(widgetId);
+    if (!bus) return false;
+    bus.cancel(widgetId);
+    return true;
+  }
+
   getLatestSnapshot(): CanvasSnapshot | null {
     return this.latestSnapshot;
   }

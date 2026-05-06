@@ -69,6 +69,20 @@ describe('agent/types', () => {
       { type: 'focus', id: 'w-1' },
       { type: 'clear' },
       { type: 'switchTemplate', id: 'ask-anything' },
+      {
+        type: 'stream-start',
+        id: 'w-3',
+        kind: 'generic',
+        role: 'primary',
+        scaffold: { title: 'Streaming', blocks: [] },
+      },
+      {
+        type: 'stream-op',
+        id: 'w-3',
+        seq: 1,
+        op: { kind: 'append-text', blockIndex: 0, text: 'hello' },
+      },
+      { type: 'stream-end', id: 'w-3', ok: true },
     ];
     const seen = new Set<string>();
     for (const d of directives) {
@@ -91,6 +105,15 @@ describe('agent/types', () => {
         case 'switchTemplate':
           seen.add('switchTemplate');
           break;
+        case 'stream-start':
+          seen.add('stream-start');
+          break;
+        case 'stream-op':
+          seen.add('stream-op');
+          break;
+        case 'stream-end':
+          seen.add('stream-end');
+          break;
         default: {
           // Exhaustiveness: `d` is `never` here. Build fails if a variant
           // is added without a case branch.
@@ -99,6 +122,6 @@ describe('agent/types', () => {
         }
       }
     }
-    expect(seen.size).toBe(6);
+    expect(seen.size).toBe(9);
   });
 });

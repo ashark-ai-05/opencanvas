@@ -49,6 +49,26 @@ function readCollapsed(meta: unknown): boolean {
 }
 
 /**
+ * Streaming state from meta, used by streaming-aware shapes (generic) to
+ * gate caret/skeleton/border-pulse visuals. Returns:
+ *   { active: true }   — stream is currently producing ops
+ *   { active: false, error: string } — stream ended with ok=false
+ *   { active: false }  — stream finished (ok=true) OR never started
+ */
+export function readStreaming(
+  meta: unknown,
+): { active: boolean; error?: string } {
+  if (!meta || typeof meta !== 'object') return { active: false };
+  const m = meta as { streaming?: unknown; streamingError?: unknown };
+  const active = m.streaming === true;
+  if (active) return { active: true };
+  if (typeof m.streamingError === 'string') {
+    return { active: false, error: m.streamingError };
+  }
+  return { active: false };
+}
+
+/**
  * A single attribution entry — either a bare URL string or a {url, label?}.
  */
 export type SourcePill = string | { url: string; label?: string };

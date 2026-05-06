@@ -2567,6 +2567,102 @@ header button:hover {
 }
 
 /* ──────────────────────────────────────────────────────────────────
+ * Streaming-state visuals for the generic widget.
+ *
+ *  - card border pulses violet while shape.meta.streaming is true
+ *  - markdown block ends with a blinking caret
+ *  - table block renders one shimmer-row beneath the real rows
+ *  - newly-appended kv fields fade-in (driven by data-streaming attr)
+ *  - the header tag swaps to a "streaming · 187 chars" live counter
+ *  - if streaming ended with ok=false, an inline error badge surfaces
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-card[data-streaming-active="true"],
+.opencanvas-card:has(.opencanvas-generic-blocks[data-streaming="true"]) {
+  animation: opencanvas-generic-stream-pulse 1.6s ease-in-out infinite;
+}
+@keyframes opencanvas-generic-stream-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px var(--color-line) inset,
+      0 12px 32px -12px rgba(0, 0, 0, 0.8),
+      0 0 0 0 rgba(167, 139, 250, 0.0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(167, 139, 250, 0.6) inset,
+      0 12px 32px -12px rgba(0, 0, 0, 0.8),
+      0 0 24px -4px rgba(167, 139, 250, 0.45);
+  }
+}
+
+.opencanvas-generic-streaming-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #f0abfc);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.7);
+  margin-right: 5px;
+  animation: opencanvas-generic-pulse 1.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+@keyframes opencanvas-generic-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(0.6); opacity: 0.5; }
+}
+
+.opencanvas-generic-caret {
+  display: inline-block;
+  margin-left: 1px;
+  color: #c4b5fd;
+  font-weight: 700;
+  animation: opencanvas-generic-caret-blink 1.05s steps(2, jump-none) infinite;
+}
+@keyframes opencanvas-generic-caret-blink {
+  50% { opacity: 0; }
+}
+
+.opencanvas-generic-table-skeleton td {
+  padding: 6px 10px;
+}
+.opencanvas-generic-skeleton-bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(167, 139, 250, 0.18) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 240% 100%;
+  animation: opencanvas-generic-skeleton-shimmer 1.4s linear infinite;
+}
+@keyframes opencanvas-generic-skeleton-shimmer {
+  from { background-position: 240% 0; }
+  to   { background-position: -140% 0; }
+}
+
+/* Newly-appended kv rows fade in 200ms while parent dl is streaming. */
+.opencanvas-generic-kv[data-streaming="true"] .opencanvas-generic-kv-row {
+  animation: opencanvas-generic-kv-fade-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes opencanvas-generic-kv-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.opencanvas-generic-error {
+  margin: 0 0 8px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(248, 113, 113, 0.10);
+  border: 1px solid rgba(248, 113, 113, 0.32);
+  color: #fca5a5;
+  font-size: 11px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
  * Source-link affordances inside widgets (rows, fields, events).
  * `.opencanvas-row-link` is the inline-text variant used inside
  * key-value-card and timeline. `.opencanvas-table-row--linked` lights

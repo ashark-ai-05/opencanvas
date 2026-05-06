@@ -1,6 +1,7 @@
 import { searchKbTool } from './search-kb.js';
 import { fetchResultTool } from './fetch-result.js';
 import { placeWidgetTool } from './place-widget.js';
+import { streamWidgetTool } from './stream-widget.js';
 import { updateWidgetTool } from './update-widget.js';
 import { readCanvasTool } from './read-canvas.js';
 import { readWidgetTool } from './read-widget.js';
@@ -10,6 +11,7 @@ import { clearCanvasTool } from './clear-canvas.js';
 import { switchTemplateTool } from './switch-template.js';
 import { webSearchTool, type WebSearchProvider } from './web-search.js';
 import type { CanvasSnapshot } from '../canvas-snapshot.js';
+import type { WidgetStreamBus } from '../widget-stream-bus.js';
 
 export interface AgentToolDeps {
   search: {
@@ -37,6 +39,13 @@ export interface AgentToolDeps {
   };
   webSearch: WebSearchProvider;
   getSnapshot: () => CanvasSnapshot;
+  /**
+   * Optional per-turn bus for the `stream_widget` tool. Null in
+   * environments that don't multiplex widget streams onto the chat
+   * SSE (tests, OpenAI-compatible /v1/query/openai). The streaming
+   * tool falls back to a one-shot place directive in that case.
+   */
+  streamBus?: WidgetStreamBus | null;
 }
 
 /**
@@ -51,6 +60,7 @@ export function buildAgentTools(deps: AgentToolDeps) {
     fetchResultTool(deps.search),
     webSearchTool(deps.webSearch),
     placeWidgetTool(),
+    streamWidgetTool(deps.streamBus ?? null),
     updateWidgetTool(deps.getSnapshot),
     readCanvasTool(deps.getSnapshot),
     readWidgetTool(deps.getSnapshot),

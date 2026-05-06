@@ -77,7 +77,7 @@ describe('claude-agent-sdk options', () => {
     expect((opts.abortController as AbortController).signal.aborted).toBe(true);
   });
 
-  it('wires the 11 agent tools as MCP server with allowedTools mcp__opencanvas__*', async () => {
+  it('wires the 12 agent tools as MCP server with allowedTools mcp__opencanvas__*', async () => {
     const adapter = new ClaudeAgentSdkAdapter();
     for await (const _ of adapter.query({
       prompt: 'hi',
@@ -89,12 +89,13 @@ describe('claude-agent-sdk options', () => {
       mockedQuery.mock.calls[0]![0] as { options: Record<string, unknown> }
     ).options;
     const allowed = opts.allowedTools as string[];
-    expect(allowed.length).toBe(11);
+    expect(allowed.length).toBe(12);
     expect(allowed.every((t) => t.startsWith('mcp__opencanvas__'))).toBe(true);
     // Sanity: known tool names appear
     expect(allowed).toContain('mcp__opencanvas__search_kb');
     expect(allowed).toContain('mcp__opencanvas__web_search');
     expect(allowed).toContain('mcp__opencanvas__place_widget');
+    expect(allowed).toContain('mcp__opencanvas__stream_widget');
     expect(allowed).toContain('mcp__opencanvas__update_widget');
     expect(opts.mcpServers).toBeDefined();
     expect(
