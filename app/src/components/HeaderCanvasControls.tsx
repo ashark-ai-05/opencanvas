@@ -1,5 +1,6 @@
 import { Maximize2, Minus, Plus, RotateCcw } from 'lucide-react';
 import { getEditor } from '../state/editor-ref';
+import { useCanvasStats } from '../state/canvas-stats-store';
 
 /**
  * Tldraw-powered zoom + fit + reset buttons rendered inline in the
@@ -9,6 +10,8 @@ import { getEditor } from '../state/editor-ref';
  * Spec: REPLICATION-PROMPT.md §13 — `HeaderCanvasControls`.
  */
 export function HeaderCanvasControls() {
+  const zoom = useCanvasStats((s) => s.zoom);
+  const zoomPct = Math.round(zoom * 100);
   return (
     <div className="flex items-center gap-1">
       <HeaderIconButton
@@ -21,6 +24,19 @@ export function HeaderCanvasControls() {
       >
         <Minus className="size-3.5" />
       </HeaderIconButton>
+      <button
+        type="button"
+        className="opencanvas-header-zoom-readout"
+        title="Click to reset to 100%"
+        aria-label={`Zoom ${zoomPct}% — click to reset to 100%`}
+        onClick={() => {
+          const editor = getEditor();
+          if (!editor) return;
+          editor.resetZoom(undefined, { animation: { duration: 220 } });
+        }}
+      >
+        {zoomPct}%
+      </button>
       <HeaderIconButton
         title="Zoom in"
         onClick={() => {

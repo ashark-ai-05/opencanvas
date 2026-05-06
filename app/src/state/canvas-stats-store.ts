@@ -7,10 +7,15 @@ import { create } from 'zustand';
  */
 type CanvasStats = {
   widgetCount: number;
+  /** Current zoom factor (1 = 100%, 0.5 = 50%, 2 = 200%). */
+  zoom: number;
   setWidgetCount: (n: number) => void;
+  setZoom: (z: number) => void;
 };
 
 export const useCanvasStats = create<CanvasStats>((set) => ({
   widgetCount: 0,
+  zoom: 1,
   setWidgetCount: (n) => set({ widgetCount: n }),
+  setZoom: (z) => set({ zoom: z }),
 }));

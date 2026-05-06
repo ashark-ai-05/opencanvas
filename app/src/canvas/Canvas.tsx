@@ -19,6 +19,7 @@ import { TasksShapeUtil } from './shapes/tasks';
 import { KanbanShapeUtil } from './shapes/kanban';
 import { StickyNoteShapeUtil } from './shapes/sticky-note';
 import { GenericShapeUtil } from './shapes/generic';
+import { TimeShapeUtil } from './shapes/time';
 import { computeCanvasSnapshot } from './snapshot';
 import { setLatestSnapshot } from '../state/snapshot-ref';
 import { setEditor } from '../state/editor-ref';
@@ -52,6 +53,8 @@ const customShapeUtils = [
   // Universal fallback — auto-classifier targets this when no specialized
   // kind fits or a payload fails its specialized schema.
   GenericShapeUtil,
+  // Live time widget — clock / timer / stopwatch / pomodoro modes.
+  TimeShapeUtil,
 ];
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -92,7 +95,15 @@ export function Canvas() {
         const tplId = useTemplateStore.getState().activeTemplateId;
         const snap = computeCanvasSnapshot(editor, tplId);
         setLatestSnapshot(snap);
-        useCanvasStats.getState().setWidgetCount(snap.widgets.length);
+        const stats = useCanvasStats.getState();
+        stats.setWidgetCount(snap.widgets.length);
+        // Camera state changes (zoom + pan) flow through the same
+        // store.listen channel, so this also keeps the header zoom
+        // readout reactive.
+        const cam = (
+          editor as unknown as { getCamera?: () => { z?: number } }
+        ).getCamera?.();
+        if (cam && typeof cam.z === 'number') stats.setZoom(cam.z);
       };
 
       // Initial publish so the very first chat turn sees current canvas state.

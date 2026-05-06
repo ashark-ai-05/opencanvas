@@ -49,6 +49,7 @@ const KIND_TO_SHAPE: Record<WidgetKind, string> = {
   kanban: 'opencanvas:kanban',
   'sticky-note': 'opencanvas:sticky-note',
   generic: 'opencanvas:generic',
+  time: 'opencanvas:time',
 };
 
 /** Sensible default size per kind so wide tables don't get cropped at 320×200. */
@@ -66,6 +67,7 @@ const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
   kanban: { w: 720, h: 360 },
   'sticky-note': { w: 200, h: 200 },
   generic: { w: 420, h: 320 },
+  time: { w: 260, h: 180 },
 };
 
 /**

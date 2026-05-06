@@ -21,6 +21,7 @@ export const WIDGET_KINDS = [
   'kanban',
   'sticky-note',
   'generic',
+  'time',
 ] as const;
 export type WidgetKind = (typeof WIDGET_KINDS)[number];
 

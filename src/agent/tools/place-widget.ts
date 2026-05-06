@@ -54,6 +54,12 @@ Payload schema per kind (use these field names exactly):
   - sticky-note     { body, author?, colour?: yellow|pink|blue|green|violet|orange }
   - composite       { title, sections: [{ heading?, kind: <any non-composite kind>, payload }] } — ONE card with multiple typed sections; cannot nest composite
   - generic         { title, subtitle?, blocks: [{ type: 'markdown'|'table'|'kv'|'embed'|'json', ... }] } — universal fallback. Use when no specialized kind fits; compose blocks like Notion sections.
+  - time            { mode: 'clock'|'timer'|'stopwatch'|'pomodoro', label?, tz?, format?: '12h'|'24h', durationSec?, startedAt?, elapsedAtPause?, paused?, pomodoro?: { workSec, breakSec, longBreakSec?, longBreakEvery?, sessions?, phase?: 'work'|'break'|'longBreak' } } — live time widget that ticks on its own. Examples:
+                      clock     — { mode: 'clock', tz: 'Asia/Tokyo', format: '24h', label: 'Tokyo' }
+                      timer     — { mode: 'timer', durationSec: 1500, startedAt: <epoch ms>, label: '25-min focus' }   # autostarts
+                      stopwatch — { mode: 'stopwatch', startedAt: <epoch ms> }                                          # autostarts
+                      pomodoro  — { mode: 'pomodoro', startedAt: <epoch ms>, pomodoro: { workSec: 1500, breakSec: 300, longBreakSec: 900, longBreakEvery: 4 } }
+                    Omit startedAt to place a paused widget the user starts manually.
 
 When you pass an unknown kind or a payload that doesn't validate, the tool auto-classifies into 'generic' with the closest-fit blocks (and a JSON fallback if nothing matches). Errors are never silent — the directive surfaces what was reformatted.`,
     inputShape,

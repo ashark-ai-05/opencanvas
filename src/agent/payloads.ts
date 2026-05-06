@@ -263,6 +263,65 @@ export const GenericPayload = z.object({
   ...baseAttribution,
 });
 
+/**
+ * Time widget — single shape that handles four live-clock modes:
+ *   - clock     : current wall-clock time in `tz` (default browser local).
+ *   - timer     : counts DOWN from `durationSec` since `startedAt`.
+ *   - stopwatch : counts UP from `startedAt`.
+ *   - pomodoro  : auto-cycles between work and break phases; tracks
+ *                 completed sessions; long-break every `longBreakEvery`.
+ *
+ * The shape ticks on its own (setInterval inside the component); the
+ * agent only places the initial state. Subsequent state changes
+ * (play/pause/reset) come from the user clicking the shape's buttons
+ * and write directly via editor.updateShape — no agent round-trip.
+ *
+ * Time bookkeeping:
+ *   - startedAt  : epoch ms of the most recent run-start (NOT the
+ *                  original placement). Pausing freezes the elapsed
+ *                  amount into elapsedAtPause and clears startedAt.
+ *   - elapsedAtPause : running total before the current run started,
+ *                      so a pause/resume cycle is loss-free.
+ *   - paused     : when true, render elapsedAtPause directly; the
+ *                  shape never advances.
+ *
+ * Field rationale: `tz` and `format` are clock-only. `durationSec` is
+ * timer-only. `pomodoro` carries pomodoro-only config + state. The
+ * runtime tldraw validator allows any optional combination — the
+ * renderer reads only what its mode needs.
+ */
+export const TimePayload = z.object({
+  mode: z.enum(['clock', 'timer', 'stopwatch', 'pomodoro']),
+  label: z.string().optional(),
+  /** IANA tz name for clock mode. Browser local when omitted. */
+  tz: z.string().optional(),
+  /** Clock display format. */
+  format: z.enum(['12h', '24h']).optional(),
+  /** Timer total duration. Required for timer mode. */
+  durationSec: z.number().int().nonnegative().optional(),
+  /** Epoch ms when the current run started. */
+  startedAt: z.number().int().nonnegative().optional(),
+  /** Accumulated elapsed (sec) before the current run started. */
+  elapsedAtPause: z.number().nonnegative().optional(),
+  /** Pause flag — true freezes the display at elapsedAtPause. */
+  paused: z.boolean().optional(),
+  /** Pomodoro config + state. Bundled so an MCP can drop a complete preset. */
+  pomodoro: z
+    .object({
+      workSec: z.number().int().positive(),
+      breakSec: z.number().int().positive(),
+      longBreakSec: z.number().int().positive().optional(),
+      /** Take a long break every Nth completed work session. */
+      longBreakEvery: z.number().int().positive().optional(),
+      /** Completed work sessions so far. */
+      sessions: z.number().int().nonnegative().optional(),
+      /** Current phase. Defaults to 'work' on placement. */
+      phase: z.enum(['work', 'break', 'longBreak']).optional(),
+    })
+    .optional(),
+  ...baseAttribution,
+});
+
 export const StickyNotePayload = z.object({
   body: z.string(),
   author: z.string().optional(),
@@ -331,6 +390,7 @@ const PAYLOAD_SCHEMAS = {
   kanban: KanbanPayload,
   'sticky-note': StickyNotePayload,
   generic: GenericPayload,
+  time: TimePayload,
 } as const satisfies Record<WidgetKind, z.ZodTypeAny>;
 
 /** Re-export for the auto-classifier (which needs to know which kinds exist
