@@ -100,7 +100,7 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
                         fontSize: 11,
                         textTransform: 'uppercase',
                         letterSpacing: 0.04,
-                        color: '#a1a1aa',
+                        color: 'var(--color-muted)',
                         borderBottom: '1px solid var(--color-line)',
                         position: 'sticky',
                         top: 0,
@@ -146,8 +146,8 @@ export class TableShapeUtil extends ShapeUtil<TableShape> {
                             fontFamily: c.mono
                               ? 'JetBrains Mono, ui-monospace, monospace'
                               : 'inherit',
-                            fontSize: c.mono ? 11.5 : 12.5,
-                            color: '#e4e4e7',
+                            fontSize: c.mono ? 12 : 13,
+                            color: 'var(--color-fg)',
                             verticalAlign: 'top',
                           }}
                         >

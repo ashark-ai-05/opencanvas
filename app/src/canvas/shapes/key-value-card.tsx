@@ -102,7 +102,7 @@ function Row({ k, v, url }: { k: string; v: string; url?: string }) {
     <>
       <dt
         style={{
-          color: '#a1a1aa',
+          color: 'var(--color-muted)',
           fontFamily: 'ui-monospace, monospace',
           fontSize: 12,
           letterSpacing: 0.02,
@@ -111,7 +111,7 @@ function Row({ k, v, url }: { k: string; v: string; url?: string }) {
       >
         {k}
       </dt>
-      <dd style={{ margin: 0, color: '#fafafa', wordBreak: 'break-word' }}>
+      <dd style={{ margin: 0, color: 'var(--color-fg)', wordBreak: 'break-word' }}>
         {url ? (
           <a
             href={url}

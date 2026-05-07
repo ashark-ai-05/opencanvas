@@ -100,16 +100,16 @@ export class TicketCardShapeUtil extends ShapeUtil<TicketCardShape> {
           </CardHeader>
           <CardBody>
             {(shape.props.assignee || shape.props.priority) && (
-              <div style={{ marginBottom: 8, color: '#a1a1aa', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ marginBottom: 8, color: 'var(--color-muted)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 {shape.props.assignee && (
                   <span>
-                    <span style={{ color: '#71717a' }}>assignee · </span>
+                    <span style={{ color: 'var(--color-muted)' }}>assignee · </span>
                     {shape.props.assignee}
                   </span>
                 )}
                 {shape.props.priority && (
                   <span>
-                    <span style={{ color: '#71717a' }}>priority · </span>
+                    <span style={{ color: 'var(--color-muted)' }}>priority · </span>
                     {shape.props.priority}
                   </span>
                 )}

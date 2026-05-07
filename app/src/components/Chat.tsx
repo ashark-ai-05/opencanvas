@@ -696,8 +696,8 @@ export function Chat() {
               <div
                 className={
                   m.role === 'user'
-                    ? 'whitespace-pre-wrap text-zinc-50 leading-relaxed text-[14px] opencanvas-glass rounded-xl px-4 py-3'
-                    : 'text-zinc-100 leading-relaxed text-[14px] opencanvas-markdown'
+                    ? 'whitespace-pre-wrap text-[var(--color-fg)] leading-relaxed text-[14px] opencanvas-glass rounded-xl px-4 py-3'
+                    : 'text-[var(--color-fg)] leading-relaxed text-[14px] opencanvas-markdown'
                 }
               >
                 {(m.parts as Array<{ type: string }>).map((p, i) => {
@@ -932,7 +932,7 @@ export function Chat() {
                 }
                 disabled={isStreaming}
                 data-busy={isStreaming || kbBusy ? 'true' : 'false'}
-                className="opencanvas-chat-input w-full rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors disabled:opacity-50 resize-none"
+                className="opencanvas-chat-input w-full rounded-xl bg-[var(--color-bg-2)] border border-white/8 text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:outline-none transition-colors disabled:opacity-50 resize-none"
               />
               {/* Live step rendered INSIDE the input where the placeholder
                   would otherwise be. Absolute-positioned over the input,
@@ -970,7 +970,7 @@ export function Chat() {
             type="button"
             onClick={() => stop()}
             aria-label="Stop"
-            className="px-3.5 py-2.5 rounded-xl bg-[var(--color-bg-3)] hover:bg-zinc-800 text-zinc-100 border border-white/8 transition-colors flex items-center justify-center"
+            className="px-3.5 py-2.5 rounded-xl bg-[var(--color-bg-3)] hover:bg-[var(--color-bg-2)] text-[var(--color-fg)] border border-white/8 transition-colors flex items-center justify-center"
             title="Stop generating"
           >
             <Square className="size-4" fill="currentColor" />

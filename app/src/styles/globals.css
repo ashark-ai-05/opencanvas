@@ -714,12 +714,26 @@
   to { transform: rotate(360deg); }
 }
 
-/* Glass utility — used on chat input, toolbar, panels. */
+/* Glass utility — used on chat input, toolbar, panels. Theme-aware:
+   dark themes use a near-black tint; light theme uses a white tint. */
 .opencanvas-glass {
   background: rgba(10, 10, 13, 0.7);
   border: 1px solid var(--color-line);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+:root[data-theme='light'] .opencanvas-glass {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.10);
+}
+:root[data-theme='midnight'] .opencanvas-glass {
+  background: rgba(7, 10, 20, 0.78);
+}
+:root[data-theme='sunset'] .opencanvas-glass {
+  background: rgba(26, 15, 10, 0.78);
+}
+:root[data-theme='mono'] .opencanvas-glass {
+  background: rgba(10, 10, 10, 0.78);
 }
 
 /* Gradient button — primary CTA accent. */

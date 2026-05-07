@@ -119,7 +119,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
                       }}
                     />
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 11, color: '#71717a', fontFamily: 'JetBrains Mono, ui-monospace, monospace' }}>
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, ui-monospace, monospace' }}>
                         {e.timestamp}
                       </span>
                       {e.kind && (
@@ -139,7 +139,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
                         </span>
                       )}
                     </div>
-                    <div style={{ fontWeight: 500, color: '#fafafa', marginTop: 2 }}>
+                    <div style={{ fontWeight: 500, color: 'var(--color-fg)', marginTop: 2 }}>
                       {e.url ? (
                         <a
                           href={e.url}
@@ -158,7 +158,7 @@ export class TimelineShapeUtil extends ShapeUtil<TimelineShape> {
                       )}
                     </div>
                     {e.body && (
-                      <div style={{ fontSize: 13, color: '#a1a1aa', marginTop: 3, lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 13, color: 'var(--color-muted)', marginTop: 3, lineHeight: 1.5 }}>
                         {e.body}
                       </div>
                     )}

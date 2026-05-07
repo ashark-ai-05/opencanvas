@@ -147,7 +147,7 @@ function TreeNode({
           borderRadius: 4,
           cursor: interactive ? 'pointer' : 'default',
           fontSize: 13,
-          color: isDir ? '#fafafa' : '#d4d4d8',
+          color: isDir ? 'var(--color-fg)' : 'var(--color-fg-2)',
           fontFamily: 'JetBrains Mono, ui-monospace, monospace',
           userSelect: 'none',
           transition: 'background 100ms ease',
@@ -164,14 +164,14 @@ function TreeNode({
           style={{
             display: 'inline-block',
             width: 10,
-            color: '#52525b',
+            color: 'var(--color-muted-2)',
             transform: isDir && open ? 'rotate(90deg)' : 'rotate(0deg)',
             transition: 'transform 120ms ease',
           }}
         >
           {isDir ? '▶' : ' '}
         </span>
-        <span style={{ color: isDir ? '#a78bfa' : '#71717a', fontSize: 11 }}>
+        <span style={{ color: isDir ? 'var(--role-primary)' : 'var(--color-muted)', fontSize: 11 }}>
           {isDir ? '📁' : '📄'}
         </span>
         <span
@@ -186,10 +186,10 @@ function TreeNode({
           {node.name}
         </span>
         {node.meta && (
-          <span style={{ fontSize: 11, color: '#52525b' }}>{node.meta}</span>
+          <span style={{ fontSize: 11, color: 'var(--color-muted-2)' }}>{node.meta}</span>
         )}
         {fileUrl && (
-          <span aria-hidden style={{ fontSize: 10, color: '#71717a' }}>
+          <span aria-hidden style={{ fontSize: 10, color: 'var(--color-muted)' }}>
             ↗
           </span>
         )}

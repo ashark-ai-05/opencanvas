@@ -69,7 +69,7 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
           </CardHeader>
           {showSnippet ? (
             <div className="opencanvas-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ margin: 0, color: '#d4d4d8' }}>{shape.props.snippet}</p>
+              <p style={{ margin: 0, color: 'var(--color-fg-2)' }}>{shape.props.snippet}</p>
               <a
                 href={shape.props.url}
                 target="_blank"
