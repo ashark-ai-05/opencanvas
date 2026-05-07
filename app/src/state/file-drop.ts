@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { useChatActions } from './chat-actions-store';
+import { getEditor } from './editor-ref';
+import { useTemplateStore } from './template-store';
+import { applyToolDirective } from '../canvas/dispatcher';
 
 /**
  * Global file-drop handler. When a file is dragged onto the OpenCanvas
@@ -22,20 +25,40 @@ const SUPPORTED = new Set(['.md', '.markdown', '.txt', '.rst', '.adoc', '.yaml',
 export function useFileDrop(): void {
   useEffect(() => {
     const onDragOver = (e: DragEvent) => {
-      // Show the "drop ok" cursor when files are being dragged.
-      if (e.dataTransfer && hasFiles(e.dataTransfer)) {
+      // Show the "drop ok" cursor when files OR URLs are being dragged.
+      // text/uri-list is what browsers populate when the user drags
+      // a tab from another window or a link from a webpage.
+      if (
+        e.dataTransfer &&
+        (hasFiles(e.dataTransfer) || hasUrl(e.dataTransfer))
+      ) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
       }
     };
 
     const onDrop = async (e: DragEvent) => {
-      const files = e.dataTransfer?.files;
-      if (!files || files.length === 0) return;
       // Don't intercept drops that happen inside form/input elements
       // (the user is probably attaching to a different control).
       const target = e.target as HTMLElement | null;
       if (target?.closest('input, textarea, [contenteditable="true"]')) return;
+
+      // URL drag (from another tab / a link) → embed widget. Checked
+      // BEFORE files so a user dragging a link from another browser
+      // window doesn't surprise-upload anything.
+      if (e.dataTransfer && hasUrl(e.dataTransfer)) {
+        const url = readUrl(e.dataTransfer);
+        if (url) {
+          e.preventDefault();
+          e.stopPropagation();
+          embedUrl(url);
+          return;
+        }
+      }
+
+      // File drop — existing behavior.
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
       e.preventDefault();
       e.stopPropagation();
 
@@ -113,4 +136,71 @@ function hasFiles(dt: DataTransfer): boolean {
   if (!dt.types) return false;
   for (const t of dt.types) if (t === 'Files') return true;
   return false;
+}
+
+/** True when the drag carries a URL (text/uri-list, set by browsers
+ *  on tab / link drags). text/plain is treated as a URL hint too —
+ *  many tools paste the URL there. */
+function hasUrl(dt: DataTransfer): boolean {
+  if (!dt.types) return false;
+  for (const t of dt.types) if (t === 'text/uri-list' || t === 'text/plain') return true;
+  return false;
+}
+
+/** Pull a single URL out of a DataTransfer. Prefers text/uri-list
+ *  (the browser-native format), falls back to text/plain. Returns
+ *  null when the payload doesn't parse as an http/https URL. */
+function readUrl(dt: DataTransfer): string | null {
+  const candidates = [
+    dt.getData('text/uri-list'),
+    dt.getData('text/plain'),
+  ].filter(Boolean);
+  for (const raw of candidates) {
+    // text/uri-list can contain comments + multiple URLs; first non-#
+    // line is the canonical one.
+    const line = raw
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .find((s) => s.length > 0 && !s.startsWith('#'));
+    if (!line) continue;
+    if (/^https?:\/\/\S+$/i.test(line)) return line;
+  }
+  return null;
+}
+
+/** Drop a web-embed widget for the given URL via the canvas
+ *  dispatcher. Toasts the host on success; reports the failure
+ *  reason if the dispatcher throws. */
+function embedUrl(url: string): void {
+  const editor = getEditor();
+  if (!editor) {
+    toast.error('Canvas not ready');
+    return;
+  }
+  let host: string;
+  try {
+    host = new URL(url).host;
+  } catch {
+    toast.error('Invalid URL', { description: url });
+    return;
+  }
+  const tplId = useTemplateStore.getState().activeTemplateId;
+  try {
+    applyToolDirective(
+      editor,
+      {
+        type: 'place',
+        id: crypto.randomUUID(),
+        kind: 'web-embed',
+        role: 'primary',
+        payload: { title: host, url },
+      },
+      tplId,
+    );
+    toast(`Embedded ${host}`);
+  } catch (e) {
+    toast.error('Could not embed', {
+      description: e instanceof Error ? e.message : String(e),
+    });
+  }
 }

@@ -87,19 +87,54 @@ export class WebEmbedShapeUtil extends ShapeUtil<WebEmbedShape> {
               </a>
             </div>
           ) : (
-            <iframe
-              src={shape.props.url}
-              sandbox="allow-scripts"
-              referrerPolicy="no-referrer"
-              style={{
-                border: 'none',
-                width: '100%',
-                height: '100%',
-                background: '#0a0a0a',
-                flex: 1,
-              }}
-              title={shape.props.title ?? host}
-            />
+            <div
+              className="opencanvas-card-body"
+              style={{ position: 'relative', padding: 0, display: 'flex' }}
+            >
+              <iframe
+                src={shape.props.url}
+                /* allow-scripts: most embeds need it.
+                   allow-same-origin: lets the iframe access its OWN
+                     origin's storage / fetch — needed for Maps,
+                     TradingView, Notion embeds, etc.
+                   allow-popups: clicking a link opens in a new tab
+                     instead of trying to navigate the iframe.
+                   allow-forms: search-bar embeds, login flows.
+                   allow-popups-to-escape-sandbox: lets the popup
+                     drop the sandbox so the new tab is a normal
+                     browsing context. */
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"
+                referrerPolicy="no-referrer-when-downgrade"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                loading="lazy"
+                style={{
+                  border: 'none',
+                  width: '100%',
+                  height: '100%',
+                  background: 'var(--color-bg)',
+                  flex: 1,
+                  borderBottomLeftRadius: 14,
+                  borderBottomRightRadius: 14,
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                title={shape.props.title ?? host}
+              />
+              {/* X-Frame-Options escape hatch: many sites refuse to be
+                  iframed and the widget appears blank. A floating
+                  "open in browser" pill is always visible at the
+                  bottom-right so users can recover. */}
+              <a
+                href={shape.props.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="opencanvas-web-embed-escape"
+                title={`Open ${host} in a new tab`}
+              >
+                Open ↗
+              </a>
+            </div>
           )}
         </CardFrame>
       </HTMLContainer>

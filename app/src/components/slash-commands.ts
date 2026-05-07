@@ -374,6 +374,55 @@ export const COMMANDS: SlashCommand[] = [
     },
   },
   {
+    name: 'embed',
+    args: '<url>',
+    description: 'Embed any URL as a sandboxed iframe widget on the canvas.',
+    run: (args) => {
+      const editor = getEditor();
+      if (!editor) {
+        toast.error('Canvas not ready');
+        return true;
+      }
+      const url = args.join(' ').trim();
+      if (!url) {
+        toast.error('Usage: /embed <url>');
+        return true;
+      }
+      // Permit bare hosts (example.com) by prefixing https when the
+      // user didn't supply a scheme. Reject anything that doesn't
+      // parse as a URL after the fix-up.
+      const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      let parsed: URL;
+      try {
+        parsed = new URL(normalized);
+      } catch {
+        toast.error('Not a valid URL', { description: url });
+        return true;
+      }
+      const tplId = useTemplateStore.getState().activeTemplateId;
+      const id = crypto.randomUUID();
+      try {
+        applyToolDirective(
+          editor,
+          {
+            type: 'place',
+            id,
+            kind: 'web-embed',
+            role: 'primary',
+            payload: { title: parsed.host, url: normalized },
+          },
+          tplId,
+        );
+        toast(`Embedded ${parsed.host}`);
+      } catch (e) {
+        toast.error('Could not embed', {
+          description: e instanceof Error ? e.message : String(e),
+        });
+      }
+      return true;
+    },
+  },
+  {
     name: 'export-png',
     description: 'Download the current canvas as a PNG.',
     run: () => {

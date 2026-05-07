@@ -3295,6 +3295,41 @@ header button:hover {
 }
 
 /* ──────────────────────────────────────────────────────────────────
+ * Web-embed iframe escape hatch — sites that block iframing via
+ * X-Frame-Options or CSP frame-ancestors render blank inside the
+ * shape. A floating "Open ↗" pill at the bottom-right is always
+ * visible so users can recover.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-web-embed-escape {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(var(--color-glass-rgb), 0.78);
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  color: var(--color-fg);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+  pointer-events: none;
+}
+.opencanvas-card:hover .opencanvas-web-embed-escape {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.opencanvas-web-embed-escape:hover {
+  background: rgba(167, 139, 250, 0.18);
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+/* ──────────────────────────────────────────────────────────────────
  * Plugin widget — sandboxed iframe + registry-not-found state.
  * ──────────────────────────────────────────────────────────────────*/
 .opencanvas-plugin-body {
