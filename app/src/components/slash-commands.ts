@@ -3,6 +3,57 @@ import { useChatActions } from '../state/chat-actions-store';
 import { useTemplateStore } from '../state/template-store';
 import { TEMPLATES_BY_ID } from '../canvas/templates';
 import type { CanvasTemplate } from '../canvas/templates';
+import { getEditor } from '../state/editor-ref';
+import { applyToolDirective } from '../canvas/dispatcher';
+
+/**
+ * How many opencanvas:* widgets the user currently has selected. Used by
+ * the selection-scoped slash commands to (a) error helpfully when no
+ * selection exists and (b) include the count in the prompt framing.
+ */
+function selectedWidgetCount(): number {
+  const editor = getEditor();
+  if (!editor) return 0;
+  const ids =
+    (editor as unknown as { getSelectedShapeIds?: () => string[] })
+      .getSelectedShapeIds?.() ?? [];
+  const shapes = (
+    editor as unknown as {
+      getCurrentPageShapes: () => Array<{ id: string; type: string }>;
+    }
+  ).getCurrentPageShapes();
+  const opencanvasIds = new Set(
+    shapes.filter((s) => s.type.startsWith('opencanvas:')).map((s) => s.id),
+  );
+  return ids.filter((id) => opencanvasIds.has(id)).length;
+}
+
+/**
+ * Send a selection-scoped chat message. Frames the agent's prompt so
+ * it knows the user intends ops over the selection (whose ids the
+ * snapshot already carries via canvasSnapshot.selectedIds). The agent
+ * can read those ids + decide which tool to call (read_widget,
+ * place_widget, update_widget, etc.).
+ */
+function sendSelectionChat(intent: string): boolean {
+  const count = selectedWidgetCount();
+  if (count === 0) {
+    toast.error('Select one or more widgets first', {
+      description: 'Click a card on the canvas, then re-run the command.',
+    });
+    return true;
+  }
+  const sendChat = useChatActions.getState().sendChat;
+  if (!sendChat) {
+    toast.error('Chat not ready');
+    return true;
+  }
+  const noun = count === 1 ? 'widget' : 'widgets';
+  sendChat(
+    `${intent} (Scope: the ${count} selected ${noun}. Their ids are in the snapshot's selectedIds; use read_widget on each, then place a single new widget with the result.)`,
+  );
+  return true;
+}
 
 /**
  * Slash-command surface for the chat input. A command starts with "/"
@@ -75,6 +126,245 @@ export const COMMANDS: SlashCommand[] = [
       }
       useTemplateStore.getState().setActiveTemplateId(id as CanvasTemplate['id']);
       toast(`Template → ${TEMPLATES_BY_ID[id as CanvasTemplate['id']].name}`);
+      return true;
+    },
+  },
+  // ────────────────────────────────────────────────────────────────
+  // Selection-scoped agent ops. Each one sends a normal chat turn
+  // with prompt framing that points the agent at canvasSnapshot
+  // .selectedIds (already populated by the snapshot writer).
+  // ────────────────────────────────────────────────────────────────
+  {
+    name: 'summarize-selected',
+    description: 'Summarize the selected widgets into a single markdown card.',
+    run: () =>
+      sendSelectionChat(
+        'Read each selected widget and produce one tight markdown widget summarising them. Place it as kind=markdown, role=detail.',
+      ),
+  },
+  {
+    name: 'merge-selected',
+    description: 'Merge the selected widgets into one composite card.',
+    run: () =>
+      sendSelectionChat(
+        'Read each selected widget and place a single composite widget whose sections preserve each as a section. Use the existing payload for each section verbatim. Composite role=primary.',
+      ),
+  },
+  {
+    name: 'contrast-selected',
+    description: 'Highlight differences between the selected widgets (table).',
+    run: () =>
+      sendSelectionChat(
+        'Read each selected widget and place ONE table widget whose columns are the selected widgets and rows are the dimensions on which they differ. role=detail.',
+      ),
+  },
+  {
+    name: 'rebuild-as-table',
+    description: 'Reshape the selected widgets into a single table.',
+    run: () =>
+      sendSelectionChat(
+        'Read each selected widget and place a table whose rows are entries from the selection and columns capture their key fields. role=detail.',
+      ),
+  },
+  // ────────────────────────────────────────────────────────────────
+  // Layout
+  // ────────────────────────────────────────────────────────────────
+  {
+    name: 'tidy',
+    description: 'Re-layout existing widgets using the active template.',
+    run: () => {
+      const editor = getEditor();
+      if (!editor) {
+        toast.error('Canvas not ready');
+        return true;
+      }
+      const tplId = useTemplateStore.getState().activeTemplateId;
+      const tpl = TEMPLATES_BY_ID[tplId];
+      const viewport = editor.getViewportPageBounds();
+
+      // Group widgets by role; for each role re-call slotForRole with
+      // increasing occupancy. Animate to the new positions.
+      const shapes = (editor.getCurrentPageShapes() as Array<{
+        id: string;
+        type: string;
+        meta?: Record<string, unknown>;
+        x: number;
+        y: number;
+      }>).filter((s) => s.type.startsWith('opencanvas:'));
+
+      if (shapes.length === 0) {
+        toast('Nothing to tidy — canvas is empty');
+        return true;
+      }
+
+      // Process roles in a stable order so the layout is reproducible.
+      const ROLE_ORDER = [
+        'primary',
+        'detail',
+        'related',
+        'reference',
+        'timeline',
+        'node',
+      ] as const;
+      const byRole = new Map<string, typeof shapes>();
+      for (const s of shapes) {
+        const role = ((s.meta?.['role'] as string) ?? 'primary');
+        if (!byRole.has(role)) byRole.set(role, []);
+        byRole.get(role)!.push(s);
+      }
+
+      editor.batch(() => {
+        for (const role of ROLE_ORDER) {
+          const list = byRole.get(role) ?? [];
+          list.forEach((shape, i) => {
+            const slot = tpl.slotForRole(role as never, i, viewport);
+            (
+              editor as unknown as {
+                animateShape: (
+                  shape: { id: string; type: string; x: number; y: number },
+                  opts: { animation: { duration: number } },
+                ) => void;
+              }
+            ).animateShape(
+              {
+                id: shape.id,
+                type: shape.type,
+                x: slot.x,
+                y: slot.y,
+              },
+              { animation: { duration: 280 } },
+            );
+          });
+        }
+      });
+      toast(`Tidied ${shapes.length} widget${shapes.length === 1 ? '' : 's'}`);
+      return true;
+    },
+  },
+  {
+    name: 'pin-selected',
+    description: 'Pin selected widgets so /clear and clear-canvas leave them.',
+    run: () => {
+      const editor = getEditor();
+      if (!editor) {
+        toast.error('Canvas not ready');
+        return true;
+      }
+      const ids =
+        (editor as unknown as { getSelectedShapeIds?: () => string[] })
+          .getSelectedShapeIds?.() ?? [];
+      const shapes = (
+        editor as unknown as {
+          getCurrentPageShapes: () => Array<{
+            id: string;
+            type: string;
+            meta?: Record<string, unknown>;
+          }>;
+        }
+      )
+        .getCurrentPageShapes()
+        .filter(
+          (s) => s.type.startsWith('opencanvas:') && ids.includes(s.id),
+        );
+      if (shapes.length === 0) {
+        toast.error('Select one or more widgets first');
+        return true;
+      }
+      editor.batch(() => {
+        for (const s of shapes) {
+          editor.updateShape({
+            id: s.id as never,
+            type: s.type as never,
+            meta: { ...(s.meta ?? {}), pinned: true } as never,
+          } as never);
+        }
+      });
+      toast(`Pinned ${shapes.length} widget${shapes.length === 1 ? '' : 's'}`);
+      return true;
+    },
+  },
+  {
+    name: 'unpin-selected',
+    description: 'Unpin selected widgets.',
+    run: () => {
+      const editor = getEditor();
+      if (!editor) {
+        toast.error('Canvas not ready');
+        return true;
+      }
+      const ids =
+        (editor as unknown as { getSelectedShapeIds?: () => string[] })
+          .getSelectedShapeIds?.() ?? [];
+      const shapes = (
+        editor as unknown as {
+          getCurrentPageShapes: () => Array<{
+            id: string;
+            type: string;
+            meta?: Record<string, unknown>;
+          }>;
+        }
+      )
+        .getCurrentPageShapes()
+        .filter(
+          (s) => s.type.startsWith('opencanvas:') && ids.includes(s.id),
+        );
+      if (shapes.length === 0) {
+        toast.error('Select one or more widgets first');
+        return true;
+      }
+      editor.batch(() => {
+        for (const s of shapes) {
+          const meta = { ...(s.meta ?? {}) };
+          delete (meta as { pinned?: unknown }).pinned;
+          editor.updateShape({
+            id: s.id as never,
+            type: s.type as never,
+            meta: meta as never,
+          } as never);
+        }
+      });
+      toast(`Unpinned ${shapes.length} widget${shapes.length === 1 ? '' : 's'}`);
+      return true;
+    },
+  },
+  {
+    name: 'remove-selected',
+    description: 'Delete the selected widgets (pinned ones are skipped).',
+    run: () => {
+      const editor = getEditor();
+      if (!editor) return true;
+      const ids =
+        (editor as unknown as { getSelectedShapeIds?: () => string[] })
+          .getSelectedShapeIds?.() ?? [];
+      const shapes = (
+        editor as unknown as {
+          getCurrentPageShapes: () => Array<{
+            id: string;
+            type: string;
+            meta?: Record<string, unknown>;
+          }>;
+        }
+      )
+        .getCurrentPageShapes()
+        .filter(
+          (s) =>
+            s.type.startsWith('opencanvas:') &&
+            ids.includes(s.id) &&
+            (s.meta as { pinned?: boolean } | undefined)?.pinned !== true,
+        );
+      if (shapes.length === 0) {
+        toast.error('Nothing to remove');
+        return true;
+      }
+      const tplId = useTemplateStore.getState().activeTemplateId;
+      for (const s of shapes) {
+        applyToolDirective(
+          editor,
+          { type: 'remove', id: s.id.replace(/^shape:/, '') },
+          tplId,
+        );
+      }
+      toast(`Removed ${shapes.length} widget${shapes.length === 1 ? '' : 's'}`);
       return true;
     },
   },

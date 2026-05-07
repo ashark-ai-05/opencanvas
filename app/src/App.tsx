@@ -13,12 +13,14 @@ import { McpSourcesPanel } from './components/McpSourcesPanel';
 import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
 import { HeaderDrawTools } from './components/HeaderDrawTools';
+import { ThemeToggle } from './components/ThemeToggle';
 import { useCanvasStats } from './state/canvas-stats-store';
 import { useChatActions } from './state/chat-actions-store';
 import { useConversationsStore } from './state/conversations-store';
 import { useKbStats } from './state/kb-stats-store';
 import { useUiStore } from './state/ui-store';
 import { useCanvasExternalEvents } from './state/canvas-events';
+import { CommandPalette } from './components/CommandPalette';
 
 /**
  * Top-level layout — full-bleed canvas with a glass header on top and a
@@ -129,6 +131,7 @@ export function App() {
           <HeaderCanvasControls />
           <span className="opencanvas-header-divider" aria-hidden />
           <HeaderDrawTools />
+          <ThemeToggle />
           <button
             type="button"
             onClick={async () => {
@@ -196,6 +199,7 @@ export function App() {
       />
       <SourcesPanel open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
       <McpSourcesPanel open={mcpOpen} onClose={() => setMcpOpen(false)} />
+      <CommandPalette />
       <Toaster
         theme="dark"
         position="top-right"

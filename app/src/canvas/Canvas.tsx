@@ -26,6 +26,7 @@ import { setEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
 import { useCanvasStats } from '../state/canvas-stats-store';
 import { useConversationsStore } from '../state/conversations-store';
+import { useThemeStore } from '../state/theme-store';
 // SearchBar + TemplatePicker removed: all searches now flow through the
 // floating chat (the agent runs search_kb, plus a parallel /v1/search
 // call surfaces inline KB hits via <KbHits />). Templates are switched
@@ -74,8 +75,21 @@ export function Canvas() {
       // Tldraw editor scope) can apply tool directives via getEditor().
       setEditor(editor);
 
-      // Force dark color scheme — OpenCanvas is dark-only by design.
-      editor.user.updateUserPreferences({ colorScheme: 'dark' });
+      // Mirror app theme into tldraw's color scheme so the canvas
+      // background matches the rest of the UI. Subscribes for the
+      // editor's lifetime so toggling theme updates the canvas live.
+      const applyScheme = (theme: 'dark' | 'light') => {
+        editor.user.updateUserPreferences({ colorScheme: theme });
+      };
+      applyScheme(useThemeStore.getState().theme);
+      const unsubTheme = useThemeStore.subscribe((s, prev) => {
+        if (s.theme !== prev.theme) applyScheme(s.theme);
+      });
+      // Stash unsubscribe on the editor so it's cleared when the
+      // canvas is torn down. Using a closure-typed property keeps
+      // tldraw's Editor type intact.
+      (editor as unknown as { _opencanvasUnsubTheme?: () => void })
+        ._opencanvasUnsubTheme = unsubTheme;
 
       // Persist tldraw snapshot back into the active conversation. Source
       // filter is dropped — agent-initiated changes (place_widget) need to

@@ -248,9 +248,21 @@ export function applyToolDirective(
       return;
     }
     case 'clear': {
-      const ids = editor
-        .getCurrentPageShapes()
-        .filter((s) => s.type.startsWith('opencanvas:'))
+      // Pinned widgets (meta.pinned === true) survive a clear — they
+      // act as a per-conversation scratchpad. The user toggles pinning
+      // via /pin-selected and /unpin-selected.
+      const ids = (
+        editor.getCurrentPageShapes() as Array<{
+          id: string;
+          type: string;
+          meta?: Record<string, unknown>;
+        }>
+      )
+        .filter(
+          (s) =>
+            s.type.startsWith('opencanvas:') &&
+            (s.meta?.['pinned'] as boolean | undefined) !== true,
+        )
         .map((s) => s.id);
       if (ids.length > 0) editor.deleteShapes(ids as never[]);
       return;

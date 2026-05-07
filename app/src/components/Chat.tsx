@@ -527,6 +527,17 @@ export function Chat() {
     return () => setSendTeam(null);
   }, [setSendTeam, sendMessage]);
 
+  // Programmatic chat send — used by selection-scoped slash commands,
+  // the Cmd+K palette, etc. Fires a normal chat turn.
+  const setSendChat = useChatActions((s) => s.setSendChat);
+  useEffect(() => {
+    setSendChat((text: string) => {
+      kbSearch(text);
+      sendMessage({ text });
+    });
+    return () => setSendChat(null);
+  }, [setSendChat, sendMessage]);
+
   // "Clear messages" — fired by ChatOptionsMenu via window event so the
   // menu doesn't need a prop drill. Wipes the current conversation's
   // useChat state AND its persisted entry in conversations-store, but

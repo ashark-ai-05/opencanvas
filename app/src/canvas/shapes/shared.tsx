@@ -1,6 +1,6 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { ChevronDown, Copy, ExternalLink, X } from 'lucide-react';
+import { ChevronDown, Copy, ExternalLink, Pin, PinOff, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getEditor } from '../../state/editor-ref';
 
@@ -291,10 +291,11 @@ export function CardActions({
   shape,
   extras,
 }: {
-  shape: { id: string; meta?: unknown };
+  shape: { id: string; type?: string; meta?: unknown };
   extras?: ReactNode;
 }) {
   const collapsed = readCollapsed(shape.meta);
+  const pinned = readPinned(shape.meta);
 
   const handleDelete = () => {
     const editor = getEditor();
@@ -302,15 +303,53 @@ export function CardActions({
     editor.deleteShapes([shape.id as never]);
   };
 
+  const togglePin = () => {
+    const editor = getEditor();
+    if (!editor) return;
+    const cur = editor.getShape(shape.id as never) as
+      | { type: string; meta?: Record<string, unknown> }
+      | undefined;
+    if (!cur) return;
+    const meta = { ...(cur.meta ?? {}) };
+    if (pinned) {
+      delete (meta as { pinned?: unknown }).pinned;
+    } else {
+      meta['pinned'] = true;
+    }
+    editor.updateShape({
+      id: shape.id as never,
+      type: cur.type as never,
+      meta: meta as never,
+    } as never);
+  };
+
   return (
     <span className="opencanvas-card-actions">
       {extras}
+      <CardActionButton
+        onClick={togglePin}
+        title={pinned ? 'Unpin (will be removed by Clear)' : 'Pin (survives Clear)'}
+      >
+        {pinned ? (
+          <Pin className="size-3" style={{ color: '#fbbf24' }} />
+        ) : (
+          <PinOff className="size-3" />
+        )}
+      </CardActionButton>
       <ToggleCollapsedAction shapeId={shape.id} collapsed={collapsed} />
       <CardActionButton onClick={handleDelete} title="Remove this widget">
         <X className="size-3" />
       </CardActionButton>
     </span>
   );
+}
+
+/** Read meta.pinned defensively. Pinned shapes survive 'clear'. */
+function readPinned(meta: unknown): boolean {
+  if (typeof meta === 'object' && meta !== null && 'pinned' in meta) {
+    return (meta as { pinned?: unknown }).pinned === true;
+  }
+  return false;
 }
 
 /** Copy-to-clipboard action. Pretty much every kind wants one. */
