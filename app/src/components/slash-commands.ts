@@ -5,6 +5,11 @@ import { TEMPLATES_BY_ID } from '../canvas/templates';
 import type { CanvasTemplate } from '../canvas/templates';
 import { getEditor } from '../state/editor-ref';
 import { applyToolDirective } from '../canvas/dispatcher';
+import {
+  exportCanvasAsPng,
+  exportCanvasAsMarkdown,
+  downloadText,
+} from '../canvas/export';
 
 /**
  * How many opencanvas:* widgets the user currently has selected. Used by
@@ -365,6 +370,41 @@ export const COMMANDS: SlashCommand[] = [
         );
       }
       toast(`Removed ${shapes.length} widget${shapes.length === 1 ? '' : 's'}`);
+      return true;
+    },
+  },
+  {
+    name: 'export-png',
+    description: 'Download the current canvas as a PNG.',
+    run: () => {
+      const editor = getEditor();
+      if (!editor) {
+        toast.error('Canvas not ready');
+        return true;
+      }
+      exportCanvasAsPng(editor)
+        .then((ok) => {
+          if (!ok) toast('Canvas is empty — nothing to export');
+          else toast('Saved opencanvas.png');
+        })
+        .catch((e) => {
+          toast.error('Export failed', { description: String(e) });
+        });
+      return true;
+    },
+  },
+  {
+    name: 'export-md',
+    description: 'Download the current canvas as a Markdown file.',
+    run: () => {
+      const editor = getEditor();
+      if (!editor) {
+        toast.error('Canvas not ready');
+        return true;
+      }
+      const md = exportCanvasAsMarkdown(editor);
+      downloadText(md, 'opencanvas.md');
+      toast('Saved opencanvas.md');
       return true;
     },
   },

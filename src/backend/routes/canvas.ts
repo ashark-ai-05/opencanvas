@@ -1,11 +1,15 @@
 import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
 import { randomUUID } from 'node:crypto';
+import { writeFile, unlink, mkdtemp } from 'node:fs/promises';
+import { join, extname } from 'node:path';
+import { tmpdir } from 'node:os';
 import {
   validatePayloadForKind,
   CompositePayload,
 } from '../../agent/payloads.js';
 import { classifyToGeneric } from '../../agent/classifier.js';
+import { extractText } from '../../indexer/extractors.js';
 import {
   WIDGET_KINDS,
   ROLES,
@@ -433,6 +437,99 @@ export function canvasRoute(state: BackendState): Hono {
     });
     state.endExternalStream(id);
     return c.json({ ok: true });
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // POST /upload — accept a single file, extract text, return it.
+  // The browser then fires a chat turn with the text framed for the
+  // agent ("summarise this into widgets"). Cap is intentionally
+  // generous (~250kB chars) — beyond that we ask the user to chunk
+  // by hand or use the indexer pipeline.
+  // ────────────────────────────────────────────────────────────────
+  r.post('/v1/canvas/upload', async (c) => {
+    const form = await c.req.parseBody().catch(() => null);
+    if (!form) return c.json({ error: 'expected multipart/form-data' }, 400);
+    const file = form['file'];
+    if (!(file instanceof File)) {
+      return c.json({ error: 'missing `file` part' }, 400);
+    }
+
+    // Persist to a tmp file because most extractors are path-based
+    // (pdf-parse, mammoth, xlsx). Cleanup in finally so failures
+    // don't leak.
+    const dir = await mkdtemp(join(tmpdir(), 'opencanvas-upload-'));
+    const ext = extname(file.name) || '.txt';
+    const path = join(dir, `upload${ext}`);
+    let text: string | null = null;
+    try {
+      const buf = Buffer.from(await file.arrayBuffer());
+      await writeFile(path, buf);
+      text = await extractText(path);
+    } finally {
+      await unlink(path).catch(() => {});
+    }
+
+    if (!text) {
+      return c.json(
+        {
+          error: `no extractor for ${ext} (supported: .md, .txt, .pdf, .docx, .xlsx, .json, .yaml)`,
+        },
+        415,
+      );
+    }
+
+    // Hard cap so a giant PDF doesn't blow the LLM context.
+    const MAX = 250_000;
+    const truncated = text.length > MAX;
+    const body = truncated ? text.slice(0, MAX) : text;
+    return c.json({
+      ok: true,
+      filename: file.name,
+      bytes: file.size,
+      chars: text.length,
+      truncated,
+      text: body,
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // Live refresh — register a recurring refetch policy for a widget.
+  // Frontend POSTs after a place_widget when meta.refresh is set, OR
+  // an external app declares a live data widget directly.
+  // ────────────────────────────────────────────────────────────────
+  r.post('/v1/canvas/refresh/register', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as {
+      widgetId?: string;
+      conversationId?: string;
+      policy?: {
+        everyMs: number;
+        source: 'http' | 'kb' | 'web';
+        spec: Record<string, unknown>;
+        mergePath?: Array<string | number>;
+      };
+    };
+    const convId = resolveConvId(state, body.conversationId);
+    if (!convId) return c.json({ error: 'no active conversation' }, 404);
+    if (!body.widgetId || !body.policy) {
+      return c.json({ error: 'widgetId and policy required' }, 400);
+    }
+    const scheduler = state.getRefreshScheduler();
+    scheduler.register({
+      conversationId: convId,
+      widgetId: body.widgetId,
+      policy: body.policy as Parameters<typeof scheduler.register>[0]['policy'],
+      bus: state.getCanvasEventBus(convId),
+    });
+    return c.json({ ok: true });
+  });
+
+  r.post('/v1/canvas/refresh/unregister', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as {
+      widgetId?: string;
+    };
+    if (!body.widgetId) return c.json({ error: 'widgetId required' }, 400);
+    const removed = state.getRefreshScheduler().unregister(body.widgetId);
+    return c.json({ ok: removed });
   });
 
   return r;

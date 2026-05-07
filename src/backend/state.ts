@@ -12,6 +12,12 @@ import type { AgentToolDeps } from '../agent/tools/index.js';
 import type { ExternalMcpSource } from '../providers/claude-agent-sdk.js';
 import type { CanvasSnapshot } from '../agent/canvas-snapshot.js';
 import { CanvasEventBus } from './canvas-event-bus.js';
+import {
+  RefreshScheduler,
+  type HttpRefreshSpec,
+  type KbRefreshSpec,
+  type WebRefreshSpec,
+} from './refresh-scheduler.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -255,6 +261,47 @@ export class BackendState {
     return this.activeConversationId;
   }
 
+  /**
+   * Refresh scheduler — drives "live" widgets that re-fetch from
+   * HTTP / KB / web on a fixed cadence and push 'update' directives
+   * via the canvas event bus. Lazily constructed so backends without
+   * any live widgets pay no cost.
+   */
+  private refreshScheduler: RefreshScheduler | null = null;
+  getRefreshScheduler(): RefreshScheduler {
+    if (this.refreshScheduler) return this.refreshScheduler;
+    const sources = {
+      http: async (spec: HttpRefreshSpec): Promise<unknown> => {
+        const res = await fetch(spec.url, {
+          headers: { accept: 'application/json, text/plain;q=0.9, */*;q=0.5' },
+        });
+        const ct = res.headers.get('content-type') ?? '';
+        const raw: unknown = ct.includes('json')
+          ? await res.json()
+          : await res.text();
+        const picked = spec.pick ? pickByPath(raw, spec.pick) : raw;
+        if (!spec.into) return picked;
+        return setByPath({}, spec.into, picked);
+      },
+      kb: async (spec: KbRefreshSpec): Promise<unknown> => {
+        const search = this.getSearchService();
+        const results = await search.search(spec.query, 1);
+        if (results.length === 0) return undefined;
+        const top = results[0]!;
+        const fetched = await search.fetchById(top.id);
+        return fetched?.payload ?? { body: top.snippet };
+      },
+      web: async (spec: WebRefreshSpec): Promise<unknown> => {
+        const provider = this.getWebSearchProvider();
+        const results = await provider.search(spec.query, 1);
+        if (results.length === 0) return undefined;
+        return results[0];
+      },
+    };
+    this.refreshScheduler = new RefreshScheduler(sources);
+    return this.refreshScheduler;
+  }
+
   getLatestSnapshot(): CanvasSnapshot | null {
     return this.latestSnapshot;
   }
@@ -264,8 +311,77 @@ export class BackendState {
   }
 
   async shutdown(): Promise<void> {
+    this.refreshScheduler?.stopAll();
     await this.sourceRegistry.closeAll();
   }
+}
+
+/**
+ * Pick a value by dot-path. Supports plain object keys and numeric
+ * array indices ('items.0.name'). Returns undefined for missing paths
+ * — refresh ticks treat undefined as "no update this turn."
+ */
+function pickByPath(obj: unknown, path: string): unknown {
+  if (!path) return obj;
+  let cur: unknown = obj;
+  for (const seg of path.split('.')) {
+    if (cur === null || cur === undefined) return undefined;
+    if (typeof cur === 'object') {
+      cur = (cur as Record<string, unknown>)[seg];
+    } else {
+      return undefined;
+    }
+  }
+  return cur;
+}
+
+/**
+ * Build an object whose dot-path entry equals `value`. Used by HTTP
+ * refresh's `into` directive to merge a scalar into a nested payload
+ * field (e.g. into='fields.0.value' produces { fields: [{ value: ... }] }).
+ */
+function setByPath(
+  base: Record<string, unknown>,
+  path: string,
+  value: unknown,
+): Record<string, unknown> {
+  const parts = path.split('.');
+  let cursor: Record<string, unknown> | unknown[] = base;
+  for (let i = 0; i < parts.length; i++) {
+    const key = parts[i]!;
+    const isLast = i === parts.length - 1;
+    const isArrayIdx = /^\d+$/.test(key);
+    if (isLast) {
+      if (Array.isArray(cursor)) (cursor as unknown[])[parseInt(key, 10)] = value;
+      else (cursor as Record<string, unknown>)[key] = value;
+      break;
+    }
+    const next = parts[i + 1]!;
+    const childIsArray = /^\d+$/.test(next);
+    let child: Record<string, unknown> | unknown[];
+    if (Array.isArray(cursor)) {
+      child = (cursor as unknown[])[parseInt(key, 10)] as
+        | Record<string, unknown>
+        | unknown[];
+      if (!child) {
+        child = childIsArray ? [] : {};
+        (cursor as unknown[])[parseInt(key, 10)] = child;
+      }
+    } else {
+      child = (cursor as Record<string, unknown>)[key] as
+        | Record<string, unknown>
+        | unknown[];
+      if (!child) {
+        child = childIsArray ? [] : {};
+        (cursor as Record<string, unknown>)[key] = child;
+      }
+    }
+    cursor = child;
+    if (isArrayIdx) {
+      // current step was an array index; cursor is now an array entry
+    }
+  }
+  return base;
 }
 
 /**

@@ -20,6 +20,7 @@ import { useConversationsStore } from './state/conversations-store';
 import { useKbStats } from './state/kb-stats-store';
 import { useUiStore } from './state/ui-store';
 import { useCanvasExternalEvents } from './state/canvas-events';
+import { useFileDrop } from './state/file-drop';
 import { CommandPalette } from './components/CommandPalette';
 
 /**
@@ -53,6 +54,10 @@ export function App() {
   // POSTs the active conversationId to the backend on every switch
   // so external callers can omit it.
   useCanvasExternalEvents();
+  // Drop a PDF / docx / markdown / etc. onto the window → backend
+  // extracts text → a chat turn fires asking the agent to summarise
+  // the content into widgets.
+  useFileDrop();
 
   // Hydrate KB chunk total on mount so the header badge shows a real
   // number from frame zero. Subsequent updates come from the
