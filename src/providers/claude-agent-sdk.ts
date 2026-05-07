@@ -371,6 +371,21 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
         activeTemplateId: 'ask-anything' as const,
         widgets: [],
       };
+    // Pull registered plugin kinds out of the registry so place_widget's
+    // tool description can list them at session start. The agent learns
+    // about chart, yearly-calendar, and any third-party plugins this way
+    // — without us hardcoding them into the WIDGET_KINDS enum.
+    const registry = request.widgetRegistry as
+      | import('../backend/widget-registry.js').WidgetRegistry
+      | undefined;
+    const plugins = registry
+      ? registry.list().map((d) => ({
+          kind: d.kind,
+          ...(d.label ? { label: d.label } : {}),
+          ...(d.description ? { description: d.description } : {}),
+        }))
+      : [];
+
     const tools = buildAgentTools({
       search,
       webSearch,
@@ -378,6 +393,7 @@ export class ClaudeAgentSdkAdapter implements LLMProvider {
       streamBus: (request.streamBus as
         | import('../agent/widget-stream-bus.js').WidgetStreamBus
         | undefined) ?? null,
+      plugins,
     });
 
     const mcp = createSdkMcpServer({

@@ -83,4 +83,42 @@ describe('place_widget', () => {
     );
     expect(a.id).not.toBe(b.id);
   });
+
+  describe('plugin kind hints in tool description', () => {
+    it('omits the plugin section when no plugins are registered', () => {
+      const tool = placeWidgetTool();
+      expect(tool.description).not.toMatch(/Plugin widget kinds/);
+    });
+
+    it('appends a plugin section listing registered kinds', () => {
+      const tool = placeWidgetTool([
+        {
+          kind: 'chart',
+          label: 'Chart',
+          description: 'Vega-Lite spec renderer',
+        },
+        {
+          kind: 'yearly-calendar',
+          description: 'A 12-month grid with year nav',
+        },
+      ]);
+      expect(tool.description).toMatch(/Plugin widget kinds/);
+      expect(tool.description).toMatch(/- chart \(Chart\) — Vega-Lite spec renderer/);
+      expect(tool.description).toMatch(/- yearly-calendar — A 12-month grid with year nav/);
+    });
+
+    it('sorts plugins alphabetically for stable prompt content', () => {
+      const tool = placeWidgetTool([
+        { kind: 'zebra' },
+        { kind: 'alpha' },
+        { kind: 'mango' },
+      ]);
+      const idxAlpha = tool.description!.indexOf('- alpha');
+      const idxMango = tool.description!.indexOf('- mango');
+      const idxZebra = tool.description!.indexOf('- zebra');
+      expect(idxAlpha).toBeGreaterThan(0);
+      expect(idxAlpha).toBeLessThan(idxMango);
+      expect(idxMango).toBeLessThan(idxZebra);
+    });
+  });
 });

@@ -149,6 +149,7 @@ export function chatRoute(state: BackendState): Hono {
         canvasSnapshot,
         abortSignal: abortController.signal,
         streamBus: bus,
+        widgetRegistry: state.getWidgetRegistry(),
       });
 
       // Wrap the provider stream so we can sniff session-started events

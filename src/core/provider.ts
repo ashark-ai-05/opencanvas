@@ -69,6 +69,15 @@ export type QueryRequest = {
    * src/agent — the provider casts to WidgetStreamBus when consuming.
    */
   streamBus?: unknown;
+  /**
+   * Process-global plugin widget registry. Threaded through so the
+   * `place_widget` tool description can list the currently-registered
+   * plugin kinds at session start — that's how the agent learns about
+   * runtime-registered widget kinds (chart, yearly-calendar, third-
+   * party plugins) without a hardcoded enum. Typed as `unknown` to
+   * avoid a circular import on src/backend.
+   */
+  widgetRegistry?: unknown;
 };
 
 export type ProbeResult = {

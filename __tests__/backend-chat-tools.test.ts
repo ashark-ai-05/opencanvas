@@ -8,6 +8,19 @@ function makeState(events: Parameters<typeof makeMockProvider>[0]) {
   const provider = makeMockProvider(events);
   let latestSnapshot: unknown = null;
   const sessions = new Map<string, string>();
+  // Minimal stub registry — chat route reads it eagerly to surface
+  // plugin kinds in the place_widget tool description.
+  const stubRegistry = {
+    list: () => [],
+    has: () => false,
+    register: () => {
+      throw new Error('not implemented in test stub');
+    },
+    unregister: () => false,
+    get: () => undefined,
+    subscribe: () => () => {},
+    subscriberCount: () => 0,
+  };
   return {
     getLLMProvider: () => provider,
     setLatestSnapshot: (s: unknown) => {
@@ -17,6 +30,20 @@ function makeState(events: Parameters<typeof makeMockProvider>[0]) {
     getSessionId: (id: string) => sessions.get(id),
     setSessionId: (id: string, sess: string) => sessions.set(id, sess),
     clearSessionId: (id: string) => sessions.delete(id),
+    getWidgetRegistry: () => stubRegistry,
+    registerStreamWidget: () => {},
+    unregisterStreamWidget: () => {},
+    cancelStreamWidget: () => false,
+    getCanvasEventBus: () => ({
+      push: () => {},
+      subscribe: () => ({
+        close: () => {},
+        [Symbol.asyncIterator]: () => ({
+          next: () => Promise.resolve({ value: undefined, done: true }),
+        }),
+      }),
+      subscriberCount: () => 0,
+    }),
   } as unknown as BackendState;
 }
 

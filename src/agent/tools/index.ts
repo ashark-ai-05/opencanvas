@@ -1,6 +1,6 @@
 import { searchKbTool } from './search-kb.js';
 import { fetchResultTool } from './fetch-result.js';
-import { placeWidgetTool } from './place-widget.js';
+import { placeWidgetTool, type PluginKindHint } from './place-widget.js';
 import { streamWidgetTool } from './stream-widget.js';
 import { updateWidgetTool } from './update-widget.js';
 import { readCanvasTool } from './read-canvas.js';
@@ -46,6 +46,15 @@ export interface AgentToolDeps {
    * tool falls back to a one-shot place directive in that case.
    */
   streamBus?: WidgetStreamBus | null;
+  /**
+   * Currently-registered plugin widget kinds (chart, yearly-calendar,
+   * third-party kinds via POST /v1/canvas/widget-kinds). Listed in
+   * the place_widget tool description so the agent knows which non-
+   * built-in kinds it can target. Pass [] / undefined when the
+   * caller doesn't have access to the registry — the tool falls
+   * back to its built-in-only description.
+   */
+  plugins?: PluginKindHint[];
 }
 
 /**
@@ -59,7 +68,7 @@ export function buildAgentTools(deps: AgentToolDeps) {
     searchKbTool(deps.search),
     fetchResultTool(deps.search),
     webSearchTool(deps.webSearch),
-    placeWidgetTool(),
+    placeWidgetTool(deps.plugins),
     streamWidgetTool(deps.streamBus ?? null),
     updateWidgetTool(deps.getSnapshot),
     readCanvasTool(deps.getSnapshot),

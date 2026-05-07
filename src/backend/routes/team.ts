@@ -193,6 +193,7 @@ export function teamRoute(state: BackendState): Hono {
             systemPrompt,
             canvasSnapshot: accumulatedSnapshot,
             abortSignal: abortController.signal,
+            widgetRegistry: state.getWidgetRegistry(),
           });
 
           // Tap: collect place_widget directives + accumulate text-delta

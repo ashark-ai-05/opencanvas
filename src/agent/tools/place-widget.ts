@@ -33,7 +33,41 @@ type Args = {
 
 type PlaceWidgetToolDef = WithArgs<typeof inputShape, Args>;
 
-export function placeWidgetTool(): PlaceWidgetToolDef {
+/**
+ * Plugin descriptor surface used to enrich the tool's description at
+ * session start. Matches the shape from src/backend/widget-registry's
+ * PluginKindDescriptor — kept as a structural type here so this file
+ * doesn't depend on the backend layer.
+ */
+export type PluginKindHint = {
+  kind: string;
+  label?: string;
+  description?: string;
+};
+
+/**
+ * Build the plugin section that gets appended to the tool's description.
+ * Empty array → empty string (no section header). Each plugin gets one
+ * line: kind, optional label, optional description.
+ */
+function pluginsSection(plugins: PluginKindHint[] | undefined): string {
+  if (!plugins || plugins.length === 0) return '';
+  const lines = plugins
+    .slice()
+    .sort((a, b) => a.kind.localeCompare(b.kind))
+    .map((p) => {
+      const desc = p.description ? ` — ${p.description}` : '';
+      const label = p.label ? ` (${p.label})` : '';
+      return `  - ${p.kind}${label}${desc}`;
+    });
+  return [
+    '',
+    'Plugin widget kinds (registered at runtime; pass `kind: "<name>"` and a free-form `payload` object — the plugin renders it inside a sandboxed iframe):',
+    ...lines,
+  ].join('\n');
+}
+
+export function placeWidgetTool(plugins?: PluginKindHint[]): PlaceWidgetToolDef {
   const def = tool(
     'place_widget',
     `Place a widget on the canvas at the role's slot in the active template.
@@ -61,7 +95,7 @@ Payload schema per kind (use these field names exactly):
                       pomodoro  — { mode: 'pomodoro', startedAt: <epoch ms>, pomodoro: { workSec: 1500, breakSec: 300, longBreakSec: 900, longBreakEvery: 4 } }
                     Omit startedAt to place a paused widget the user starts manually.
 
-When you pass an unknown kind or a payload that doesn't validate, the tool auto-classifies into 'generic' with the closest-fit blocks (and a JSON fallback if nothing matches). Errors are never silent — the directive surfaces what was reformatted.`,
+When you pass an unknown kind or a payload that doesn't validate, the tool auto-classifies into 'generic' with the closest-fit blocks (and a JSON fallback if nothing matches). Errors are never silent — the directive surfaces what was reformatted.${pluginsSection(plugins)}`,
     inputShape,
     async (args) => {
       const id = randomUUID();
