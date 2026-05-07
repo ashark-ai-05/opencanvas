@@ -1,10 +1,12 @@
 import type { Editor } from 'tldraw';
+import { toast } from 'sonner';
 import type { SearchResult } from '../api/search';
 import { TEMPLATES_BY_ID } from './templates';
 import { useTemplateStore } from '../state/template-store';
 import type {
   ToolDirective,
   TemplateId,
+  Role,
   WidgetKind,
   WidgetStreamOp,
 } from '../../../src/agent/types';
@@ -140,6 +142,137 @@ function scheduleFlush(editor: Editor, id: string): void {
   s.rafHandle = requestAnimationFrame(() => flushStream(editor, id));
 }
 
+/* ──────────────────────────────────────────────────────────────────
+ * Auto-arrange — when widgets land in a burst (e.g. /team places
+ * three at once, or an external script POSTs five widgets back-to-
+ * back), debounce a single tidy pass that re-flows JUST the burst
+ * into the active template's role slots. Existing widgets aren't
+ * disturbed — manual placements survive, only the new arrivals
+ * snap to the grid.
+ *
+ * Single placements skip the tidy: one widget already landed in
+ * its template slot via the per-place findFreePosition path, so
+ * re-running the slot solver would just animate it to the same spot.
+ *
+ * Wrapped in editor.batch() so Cmd+Z reverts the whole arrangement
+ * as a single history transaction, not one undo per widget.
+ * ──────────────────────────────────────────────────────────────────*/
+const recentPlaceIds = new Set<string>();
+let burstTidyTimer: ReturnType<typeof setTimeout> | null = null;
+const BURST_DEBOUNCE_MS = 700;
+
+function noteBurstPlace(
+  editor: Editor,
+  templateId: TemplateId,
+  shapeId: string,
+): void {
+  recentPlaceIds.add(shapeId);
+  if (burstTidyTimer) clearTimeout(burstTidyTimer);
+  burstTidyTimer = setTimeout(() => {
+    burstTidyTimer = null;
+    flushBurstTidy(editor, templateId);
+  }, BURST_DEBOUNCE_MS);
+}
+
+function flushBurstTidy(editor: Editor, templateId: TemplateId): void {
+  const ids = Array.from(recentPlaceIds);
+  recentPlaceIds.clear();
+  if (ids.length < 2) return;
+
+  const tpl = TEMPLATES_BY_ID[templateId];
+  if (!tpl) return;
+
+  // Skip if the user is mid-drag — tearing them off mid-gesture
+  // feels rude.
+  const editing = (
+    editor as unknown as { getEditingShapeId?: () => string | null }
+  ).getEditingShapeId?.();
+  if (editing) {
+    // Try once more after the user finishes; cheap to schedule.
+    burstTidyTimer = setTimeout(
+      () => flushBurstTidy(editor, templateId),
+      400,
+    );
+    for (const id of ids) recentPlaceIds.add(id);
+    return;
+  }
+
+  const all = editor.getCurrentPageShapes() as Array<{
+    id: string;
+    type: string;
+    meta?: Record<string, unknown>;
+    x: number;
+    y: number;
+    props?: { w?: number; h?: number };
+  }>;
+  const idSet = new Set(ids);
+  const burst = all.filter(
+    (s) => s.type.startsWith('opencanvas:') && idSet.has(s.id),
+  );
+  // Some ids may have been deleted before the timer fired (rapid
+  // place + remove). If nothing's left, nothing to tidy.
+  if (burst.length < 2) return;
+
+  // Group by role; for each role, find the next slot index AFTER
+  // existing (non-burst) widgets in that role, then assign each
+  // burst widget to the next slot in turn.
+  const burstByRole = new Map<Role, typeof burst>();
+  for (const s of burst) {
+    const role = ((s.meta?.['role'] as Role) ?? 'primary') as Role;
+    if (!burstByRole.has(role)) burstByRole.set(role, []);
+    burstByRole.get(role)!.push(s);
+  }
+  const existingByRole = new Map<Role, number>();
+  for (const s of all) {
+    if (!s.type.startsWith('opencanvas:')) continue;
+    if (idSet.has(s.id)) continue;
+    const role = ((s.meta?.['role'] as Role) ?? 'primary') as Role;
+    existingByRole.set(role, (existingByRole.get(role) ?? 0) + 1);
+  }
+
+  const viewport = editor.getViewportPageBounds();
+  let moved = 0;
+
+  editor.batch(() => {
+    for (const [role, shapes] of burstByRole) {
+      const offset = existingByRole.get(role) ?? 0;
+      shapes.forEach((shape, i) => {
+        const slot = tpl.slotForRole(role, offset + i, viewport);
+        const w = shape.props?.w ?? slot.w;
+        const h = shape.props?.h ?? slot.h;
+        const { x, y } = findFreePosition(
+          editor,
+          slot.x,
+          slot.y,
+          w,
+          h,
+          idSet, // exclude burst widgets from "occupied" so they pack tight
+        );
+        // Avoid a no-op animation that would still spend a frame.
+        if (Math.abs(shape.x - x) < 1 && Math.abs(shape.y - y) < 1) return;
+        (
+          editor as unknown as {
+            animateShape: (
+              s: { id: string; type: string; x: number; y: number },
+              opts: { animation: { duration: number } },
+            ) => void;
+          }
+        ).animateShape(
+          { id: shape.id, type: shape.type, x, y },
+          { animation: { duration: 320 } },
+        );
+        moved += 1;
+      });
+    }
+  });
+
+  if (moved === 0) return;
+  toast(`Arranged ${moved} widget${moved === 1 ? '' : 's'}`, {
+    description: 'tldraw undo (⌘Z) reverts the layout',
+    duration: 2400,
+  });
+}
+
 /**
  * Apply a directive coming from a backend tool to the tldraw editor.
  * `templateId` is the active template at directive-receive time
@@ -202,6 +335,7 @@ export function applyToolDirective(
           h: startCollapsed ? 44 : h,
         } as never,
       } as never);
+      noteBurstPlace(editor, templateId, 'shape:' + directive.id);
       return;
     }
     case 'update': {
@@ -329,6 +463,7 @@ export function applyToolDirective(
 
       // Initialise the per-stream buffer so subsequent ops route here.
       ensureStream(directive.id);
+      noteBurstPlace(editor, templateId, 'shape:' + directive.id);
       return;
     }
     case 'stream-op': {
@@ -441,13 +576,25 @@ function findFreePosition(
   preferY: number,
   w: number,
   h: number,
+  /**
+   * Optional set of shape ids to treat as "not occupying space."
+   * Used by the burst-tidy pass — when re-flowing widgets that just
+   * landed, we don't want them to count as obstacles for each other,
+   * which would push later ones further down the canvas.
+   */
+  excludeIds?: Set<string>,
 ): { x: number; y: number } {
   const placed = (editor.getCurrentPageShapes() as Array<{
+    id: string;
     type: string;
     x: number;
     y: number;
     props?: { w?: number; h?: number };
-  }>).filter((s) => s.type.startsWith('opencanvas:'));
+  }>).filter(
+    (s) =>
+      s.type.startsWith('opencanvas:') &&
+      (!excludeIds || !excludeIds.has(s.id)),
+  );
 
   const overlaps = (x: number, y: number): boolean => {
     for (const s of placed) {
