@@ -27,7 +27,7 @@ import { setEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
 import { useCanvasStats } from '../state/canvas-stats-store';
 import { useConversationsStore } from '../state/conversations-store';
-import { useThemeStore } from '../state/theme-store';
+import { useThemeStore, tldrawColorSchemeFor } from '../state/theme-store';
 import { useCanvasHistory } from '../state/canvas-history-store';
 // SearchBar + TemplatePicker removed: all searches now flow through the
 // floating chat (the agent runs search_kb, plus a parallel /v1/search
@@ -80,11 +80,14 @@ export function Canvas() {
       // Tldraw editor scope) can apply tool directives via getEditor().
       setEditor(editor);
 
-      // Mirror app theme into tldraw's color scheme so the canvas
-      // background matches the rest of the UI. Subscribes for the
-      // editor's lifetime so toggling theme updates the canvas live.
-      const applyScheme = (theme: 'dark' | 'light') => {
-        editor.user.updateUserPreferences({ colorScheme: theme });
+      // Mirror app theme into tldraw's color scheme. tldraw only
+      // supports light/dark — our 5 themes (dark, light, midnight,
+      // sunset, mono) collapse via tldrawColorSchemeFor: only `light`
+      // maps to light; everything else (the dark themes + their
+      // variants) maps to dark.
+      const applyScheme = (theme: import('../state/theme-store').Theme) => {
+        const scheme = tldrawColorSchemeFor(theme);
+        editor.user.updateUserPreferences({ colorScheme: scheme });
       };
       applyScheme(useThemeStore.getState().theme);
       const unsubTheme = useThemeStore.subscribe((s, prev) => {

@@ -122,6 +122,116 @@
   border-bottom-color: rgba(0, 0, 0, 0.08);
 }
 
+/* ──────────────────────────────────────────────────────────────────
+ * Midnight theme — deep navy + electric blue.
+ *
+ * Same architecture as light: every override is a CSS-variable swap
+ * so downstream rules (cards, chat panel, palette, stripe roles)
+ * recolor automatically. Role hues are kept stable across themes —
+ * only chrome / surfaces / brand accent shift.
+ * ──────────────────────────────────────────────────────────────────*/
+:root[data-theme='midnight'] {
+  --color-bg:       #070a14;     /* deep navy near-black */
+  --color-bg-2:     #0d1226;
+  --color-bg-3:     #131a2e;
+  --color-line:     rgba(180, 200, 255, 0.10);
+  --color-line-2:   rgba(180, 200, 255, 0.16);
+  --color-fg:       #e2e8f0;     /* slate-200 — slight cool tint reads natural here */
+  --color-fg-2:     #cbd5e1;
+  --color-muted:    #64748b;
+  --color-muted-2:  #475569;
+  --color-accent:    #60a5fa;     /* blue-400 */
+  --color-accent-2:  #818cf8;     /* indigo-400 */
+  --color-accent-3:  #6366f1;     /* indigo-500 */
+  --grad-brand:      linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #6366f1 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(129,140,248,0.18) 50%, rgba(99,102,241,0.18) 100%);
+}
+:root[data-theme='midnight'] .opencanvas-card {
+  background:
+    linear-gradient(180deg, rgba(28, 36, 60, 0.86) 0%, rgba(15, 20, 36, 0.86) 100%),
+    radial-gradient(
+      ellipse at top left,
+      var(--role-color-soft, var(--role-primary-soft)) 0%,
+      transparent 60%
+    );
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Sunset theme — warm wine/brown + orange/amber accent.
+ *
+ * Notable: --color-line uses a cream-tinted alpha (rather than pure
+ * white) so borders pick up the warmth instead of looking grey.
+ * ──────────────────────────────────────────────────────────────────*/
+:root[data-theme='sunset'] {
+  --color-bg:       #1a0f0a;     /* deep wine-brown near-black */
+  --color-bg-2:     #2a1814;
+  --color-bg-3:     #321e18;
+  --color-line:     rgba(255, 220, 200, 0.10);
+  --color-line-2:   rgba(255, 220, 200, 0.17);
+  --color-fg:       #fef3e8;     /* warm cream — reads as "candlelit" */
+  --color-fg-2:     #fed7aa;
+  --color-muted:    #b8a89a;
+  --color-muted-2:  #8a7a6d;
+  --color-accent:    #fb923c;     /* orange-400 */
+  --color-accent-2:  #f97316;     /* orange-500 */
+  --color-accent-3:  #ef4444;     /* red-500 */
+  --grad-brand:      linear-gradient(135deg, #fbbf24 0%, #fb923c 50%, #f97316 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(251,146,60,0.18) 50%, rgba(249,115,22,0.18) 100%);
+}
+:root[data-theme='sunset'] .opencanvas-card {
+  background:
+    linear-gradient(180deg, rgba(56, 36, 28, 0.86) 0%, rgba(35, 22, 18, 0.86) 100%),
+    radial-gradient(
+      ellipse at top left,
+      var(--role-color-soft, var(--role-primary-soft)) 0%,
+      transparent 60%
+    );
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Mono theme — pure grayscale. No chromatic accent anywhere.
+ *
+ * Role colors are desaturated to mid-grays so cards still encode
+ * placement role via *brightness* rather than *hue*. This is the
+ * trade-off of mono: less glanceable role-by-color, but a
+ * distraction-free monochrome aesthetic (Linear/Vercel feel).
+ * ──────────────────────────────────────────────────────────────────*/
+:root[data-theme='mono'] {
+  --color-bg:       #0a0a0a;
+  --color-bg-2:     #141414;
+  --color-bg-3:     #1f1f1f;
+  --color-line:     rgba(255, 255, 255, 0.10);
+  --color-line-2:   rgba(255, 255, 255, 0.17);
+  --color-fg:       #ffffff;     /* pure white — max contrast */
+  --color-fg-2:     #d4d4d4;
+  --color-muted:    #737373;
+  --color-muted-2:  #525252;
+  --color-accent:    #fafafa;
+  --color-accent-2:  #d4d4d4;
+  --color-accent-3:  #a3a3a3;
+  --grad-brand:      linear-gradient(135deg, #fafafa 0%, #d4d4d4 50%, #a3a3a3 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(212,212,212,0.16) 50%, rgba(163,163,163,0.16) 100%);
+  /* Roles → grayscale brightness ramp so cards still differ but
+     within the monochrome aesthetic. Brightest = primary → darkest
+     = node, in the same order as the original palette. */
+  --role-primary:        #fafafa;
+  --role-primary-soft:   rgba(250, 250, 250, 0.16);
+  --role-detail:         #d4d4d4;
+  --role-detail-soft:    rgba(212, 212, 212, 0.16);
+  --role-related:        #a3a3a3;
+  --role-related-soft:   rgba(163, 163, 163, 0.16);
+  --role-reference:      #737373;
+  --role-reference-soft: rgba(115, 115, 115, 0.18);
+  --role-timeline:       #525252;
+  --role-timeline-soft:  rgba(82, 82, 82, 0.20);
+  --role-node:           #404040;
+  --role-node-soft:      rgba(64, 64, 64, 0.22);
+}
+:root[data-theme='mono'] .opencanvas-card {
+  background:
+    linear-gradient(180deg, rgba(30, 30, 30, 0.88) 0%, rgba(18, 18, 18, 0.88) 100%);
+}
+
 @layer base {
   html, body, #root {
     height: 100%;
@@ -740,6 +850,91 @@
     rgba(0, 0, 0, 0.4);
   cursor: crosshair;
   user-select: none;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Theme picker popover — anchored to the header palette button.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-theme-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 51;
+  min-width: 240px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-line-2);
+  box-shadow:
+    0 16px 48px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(167, 139, 250, 0.14) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.opencanvas-theme-menu-header {
+  padding: 8px 10px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+.opencanvas-theme-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-fg-2);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.opencanvas-theme-row:hover {
+  background: rgba(167, 139, 250, 0.10);
+  border-color: rgba(167, 139, 250, 0.28);
+  color: var(--color-fg);
+}
+.opencanvas-theme-row--active {
+  background: var(--grad-brand-soft);
+  border-color: color-mix(in oklab, var(--color-accent) 35%, transparent);
+  color: var(--color-fg);
+}
+.opencanvas-theme-swatches {
+  display: inline-flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  flex-shrink: 0;
+}
+.opencanvas-theme-swatches > span {
+  display: inline-block;
+  width: 14px;
+  height: 22px;
+}
+.opencanvas-theme-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.opencanvas-theme-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-fg);
+}
+.opencanvas-theme-desc {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.opencanvas-theme-check {
+  color: var(--color-accent);
+  flex-shrink: 0;
 }
 
 /* Zoom-percentage chip in HeaderCanvasControls. Click resets to 100%. */
