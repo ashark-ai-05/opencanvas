@@ -33,7 +33,7 @@ importers:
         version: 1.29.0(zod@4.4.2)
       '@sourcegraph/amp-sdk':
         specifier: '*'
-        version: 0.1.0-20260505123815-g9186014
+        version: 0.1.0-20260507090432-g879ced5
       ai:
         specifier: ^6.0.0
         version: 6.0.174(zod@4.4.2)
@@ -1938,8 +1938,8 @@ packages:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260505123815-g9186014':
-    resolution: {integrity: sha512-zqHwNwCQ8lvSqA9CiHW92WRKpZ/yhck/uzNETYym/I4znLTUCY48z2icJphQH9vIf9fdEMWbHaTHmUZZ67hVjg==}
+  '@sourcegraph/amp-sdk@0.1.0-20260507090432-g879ced5':
+    resolution: {integrity: sha512-sX3mv9L7aJk+v7WY3icn13nco/TQgn653sj66D1S31Q+ZRW3Kbgj5DxiWhNb1z4gApihapuvHWBTOKp7h8k6uw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -7058,7 +7058,7 @@ snapshots:
 
   '@sindresorhus/is@4.6.0': {}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260505123815-g9186014':
+  '@sourcegraph/amp-sdk@0.1.0-20260507090432-g879ced5':
     dependencies:
       zod: 3.25.76
 

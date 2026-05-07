@@ -33,42 +33,6 @@ OpenCanvas is a local desktop knowledge surface. Conversations live alongside an
 
 ---
 
-## Showcase — *"render something amazing on canvas"*
-
-One prompt. Eleven widgets. Every role represented. Every interactive surface live.
-
-> *render something amazing on canvas*
-
-The agent composes a coherent **Q3 Operations Dashboard** — a markdown brief, a layered Vega-Lite chart, a 25-min pomodoro that ticks live, two timezone clocks, a region-health table, a 4-column kanban, a decisions timeline, a sandboxed web embed, a key-value summary, and a sticky note. All draggable, resizable, role-tinted, and exportable. Auto-tidy reflows them into the active template's role slots ~700ms after the burst.
-
-| Role · color | Widget | What it does |
-|---|---|---|
-| 🟣 primary · violet | Hero **markdown** card | Welcome, themes, quick orientation |
-| 🟣 primary · violet | **MAU chart** | Layered Vega-Lite area + line + dashed target — hover for tooltips |
-| 🔵 detail · blue | **Pomodoro** | Live 25/5 timer; auto-cycles work → break → long-break |
-| 🔵 detail · blue | **SF clock** | `America/Los_Angeles` 12h, ticks every second |
-| 🔵 detail · blue | **Tokyo clock** | `Asia/Tokyo` 24h, ticks every second |
-| 🟢 related · teal | **Region health table** | 7 regions × RPS / p95 / uptime / trend, monospace numerics |
-| 🟢 related · teal | **Q3 kanban** | 4 columns × 7 cards, color-tagged, assignees, priorities |
-| 🩷 timeline · rose | **Decisions timeline** | 5 events, kind-tinted dots (release / deploy / incident / note / commit) |
-| 🟡 reference · amber | **Web embed** | Sandboxed iframe (with **Open ↗** escape hatch when sites block framing) |
-| 🟢 node · emerald | **KV summary** | Weekly metrics at-a-glance, tabular nums |
-| 🟢 node · emerald | **Sticky note** | Violet sticky w/ author byline |
-
-**Reproduce it locally** (no agent — pure REST so it runs even without an LLM key):
-
-```bash
-# clear first; pinned widgets survive
-curl -s -X POST http://localhost:3457/v1/canvas/clear -H 'content-type: application/json' -d '{}'
-
-# then place all 11 — the script is in docs/showcase.py
-python3 docs/showcase.py
-```
-
-Or just ask the agent in chat — *"compose a Q3 ops dashboard with charts, timelines, kanban"* — it'll reach for the right kinds because the plugin registry is wired into its `place_widget` tool description.
-
----
-
 ## 60-second tour
 
 Once you have the app open (`pnpm electron:dev`), try these — each demonstrates a different axis:

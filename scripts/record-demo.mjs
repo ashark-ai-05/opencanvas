@@ -1,27 +1,28 @@
 #!/usr/bin/env node
 /**
- * Record a slow, content-rich demo GIF of OpenCanvas.
+ * Record the README hero GIF — the "Q3 Operations Dashboard" demo.
  *
- * Storyboard: a user asks "How is OpenCanvas built?" and the agent
- * progressively places a coherent set of widgets — a markdown
- * overview, a deep file-tree, a composite multi-section card, a
- * timeline of releases, a kanban board, and a live code-block — that
- * together explain the architecture. Each placement gets a beat for
- * the fresh-place pop animation to read; tweens are paced so the
- * loop doesn't feel hurried.
+ * Storyboard: a user types "render something amazing on canvas." The
+ * canvas explodes into a coherent dashboard: a hero markdown brief,
+ * a Vega-Lite chart, a live pomodoro + two timezone clocks, a region
+ * health table, a Q3 kanban, a decisions timeline, a sandboxed web
+ * embed, a weekly KV summary, and a sticky note. Auto-tidy reflows
+ * the burst into role slots and we hold the hero shot for a few
+ * frames so the role-tinted card auras + the live chart can read.
  *
- * - Boots Playwright's bundled chromium (no system Chrome / sudo).
- * - Imports state/editor-ref + canvas/dispatcher off Vite's dev
- *   module graph; widgets land via `applyToolDirective` so the demo
- *   doesn't spend tokens on a real chat turn.
- * - Collapses the floating chat after the typing beat so the canvas
- *   becomes the visual hero, then reopens it for a final shot.
- * - Captures ~30+ PNG frames at 1280×800 @ 1.5x DPR.
- * - Stitches with ffmpeg-static into docs/demo.gif at 4 fps for a
- *   ~10s loop.
+ * Pipeline:
+ *   1. Boot Playwright's bundled chromium (headless, dark scheme).
+ *   2. Navigate to the running Vite dev server (:3458).
+ *   3. POST widgets to /v1/canvas/widgets — the browser's SSE
+ *      subscriber renders them as they arrive. This route handles
+ *      the plugin rewrite (chart → kind:'plugin'), so the demo's
+ *      Vega-Lite chart shows up correctly without a window-hook
+ *      detour through applyToolDirective.
+ *   4. Snap PNGs at 1280×800 @ 1.5x DPR with deliberate beats.
+ *   5. Stitch with ffmpeg-static into docs/demo.gif at 4 fps.
  *
  * Run:
- *   pnpm dev              # in another terminal
+ *   pnpm dev                              # in another terminal
  *   node scripts/record-demo.mjs
  */
 import { chromium } from 'playwright';
@@ -36,12 +37,15 @@ const REPO = resolve(__dirname, '..');
 const OUT_DIR = join(REPO, 'docs', 'demo-frames');
 const GIF_PATH = join(REPO, 'docs', 'demo.gif');
 const APP_URL = 'http://127.0.0.1:3458/';
+const BACKEND = 'http://127.0.0.1:3457';
 const FFMPEG = (await import('ffmpeg-static')).default;
 const W = 1280;
 const H = 800;
-const FPS = 4;        // playback rate of the gif (one frame every 250ms)
-const HOLD = 280;     // ms between snaps within a beat
-const BIG_HOLD = 700; // hero / fresh-place beats
+const FPS = 5;        // playback rate of the gif (one frame every 200ms)
+const HOLD = 260;     // ms between snaps within a beat
+const POP = 520;      // a placement settling beat
+const HERO = 900;     // hero / pause beats
+const NOW_MS = Date.now();
 
 async function ensureCleanFrames() {
   await mkdir(OUT_DIR, { recursive: true });
@@ -58,35 +62,221 @@ async function snap(page, label) {
   return file;
 }
 
-async function sleep(ms) {
-  await new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function postWidget(payload) {
+  const res = await fetch(BACKEND + '/v1/canvas/widgets', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`POST /v1/canvas/widgets ${res.status}: ${body}`);
+  }
+  return res.json();
 }
 
-async function placeWidget(page, kind, role, payload) {
-  await page.evaluate(
-    ({ kind, role, payload }) => {
-      const editor = window.__opencanvasEditorForDemo__;
-      const dispatcher = window.__opencanvasDispatcher__;
-      if (!editor || !dispatcher) throw new Error('demo hooks missing');
-      const id = crypto.randomUUID();
-      dispatcher(editor, { type: 'place', id, kind, role, payload }, 'ask-anything');
-      // Track the growing cluster: re-fit after every placement so the
-      // camera always shows the latest addition + everything before it.
-      // Zoom is animated so the gif gets a satisfying re-frame between
-      // beats. inset:80 keeps a comfortable margin around the widgets.
-      editor.zoomToFit({ animation: { duration: 300 }, inset: 80 });
+async function clearCanvas(conversationId) {
+  const res = await fetch(BACKEND + '/v1/canvas/clear', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ conversationId }),
+  });
+  // Tolerate failure when there's no active conversation yet — the
+  // initial burst will still land via the active-conversation handshake
+  // the browser fires on mount.
+  if (!res.ok) console.warn('[demo] clear-canvas failed:', res.status);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Storyboard widgets — the Q3 Operations Dashboard.
+// Roles drive the auto-tidy slot resolver: primary on top, detail in
+// the second band, related in the third, timeline below, reference
+// to one side, node items final.
+// ─────────────────────────────────────────────────────────────────────
+const WIDGETS = [
+  {
+    label: 'hero markdown',
+    body: {
+      kind: 'markdown', role: 'primary',
+      payload: {
+        title: 'Q3 Operations Dashboard',
+        body:
+          '## Welcome back\n\n' +
+          'Six countries, eleven product lines, one canvas.\n\n' +
+          '**Today\'s themes**\n' +
+          '- 🚀 EU launch is **3 weeks out** — go/no-go review Friday\n' +
+          '- 📈 MAU growth **+18% MoM** — best month in a year\n' +
+          '- ⚠️ Latency creeping in `ap-south` — eng investigating',
+      },
     },
-    { kind, role, payload },
-  );
-}
-
-async function setChatWindow(page, patch) {
-  await page.evaluate((patch) => {
-    const ui = window.__opencanvasUiStore__;
-    if (!ui) return;
-    ui.getState().setChatWindow(patch);
-  }, patch);
-}
+  },
+  {
+    label: 'live MAU chart (Vega-Lite plugin)',
+    body: {
+      kind: 'chart', role: 'primary',
+      payload: {
+        title: 'Monthly Active Users — last 8 months',
+        spec: {
+          data: { values: [
+            { month: 'Jan', users: 1200, target: 1500 },
+            { month: 'Feb', users: 1450, target: 1700 },
+            { month: 'Mar', users: 1820, target: 1900 },
+            { month: 'Apr', users: 2100, target: 2200 },
+            { month: 'May', users: 2480, target: 2600 },
+            { month: 'Jun', users: 2950, target: 2900 },
+            { month: 'Jul', users: 3420, target: 3300 },
+            { month: 'Aug', users: 4100, target: 3800 },
+          ]},
+          layer: [
+            { mark: { type: 'area', opacity: 0.18, color: '#a78bfa' },
+              encoding: { x: { field: 'month', type: 'ordinal' },
+                          y: { field: 'users', type: 'quantitative' } } },
+            { mark: { type: 'line', strokeWidth: 3, point: true, tooltip: true },
+              encoding: { x: { field: 'month', type: 'ordinal',
+                               axis: { labelAngle: 0, title: null } },
+                          y: { field: 'users', type: 'quantitative',
+                               axis: { title: 'MAU' } } } },
+            { mark: { type: 'line', strokeDash: [4, 4],
+                      color: '#71717a', tooltip: true },
+              encoding: { x: { field: 'month', type: 'ordinal' },
+                          y: { field: 'target', type: 'quantitative' } } },
+          ],
+        },
+      },
+    },
+  },
+  {
+    label: 'pomodoro (live)',
+    body: {
+      kind: 'time', role: 'detail',
+      payload: {
+        mode: 'pomodoro', label: 'Deep work · 25/5',
+        startedAt: NOW_MS, elapsedAtPause: 0, paused: false,
+        pomodoro: { workSec: 1500, breakSec: 300, longBreakSec: 900,
+                    longBreakEvery: 4, sessions: 0, phase: 'work' },
+      },
+    },
+  },
+  {
+    label: 'SF clock (live)',
+    body: {
+      kind: 'time', role: 'detail',
+      payload: { mode: 'clock', label: 'San Francisco',
+                 tz: 'America/Los_Angeles', format: '12h' },
+    },
+  },
+  {
+    label: 'Tokyo clock (live)',
+    body: {
+      kind: 'time', role: 'detail',
+      payload: { mode: 'clock', label: 'Tokyo',
+                 tz: 'Asia/Tokyo', format: '24h' },
+    },
+  },
+  {
+    label: 'region health table',
+    body: {
+      kind: 'table', role: 'related',
+      payload: {
+        title: 'Region health · last 24h',
+        columns: [
+          { key: 'region', label: 'Region' },
+          { key: 'rps',    label: 'RPS',    align: 'right', mono: true },
+          { key: 'p95',    label: 'p95 ms', align: 'right', mono: true },
+          { key: 'uptime', label: 'Uptime', align: 'right', mono: true },
+          { key: 'trend',  label: 'Trend' },
+        ],
+        rows: [
+          ['us-east',    '4,200', ' 22', '99.99%', '↗ steady'],
+          ['us-west',    '3,400', ' 18', '99.98%', '↗ steady'],
+          ['eu-west',    '2,800', ' 31', '99.95%', '→ flat'],
+          ['eu-central', '2,950', ' 28', '99.97%', '↗ steady'],
+          ['ap-south',   '1,900', ' 47', '99.82%', '↘ degrading'],
+          ['ap-east',    '1,700', ' 52', '99.79%', '↘ degrading'],
+          ['sa-east',    '1,300', ' 64', '99.68%', '→ flat'],
+        ],
+      },
+    },
+  },
+  {
+    label: 'Q3 kanban',
+    body: {
+      kind: 'kanban', role: 'related',
+      payload: {
+        title: 'Q3 deliverables',
+        columns: [
+          { name: 'Backlog', colour: 'neutral', cards: [
+            { title: 'Mobile push for EU launch', tag: 'growth', priority: 'med' },
+            { title: 'Refresh pricing page', tag: 'marketing' },
+          ]},
+          { name: 'In progress', colour: 'amber', cards: [
+            { title: 'Latency: ap-south remediation', tag: 'infra',
+              assignee: 'Priya', priority: 'high' },
+            { title: 'Onboarding rewrite (v3)', tag: 'growth', assignee: 'Marc' },
+          ]},
+          { name: 'Review', colour: 'violet', cards: [
+            { title: 'EU launch — go/no-go', tag: 'launch',
+              assignee: 'Anya', priority: 'high' },
+          ]},
+          { name: 'Shipped', colour: 'green', cards: [
+            { title: 'SAML SSO', tag: 'compliance', assignee: 'Priya' },
+            { title: 'Activity timeline', tag: 'product' },
+          ]},
+        ],
+      },
+    },
+  },
+  {
+    label: 'decisions timeline',
+    body: {
+      kind: 'timeline', role: 'timeline',
+      payload: {
+        title: 'Recent decisions',
+        events: [
+          { timestamp: '2026-04-18',
+            label: 'Approved EU data residency plan', kind: 'release' },
+          { timestamp: '2026-04-22',
+            label: 'Tracing rollout (us-east)', kind: 'deploy' },
+          { timestamp: '2026-04-29',
+            label: 'ap-south latency incident', kind: 'incident',
+            body: 'p95 spiked to 180ms for 2h.' },
+          { timestamp: '2026-05-02',
+            label: 'Hired SRE lead', kind: 'note' },
+          { timestamp: '2026-05-05',
+            label: 'v3 onboarding flow merged', kind: 'commit' },
+        ],
+      },
+    },
+  },
+  {
+    label: 'KV summary',
+    body: {
+      kind: 'key-value-card', role: 'node',
+      payload: {
+        title: 'This week at a glance',
+        fields: [
+          { key: 'MAU',            value: '4,128 (+18%)' },
+          { key: 'Revenue',        value: '$284K (+12%)' },
+          { key: 'p95 (global)',   value: '29 ms' },
+          { key: 'Open incidents', value: '1 (P3, ap-south)' },
+          { key: 'Releases',       value: '7 this week' },
+        ],
+      },
+    },
+  },
+  {
+    label: 'sticky note',
+    body: {
+      kind: 'sticky-note', role: 'node',
+      payload: {
+        body: 'Make the EU launch boring 🚢\n\n— a calm launch is a successful launch',
+        author: 'Anya', colour: 'violet',
+      },
+    },
+  },
+];
 
 async function main() {
   await ensureCleanFrames();
@@ -105,66 +295,59 @@ async function main() {
   await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('header h1', { timeout: 30_000 });
 
-  // Wire window hooks for direct control.
-  await page.evaluate(async () => {
-    const start = Date.now();
-    while (Date.now() - start < 12_000) {
-      try {
-        const editorRef = await import('/src/state/editor-ref.ts');
-        const dispatcherMod = await import('/src/canvas/dispatcher.ts');
-        const uiMod = await import('/src/state/ui-store.ts');
-        const editor = editorRef.getEditor();
-        if (editor) {
-          window.__opencanvasEditorForDemo__ = editor;
-          window.__opencanvasDispatcher__ = dispatcherMod.applyToolDirective;
-          window.__opencanvasUiStore__ = uiMod.useUiStore;
-          return;
-        }
-      } catch {
-        /* canvas not ready yet */
-      }
-      await new Promise((r) => setTimeout(r, 200));
-    }
-    throw new Error('editor never appeared');
-  });
-  await sleep(500);
+  // Wait for the canvas SSE handshake so subsequent /v1/canvas/widgets
+  // POSTs land in this browser session. The hook fires on mount; we
+  // give it ~1s to register the conversationId with the backend.
+  await sleep(1200);
 
-  // ---------------------------------------------------------------
-  // Beat 1 — empty canvas hero (3 frames, slow open)
-  // ---------------------------------------------------------------
+  // Pull the active conversationId out of the conversations store so
+  // we can scope the clear precisely (avoids touching whatever else
+  // the user's OpenCanvas instance had open).
+  const activeId = await page.evaluate(async () => {
+    const start = Date.now();
+    while (Date.now() - start < 5000) {
+      try {
+        const m = await import('/src/state/conversations-store.ts');
+        const id = m.useConversationsStore.getState().activeId;
+        if (id) return id;
+      } catch { /* not ready yet */ }
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    return null;
+  });
+  if (activeId) await clearCanvas(activeId);
+  await sleep(400);
+
+  // ── Beat 1 — empty canvas hero ──────────────────────────────────
   await snap(page, 'empty canvas');
   await sleep(HOLD);
   await snap(page, 'empty canvas (hold)');
-  await sleep(HOLD);
-  await snap(page, 'empty canvas (settle)');
 
-  // ---------------------------------------------------------------
-  // Beat 2 — focus chat + animated typing (slow, ~6 frames)
-  // ---------------------------------------------------------------
+  // ── Beat 2 — type the prompt slowly ─────────────────────────────
   const input = await page.$('.opencanvas-chat-input');
   if (input) {
     await input.focus();
     await sleep(HOLD);
     await snap(page, 'composer focused');
-    const text = 'How is OpenCanvas built?';
+    const text = 'render something amazing on canvas';
     let buffer = '';
     for (let i = 0; i < text.length; i++) {
       buffer += text[i];
       await input.type(text[i], { delay: 0 });
-      // Snap every ~5 chars for a perceptibly-slow typing animation.
-      if ((i + 1) % 5 === 0 || i === text.length - 1) {
-        await sleep(160);
+      // Snap roughly every word for a perceptibly-slow typing animation.
+      if ((i + 1) % 6 === 0 || i === text.length - 1) {
+        await sleep(140);
         await snap(page, `typing "${buffer}"`);
       }
     }
     await sleep(HOLD);
-    // "Submit" — clear the input via React-aware setter.
+
+    // "Submit" — clear the textarea via the React-aware setter.
     await page.evaluate(() => {
       const el = document.querySelector('.opencanvas-chat-input');
-      if (!(el instanceof HTMLInputElement)) return;
+      if (!(el instanceof HTMLTextAreaElement)) return;
       const setter = Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        'value',
+        HTMLTextAreaElement.prototype, 'value',
       )?.set;
       setter?.call(el, '');
       el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -173,273 +356,67 @@ async function main() {
     await snap(page, 'submitted');
   }
 
-  // ---------------------------------------------------------------
-  // Beat 3 — collapse chat → canvas becomes hero
-  // ---------------------------------------------------------------
-  await setChatWindow(page, { mode: 'collapsed' });
+  // ── Beat 3 — collapse chat → canvas as hero ─────────────────────
+  await page.evaluate(() => {
+    return import('/src/state/ui-store.ts').then((m) => {
+      m.useUiStore.getState().setChatWindow({ mode: 'collapsed' });
+    });
+  });
   await sleep(HOLD);
   await snap(page, 'chat collapsed');
 
-  // ---------------------------------------------------------------
-  // Beat 4 — sequential rich placements. Each widget gets two
-  // snapshots: one immediately (fresh-place pop) and one after a
-  // longer beat (settled card with role-tinted glow).
-  // ---------------------------------------------------------------
+  // ── Beat 4 — sequential widget burst ────────────────────────────
+  // POST each widget; snap once after the SSE round-trip lands and
+  // again after the role-aura settle. The dispatcher's auto-tidy
+  // debounces 700ms after the last placement so a final burst-end
+  // beat captures the rearrangement.
+  for (const w of WIDGETS) {
+    await postWidget(w.body);
+    await sleep(180);                // SSE round-trip + dispatcher
+    await snap(page, `+ ${w.label} (pop)`);
+    await sleep(POP - 180);
+    await snap(page, `${w.label} (settled)`);
+  }
 
-  // Markdown — primary, violet edge.
-  await placeWidget(page, 'markdown', 'primary', {
-    title: 'OpenCanvas — at a glance',
-    body:
-      'A local desktop knowledge surface. The agent **searches** your KB, the web, and any MCP source you wire up — then **places typed widgets** on a tldraw canvas to build the answer spatially. Every conversation indexes back, so search compounds with use.',
-  });
-  await sleep(HOLD);
-  await snap(page, '+ markdown (pop)');
-  await sleep(BIG_HOLD);
-  await snap(page, 'markdown (settled)');
+  // ── Beat 5 — auto-tidy lands; let the layout breathe ────────────
+  await sleep(800);  // BURST_DEBOUNCE_MS=700 + overhead
+  await snap(page, 'auto-tidy fires');
+  await sleep(HERO);
+  await snap(page, 'arranged (hero 1)');
 
-  // File-tree — detail, blue edge. Real repo structure.
-  await placeWidget(page, 'file-tree', 'detail', {
-    title: 'src/ — backend',
-    root: {
-      name: 'src',
-      type: 'directory',
-      children: [
-        {
-          name: 'agent',
-          type: 'directory',
-          children: [
-            { name: 'tools/', type: 'directory', meta: '11 tools' },
-            { name: 'payloads.ts', type: 'file' },
-            { name: 'types.ts', type: 'file' },
-          ],
-        },
-        {
-          name: 'backend',
-          type: 'directory',
-          children: [
-            { name: 'routes/', type: 'directory', meta: '14 routes' },
-            { name: 'server.ts', type: 'file' },
-            { name: 'state.ts', type: 'file' },
-            { name: 'uims-stream.ts', type: 'file' },
-          ],
-        },
-        {
-          name: 'connectors',
-          type: 'directory',
-          children: [
-            { name: 'code.ts', type: 'file' },
-            { name: 'jira.ts', type: 'file' },
-            { name: 'stash.ts', type: 'file' },
-            { name: 'confluence.ts', type: 'file' },
-          ],
-        },
-        {
-          name: 'indexer',
-          type: 'directory',
-          children: [
-            { name: 'orchestrator.ts', type: 'file' },
-            { name: 'qa-enricher.ts', type: 'file' },
-            { name: 'link-extractor.ts', type: 'file' },
-          ],
-        },
-        { name: 'providers/', type: 'directory', meta: '6 adapters' },
-      ],
-    },
-  });
-  await sleep(HOLD);
-  await snap(page, '+ file-tree (pop)');
-  await sleep(BIG_HOLD);
-  await snap(page, 'file-tree (settled)');
-
-  // Composite — primary, stacks under the markdown card in column 0.
-  await placeWidget(page, 'composite', 'primary', {
-    title: 'Architecture · stack + numbers',
-    sections: [
-      {
-        heading: 'Stack',
-        kind: 'key-value-card',
-        payload: {
-          title: '',
-          fields: [
-            { key: 'Backend', value: 'Hono + better-sqlite3 + sqlite-vec' },
-            { key: 'Agent SDK', value: 'Claude Agent SDK (in-process MCP)' },
-            { key: 'Frontend', value: 'Vite + React 19 + tldraw 3' },
-            { key: 'Streaming', value: 'AI SDK 6 UIMS' },
-            { key: 'Desktop', value: 'Electron 39 + electron-builder' },
-          ],
-        },
-      },
-      {
-        heading: 'Surface',
-        kind: 'key-value-card',
-        payload: {
-          title: '',
-          fields: [
-            { key: 'Widget kinds', value: '12' },
-            { key: 'Agent tools', value: '11 (in-process MCP)' },
-            { key: 'KB connectors', value: 'code · jira · stash · confluence' },
-            { key: 'LLM providers', value: '6' },
-            { key: 'Embedders', value: 'onnx · openai · voyage · ollama' },
-          ],
-        },
-      },
-      {
-        heading: 'Where the magic is',
-        kind: 'markdown',
-        payload: {
-          title: '',
-          body:
-            'Hybrid retrieval: **FTS5 BM25 + sqlite-vec MATCH**, fused via reciprocal rank (k=60). The QA enricher embeds the **12 hypothetical user queries** generated per chunk — biases the vector subspace toward how users phrase questions.',
-        },
-      },
-    ],
-  });
-  await sleep(HOLD);
-  await snap(page, '+ composite (pop)');
-  await sleep(BIG_HOLD);
-  await snap(page, 'composite (settled)');
-
-  // Timeline — release history. Reuse the 'detail' role so it stacks
-  // under the file-tree (keeps the layout tight in column 1 instead
-  // of scattering across 6 role columns).
-  await placeWidget(page, 'timeline', 'detail', {
-    title: 'Recent releases',
-    events: [
-      {
-        timestamp: '2026-01',
-        label: 'v0.0.0 · spec replication',
-        body: '22-section build spec ported to working code.',
-        kind: 'release',
-      },
-      {
-        timestamp: '2026-02',
-        label: 'Phase 1–6 · backend + frontend',
-        body: 'Provider rename, KB pipeline, 12 widget kinds.',
-        kind: 'commit',
-      },
-      {
-        timestamp: '2026-03',
-        label: 'UI polish · gradients + glows',
-        body: 'Brand gradient, role-tinted card hover, in-input live-step overlay.',
-        kind: 'commit',
-      },
-      {
-        timestamp: '2026-04',
-        label: 'Live progress + composer status',
-        body: 'KB hits chip, live-step renders inside the input box itself.',
-        kind: 'commit',
-      },
-      {
-        timestamp: '2026-05',
-        label: 'Rename → OpenCanvas + dependabot zero',
-        body: 'Brand rename, electron 39 bump, all alerts resolved.',
-        kind: 'release',
-      },
-    ],
-  });
-  await sleep(HOLD);
-  await snap(page, '+ timeline (pop)');
-  await sleep(BIG_HOLD);
-  await snap(page, 'timeline (settled)');
-
-  // Kanban — feature progress. Sits in 'related' (column 2) so the
-  // three-column cluster is tight and readable in the hero shot.
-  await placeWidget(page, 'kanban', 'related', {
-    title: 'Roadmap',
-    columns: [
-      {
-        name: 'To do',
-        colour: 'neutral',
-        cards: [
-          { title: 'Voice input mode', priority: 'Medium' },
-          { title: 'Per-widget annotations', tag: 'UX' },
-          { title: 'Mobile companion view' },
-        ],
-      },
-      {
-        name: 'Doing',
-        colour: 'amber',
-        cards: [
-          { title: 'Agentic export → Notion', priority: 'High' },
-          { title: 'Markdown rendering polish', tag: 'styling' },
-        ],
-      },
-      {
-        name: 'Done',
-        colour: 'green',
-        cards: [
-          { title: 'KB hits panel' },
-          { title: 'Floating chat' },
-          { title: 'Mini-map' },
-        ],
-      },
-    ],
-  });
-  await sleep(HOLD);
-  await snap(page, '+ kanban (pop)');
-  await sleep(BIG_HOLD);
-  await snap(page, 'kanban (settled)');
-
-  // Code-block — also in 'related' so it stacks under the kanban.
-  await placeWidget(page, 'code-block', 'related', {
-    title: 'src/agent/tools/place-widget.ts',
-    language: 'typescript',
-    code:
-      "export function placeWidgetTool(): PlaceWidgetToolDef {\n" +
-      "  return tool(\n" +
-      "    'place_widget',\n" +
-      "    /* description … */,\n" +
-      "    inputShape,\n" +
-      "    async (args) => {\n" +
-      "      const validated = validatePayloadForKind(\n" +
-      "        args.kind, args.payload\n" +
-      "      );\n" +
-      "      const id = randomUUID();\n" +
-      "      return { ok: true, id, directive: {\n" +
-      "        type: 'place', id, kind: args.kind,\n" +
-      "        role: args.role, payload: validated,\n" +
-      "      } };\n" +
-      "    },\n" +
-      "  );\n" +
-      "}",
-  });
-  await sleep(HOLD);
-  await snap(page, '+ code-block (pop)');
-  await sleep(BIG_HOLD);
-  await snap(page, 'code-block (settled)');
-
-  // ---------------------------------------------------------------
-  // Beat 5 — expand any cards the dispatcher auto-collapsed
-  // (COLLAPSE_THRESHOLD=3 makes the 4th+ widget start at 44px). For
-  // the demo we want every card readable, so we mass-expand and
-  // re-fit the camera before the hero shot.
-  // ---------------------------------------------------------------
+  // Expand any cards the dispatcher auto-collapsed past the threshold
+  // so every widget is readable in the hero shot.
   await page.evaluate(() => {
-    const editor = window.__opencanvasEditorForDemo__;
-    const shapes = editor.getCurrentPageShapes();
-    for (const s of shapes) {
-      if (!s.type.startsWith('opencanvas:')) continue;
-      const meta = (s.meta ?? {});
-      if (meta.collapsed) {
-        const h = meta.expandedHeight ?? 200;
-        editor.updateShape({
-          id: s.id,
-          type: s.type,
-          props: { ...s.props, h },
-          meta: { ...meta, collapsed: false },
-        });
+    return import('/src/state/editor-ref.ts').then((m) => {
+      const editor = m.getEditor();
+      if (!editor) return;
+      const shapes = editor.getCurrentPageShapes();
+      for (const s of shapes) {
+        if (!s.type.startsWith('opencanvas:')) continue;
+        const meta = s.meta ?? {};
+        if (meta.collapsed) {
+          const h = meta.expandedHeight ?? 200;
+          editor.updateShape({
+            id: s.id, type: s.type,
+            props: { ...s.props, h },
+            meta: { ...meta, collapsed: false },
+          });
+        }
       }
-    }
-    editor.zoomToFit({ animation: { duration: 400 }, inset: 60 });
+      editor.zoomToFit({ animation: { duration: 400 }, inset: 60 });
+    });
   });
   await sleep(700);
-  await snap(page, 'expanded all (hero 1)');
-  await sleep(BIG_HOLD);
+  await snap(page, 'expanded all');
+  await sleep(HERO);
   await snap(page, 'full canvas (hero 2)');
 
-  // Re-open chat for the final beat — emphasises that asking + result
-  // co-exist visually.
-  await setChatWindow(page, { mode: 'open' });
+  // ── Beat 6 — re-open the chat for the final hero shot ──────────
+  await page.evaluate(() => {
+    return import('/src/state/ui-store.ts').then((m) => {
+      m.useUiStore.getState().setChatWindow({ mode: 'open' });
+    });
+  });
   await sleep(HOLD);
   await snap(page, 'chat reopened');
   await sleep(HOLD);
@@ -447,7 +424,7 @@ async function main() {
 
   await browser.close();
 
-  // ---- Stitch ----
+  // ── Stitch ──────────────────────────────────────────────────────
   console.log('[demo] stitching →', GIF_PATH);
   await new Promise((res, rej) => {
     const args = [
