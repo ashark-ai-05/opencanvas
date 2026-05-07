@@ -1231,47 +1231,46 @@
   transition: none;
 }
 
+/* Title bar — minimal, draggable. The whole bar is the drag handle
+   (grip column dropped). 40px tall, generous padding, hairline
+   bottom border. */
 .opencanvas-chat-titlebar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 10px;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border-bottom: 1px solid var(--color-line);
   cursor: grab;
   flex-shrink: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.02) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
 }
 .opencanvas-chat-titlebar:active {
   cursor: grabbing;
 }
+/* Grip column is hidden by default — the whole bar is draggable, the
+   grip glyph was visual noise. Kept as a class so the JSX can still
+   render it (we just don't show the icon). */
 .opencanvas-chat-titlebar-grip {
-  display: inline-flex;
-  align-items: center;
-  color: var(--color-muted);
+  display: none;
 }
 .opencanvas-chat-titlebar-title {
   flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--color-fg-2);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--color-fg);
 }
 .opencanvas-chat-titlebar-actions {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 .opencanvas-chat-titlebar-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   background: transparent;
   border: 1px solid transparent;
@@ -1281,13 +1280,11 @@
 }
 .opencanvas-chat-titlebar-btn:hover {
   color: var(--color-fg);
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 .opencanvas-chat-titlebar-btn[data-danger='true']:hover {
   color: var(--color-fail);
-  border-color: rgba(248, 113, 113, 0.32);
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(248, 113, 113, 0.10);
 }
 
 .opencanvas-chat-body {
@@ -1782,66 +1779,47 @@ header [aria-hidden].size-5.rounded-md {
  * `--opencanvas-chat-angle` (declared further down with @property),
  * so the visible 1px border drifts continuously through violet →
  * pink → cyan and back. Subtle when idle, brighter while streaming. */
+/* Calm glass surface — no animated border. The chat is a workspace,
+   not a Christmas tree. A subtle hairline border with a soft violet
+   glow handles "this is a focused panel" without the conic strobe. */
 .opencanvas-chat-floating {
-  background:
-    linear-gradient(rgba(var(--color-glass-rgb), 0.92), rgba(var(--color-glass-rgb), 0.92)) padding-box,
-    conic-gradient(
-      from var(--opencanvas-chat-angle, 0deg),
-      #a78bfa 0deg,
-      #d946ef 90deg,
-      #ec4899 180deg,
-      #d946ef 270deg,
-      #a78bfa 360deg
-    )
-      border-box;
-  border: 1.5px solid transparent;
-  animation: opencanvas-chat-border-spin 7s linear infinite;
+  background: rgba(var(--color-glass-rgb), 0.92);
+  border: 1px solid var(--color-line-2);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(167, 139, 250, 0.06) inset,
+    0 0 32px -16px rgba(167, 139, 250, 0.18);
   transition:
     width 200ms ease,
     height 200ms ease,
     box-shadow 240ms ease,
-    transform 200ms ease;
+    transform 200ms ease,
+    border-color 240ms ease;
 }
-/* Streaming: keep the conic-spin animation; only speed it up. Setting
-   `animation-duration` alone preserves the `animation-name` from the
-   base rule. (The previous version overrode `animation:` shorthand
-   here, which clobbered the conic-spin and froze the gradient — that
-   showed up as a "stuck" lower border in the user-reported bug.) */
+/* Streaming: subtle border-color shift + a brighter ambient glow.
+   No animated gradient — the streaming pulse at the very top of
+   the panel (header-pulse rule elsewhere) is the "alive" indicator. */
 .opencanvas-chat-floating[data-streaming='true'] {
-  animation-duration: 3.2s;
+  border-color: rgba(167, 139, 250, 0.32);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(167, 139, 250, 0.14) inset,
+    0 0 48px -12px rgba(167, 139, 250, 0.32);
 }
 
-/* Chat title bar — animated gradient sweep while streaming. */
+/* Chat title bar — clean hairline divider, no streaming sweep. */
 .opencanvas-chat-titlebar {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+  background: transparent;
   position: relative;
 }
-.opencanvas-chat-floating[data-streaming='true'] .opencanvas-chat-titlebar::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(167, 139, 250, 0.18) 30%,
-    rgba(217, 70, 239, 0.20) 50%,
-    rgba(236, 72, 153, 0.18) 70%,
-    transparent 100%
-  );
-  background-size: 240% 100%;
-  animation: opencanvas-titlebar-sweep 2.4s linear infinite;
-  pointer-events: none;
-}
-@keyframes opencanvas-titlebar-sweep {
-  from { background-position: 240% 0; }
-  to   { background-position: -140% 0; }
-}
+/* (Streaming title-bar sweep removed — the calm panel uses the
+ *  header-pulse bar at the very top + the inline live-step in the
+ *  composer as its activity cues.) */
 
-/* Composer input — only the BORDER is colored (animated conic). The
-   inside stays a flat dark fill at all times, including focus, so the
-   text area never looks tinted. The focus signal is a brighter outer
-   glow + faster spin; everything else stays the same. */
+/* Composer input — clean hairline border with a single violet glow
+ * on focus. The previous animated conic looked nice in isolation
+ * but bled into the input fill at certain alphas, made the bg
+ * appear tinted, and clashed with the overall calm-glass surface. */
 .opencanvas-chat-body input[type='text'] {
   transition: box-shadow 200ms ease;
 }
@@ -2915,26 +2893,19 @@ header button:hover {
   inherits: false;
   initial-value: 0deg;
 }
+/* Clean composer — single hairline border, soft violet glow on focus.
+   No animated conic; the previous rotating gradient required the
+   input to render its border via background-clip which fought the
+   focus ring + made the inside read as tinted. */
 .opencanvas-chat-input {
-  background:
-    linear-gradient(var(--color-bg-2), var(--color-bg-2)) padding-box,
-    conic-gradient(
-      from var(--opencanvas-input-angle, 0deg),
-      #a78bfa 0deg,
-      #d946ef 90deg,
-      #ec4899 180deg,
-      #d946ef 270deg,
-      #a78bfa 360deg
-    )
-      border-box !important;
-  border: 1.5px solid transparent !important;
-  animation: opencanvas-input-border-spin 9s linear infinite;
+  background: var(--color-bg-2) !important;
+  border: 1px solid var(--color-line-2) !important;
+  transition: border-color 160ms ease, box-shadow 200ms ease;
 }
 .opencanvas-chat-input:focus {
-  animation-duration: 4.5s;
-}
-@keyframes opencanvas-input-border-spin {
-  to { --opencanvas-input-angle: 360deg; }
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.16),
+    0 0 24px -8px rgba(167, 139, 250, 0.4) !important;
 }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -2968,61 +2939,41 @@ header button:hover {
  * framer-motion scale animation on the wrapper, the mark feels alive
  * without ever drawing focus away from content.
  * ──────────────────────────────────────────────────────────────────*/
+/* Static brand dot — calm violet pearl. The previous spinning ring +
+ * breathing core felt busy in the title bar; the new dot just holds
+ * its color, then quietly brightens + glows when the chat is
+ * streaming. Single visible element, no animation when idle. */
 .opencanvas-chat-brand {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
-  margin-right: -2px;
-}
-.opencanvas-chat-brand-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(
-    from var(--opencanvas-chat-angle, 0deg),
-    #a78bfa 0deg,
-    #d946ef 120deg,
-    #ec4899 240deg,
-    #a78bfa 360deg
-  );
-  filter: blur(0.4px);
-  animation: opencanvas-chat-brand-spin 6s linear infinite;
-  opacity: 0.85;
-}
-.opencanvas-chat-brand[data-active='true'] .opencanvas-chat-brand-ring {
-  animation-duration: 2.6s;
-  opacity: 1;
-  filter: blur(0px) drop-shadow(0 0 6px rgba(167, 139, 250, 0.55));
 }
 .opencanvas-chat-brand-core {
-  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: radial-gradient(
     circle at 35% 30%,
     #fafafa 0%,
-    #ddd6fe 60%,
+    #ddd6fe 55%,
     #a78bfa 100%
   );
-  box-shadow: 0 0 6px rgba(167, 139, 250, 0.55);
-  animation: opencanvas-chat-brand-pulse 3.2s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.45);
+  transition: box-shadow 220ms ease, transform 220ms ease;
 }
 .opencanvas-chat-brand[data-active='true'] .opencanvas-chat-brand-core {
-  animation-duration: 1.6s;
-  box-shadow: 0 0 10px rgba(240, 171, 252, 0.7);
-}
-@keyframes opencanvas-chat-brand-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  box-shadow:
+    0 0 12px rgba(167, 139, 250, 0.7),
+    0 0 24px rgba(167, 139, 250, 0.35);
+  animation: opencanvas-chat-brand-pulse 1.4s ease-in-out infinite;
 }
 @keyframes opencanvas-chat-brand-pulse {
-  0%, 100% { opacity: 0.85; transform: scale(1); }
-  50%      { opacity: 1;    transform: scale(1.15); }
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.18); opacity: 0.85; }
 }
 
 /* ──────────────────────────────────────────────────────────────────
