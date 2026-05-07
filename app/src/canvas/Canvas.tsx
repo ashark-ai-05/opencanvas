@@ -20,6 +20,7 @@ import { KanbanShapeUtil } from './shapes/kanban';
 import { StickyNoteShapeUtil } from './shapes/sticky-note';
 import { GenericShapeUtil } from './shapes/generic';
 import { TimeShapeUtil } from './shapes/time';
+import { PluginShapeUtil } from './shapes/plugin';
 import { computeCanvasSnapshot } from './snapshot';
 import { setLatestSnapshot } from '../state/snapshot-ref';
 import { setEditor } from '../state/editor-ref';
@@ -27,6 +28,7 @@ import { useTemplateStore } from '../state/template-store';
 import { useCanvasStats } from '../state/canvas-stats-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useThemeStore } from '../state/theme-store';
+import { useCanvasHistory } from '../state/canvas-history-store';
 // SearchBar + TemplatePicker removed: all searches now flow through the
 // floating chat (the agent runs search_kb, plus a parallel /v1/search
 // call surfaces inline KB hits via <KbHits />). Templates are switched
@@ -56,6 +58,9 @@ const customShapeUtils = [
   GenericShapeUtil,
   // Live time widget — clock / timer / stopwatch / pomodoro modes.
   TimeShapeUtil,
+  // Plugin widget — renders externally-registered kinds in a sandboxed
+  // iframe with a postMessage prop bridge.
+  PluginShapeUtil,
 ];
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -94,12 +99,24 @@ export function Canvas() {
       // Persist tldraw snapshot back into the active conversation. Source
       // filter is dropped — agent-initiated changes (place_widget) need to
       // save too. Debounce so rapid drag/resize events don't thrash.
+      // The same debounce drives history capture so a 30s typing burst
+      // becomes one history entry, not 60.
+      useCanvasHistory.getState().hydrate(activeId);
+      let lastHistoryAt = 0;
+      const HISTORY_MIN_GAP_MS = 8_000;
       editor.store.listen(() => {
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
         saveTimerRef.current = setTimeout(() => {
-          useConversationsStore
-            .getState()
-            .saveCanvasSnapshot(activeId, editor.getSnapshot());
+          const snap = editor.getSnapshot();
+          useConversationsStore.getState().saveCanvasSnapshot(activeId, snap);
+          // Only push to history when at least HISTORY_MIN_GAP_MS has
+          // passed since the last entry — keeps the timeline navigable
+          // (no 200 entries in 30 seconds during a heavy edit).
+          const now = Date.now();
+          if (now - lastHistoryAt >= HISTORY_MIN_GAP_MS) {
+            useCanvasHistory.getState().push(activeId, snap);
+            lastHistoryAt = now;
+          }
         }, SAVE_DEBOUNCE_MS);
       });
 

@@ -18,6 +18,7 @@ import {
   type KbRefreshSpec,
   type WebRefreshSpec,
 } from './refresh-scheduler.js';
+import { WidgetRegistry } from './widget-registry.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -308,6 +309,18 @@ export class BackendState {
 
   setLatestSnapshot(snapshot: CanvasSnapshot | null): void {
     this.latestSnapshot = snapshot;
+  }
+
+  /**
+   * Plugin widget registry. External processes register custom kinds
+   * via POST /v1/canvas/widget-kinds; the dispatcher's 'plugin' shape
+   * looks them up by name to render via an iframe / web-component /
+   * vega-lite descriptor. Single global instance per backend.
+   */
+  private widgetRegistry: WidgetRegistry | null = null;
+  getWidgetRegistry(): WidgetRegistry {
+    if (!this.widgetRegistry) this.widgetRegistry = new WidgetRegistry();
+    return this.widgetRegistry;
   }
 
   async shutdown(): Promise<void> {

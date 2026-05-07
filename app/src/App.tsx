@@ -14,6 +14,7 @@ import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
 import { HeaderDrawTools } from './components/HeaderDrawTools';
 import { ThemeToggle } from './components/ThemeToggle';
+import { HistoryScrubber } from './components/HistoryScrubber';
 import { useCanvasStats } from './state/canvas-stats-store';
 import { useChatActions } from './state/chat-actions-store';
 import { useConversationsStore } from './state/conversations-store';
@@ -136,6 +137,7 @@ export function App() {
           <HeaderCanvasControls />
           <span className="opencanvas-header-divider" aria-hidden />
           <HeaderDrawTools />
+          <HistoryScrubber />
           <ThemeToggle />
           <button
             type="button"

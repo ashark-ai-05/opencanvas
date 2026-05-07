@@ -322,6 +322,24 @@ export const TimePayload = z.object({
   ...baseAttribution,
 });
 
+/**
+ * Plugin widget — wraps a registered external kind. The renderer is
+ * looked up by `pluginKind` in the browser's registry cache (synced
+ * from /v1/canvas/widget-kinds). `props` is the raw payload the agent
+ * emitted; whatever shape the plugin's renderer expects.
+ *
+ * No deep validation here — the registered kind owns its own schema.
+ * V1 is intentionally permissive: a plugin can ship today and add
+ * stricter validation later without an OpenCanvas release.
+ */
+export const PluginPayload = z.object({
+  pluginKind: z.string().min(1),
+  props: z.record(z.string(), z.unknown()).default({}),
+  /** Optional title — surfaces in the card header + chat anchor. */
+  title: z.string().optional(),
+  ...baseAttribution,
+});
+
 export const StickyNotePayload = z.object({
   body: z.string(),
   author: z.string().optional(),
@@ -391,6 +409,7 @@ const PAYLOAD_SCHEMAS = {
   'sticky-note': StickyNotePayload,
   generic: GenericPayload,
   time: TimePayload,
+  plugin: PluginPayload,
 } as const satisfies Record<WidgetKind, z.ZodTypeAny>;
 
 /** Re-export for the auto-classifier (which needs to know which kinds exist

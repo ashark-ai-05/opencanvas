@@ -96,6 +96,24 @@ export function canvasRoute(state: BackendState): Hono {
       // when no events have queued yet.
       await s.write(`: connected\n\n`);
 
+      // Subscribe to registry changes so browser plugin cache stays
+      // in sync without polling. Plugin events ride the SAME SSE
+      // channel as directives (different `event:` line) — easier than
+      // a second connection.
+      const registry = state.getWidgetRegistry();
+      const unsubRegistry = registry.subscribe((event) => {
+        const data = JSON.stringify(event);
+        // Fire-and-forget; if the writer is closed the catch swallows.
+        s.write(`event: widget-kind\ndata: ${data}\n\n`).catch(() => {});
+      });
+      // Snapshot the current kinds on connect so a freshly-loaded
+      // browser tab can populate its cache without a separate GET.
+      for (const descriptor of registry.list()) {
+        await s.write(
+          `event: widget-kind\ndata: ${JSON.stringify({ type: 'register', descriptor })}\n\n`,
+        );
+      }
+
       try {
         for await (const event of sub) {
           await s.write(
@@ -103,6 +121,7 @@ export function canvasRoute(state: BackendState): Hono {
           );
         }
       } finally {
+        unsubRegistry();
         sub.close();
       }
     });
@@ -183,7 +202,28 @@ export function canvasRoute(state: BackendState): Hono {
       }
     }
 
-    // Unknown kind → straight to classifier.
+    // Unknown built-in kind — first try the plugin registry. If a
+    // plugin claims this kind, wrap as a 'plugin' directive so the
+    // browser's PluginShape dispatches via the registered renderer.
+    if (state.getWidgetRegistry().has(kindStr)) {
+      const directive: ToolDirective = {
+        type: 'place',
+        id,
+        kind: 'plugin',
+        role: body.role,
+        payload: {
+          pluginKind: kindStr,
+          props: body.payload,
+          ...(typeof body.payload['title'] === 'string'
+            ? { title: body.payload['title'] }
+            : {}),
+        },
+      };
+      push(state, convId, directive);
+      return c.json({ ok: true, id, directive });
+    }
+
+    // Truly unknown — auto-classifier fallback to generic.
     const generic = classifyToGeneric(kindStr, body.payload);
     const directive: ToolDirective = {
       type: 'place',
@@ -437,6 +477,59 @@ export function canvasRoute(state: BackendState): Hono {
     });
     state.endExternalStream(id);
     return c.json({ ok: true });
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // /widget-kinds — plugin registry. External processes register
+  // custom widget kinds; the browser PluginShape renders via the
+  // descriptor's renderer.iframe.srcdoc with a postMessage prop bridge.
+  // ────────────────────────────────────────────────────────────────
+  r.post('/v1/canvas/widget-kinds', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as {
+      kind?: string;
+      label?: string;
+      description?: string;
+      renderer?: { type?: string; srcdoc?: string; sandbox?: string;
+        defaultSize?: { w?: number; h?: number } };
+    };
+    if (!body.kind || typeof body.kind !== 'string') {
+      return c.json({ error: 'kind required' }, 400);
+    }
+    if ((WIDGET_KINDS as readonly string[]).includes(body.kind)) {
+      return c.json({ error: `cannot override built-in kind: ${body.kind}` }, 400);
+    }
+    if (
+      !body.renderer ||
+      body.renderer.type !== 'iframe' ||
+      typeof body.renderer.srcdoc !== 'string'
+    ) {
+      return c.json({ error: 'renderer.{type:"iframe", srcdoc} required' }, 400);
+    }
+    const stored = state.getWidgetRegistry().register({
+      kind: body.kind,
+      ...(body.label ? { label: body.label } : {}),
+      ...(body.description ? { description: body.description } : {}),
+      renderer: {
+        type: 'iframe',
+        srcdoc: body.renderer.srcdoc,
+        sandbox: body.renderer.sandbox,
+        defaultSize:
+          body.renderer.defaultSize?.w && body.renderer.defaultSize.h
+            ? { w: body.renderer.defaultSize.w, h: body.renderer.defaultSize.h }
+            : undefined,
+      },
+    });
+    return c.json({ ok: true, descriptor: stored });
+  });
+
+  r.delete('/v1/canvas/widget-kinds/:kind', async (c) => {
+    const removed = state.getWidgetRegistry().unregister(c.req.param('kind'));
+    return c.json({ ok: removed });
+  });
+
+  r.get('/v1/canvas/widget-kinds', async (c) => {
+    const kinds = state.getWidgetRegistry().list();
+    return c.json({ kinds });
   });
 
   // ────────────────────────────────────────────────────────────────

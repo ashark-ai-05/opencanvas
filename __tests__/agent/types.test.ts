@@ -24,6 +24,7 @@ describe('agent/types', () => {
       'sticky-note',
       'generic',
       'time',
+      'plugin',
     ]);
   });
 

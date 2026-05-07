@@ -3,6 +3,7 @@ import { applyToolDirective } from '../canvas/dispatcher';
 import { getEditor } from './editor-ref';
 import { useTemplateStore } from './template-store';
 import { useConversationsStore } from './conversations-store';
+import { usePluginRegistry, type PluginKindDescriptor } from './plugin-registry-store';
 import type { ToolDirective } from '../../../src/agent/types';
 
 /**
@@ -62,6 +63,24 @@ export function useCanvasExternalEvents(): void {
           applyToolDirective(editor, directive, tplId);
         } catch (e) {
           console.warn('[canvas-events] bad directive', e);
+        }
+      });
+
+      // Plugin registry sync. The backend ships the current registry
+      // snapshot on connect (one register event per kind), then streams
+      // subsequent register/unregister events. The browser cache stays
+      // in lockstep without a separate poll/GET.
+      es.addEventListener('widget-kind', (ev) => {
+        try {
+          const event = JSON.parse((ev as MessageEvent).data) as
+            | { type: 'register'; descriptor: PluginKindDescriptor }
+            | { type: 'unregister'; kind: string };
+          const store = usePluginRegistry.getState();
+          if (event.type === 'register') store.upsert(event.descriptor);
+          else store.remove(event.kind);
+          if (!store.hydrated) store.setHydrated(true);
+        } catch (e) {
+          console.warn('[canvas-events] bad widget-kind event', e);
         }
       });
 

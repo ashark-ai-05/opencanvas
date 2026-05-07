@@ -22,6 +22,7 @@ export const WIDGET_KINDS = [
   'sticky-note',
   'generic',
   'time',
+  'plugin',
 ] as const;
 export type WidgetKind = (typeof WIDGET_KINDS)[number];
 

@@ -63,6 +63,7 @@ const ANCHOR_EMOJI: Record<string, string> = {
   'sticky-note': '📒',
   generic: '🧱',
   time: '⏰',
+  plugin: '🔌',
 };
 
 /**

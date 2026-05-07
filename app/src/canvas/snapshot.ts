@@ -24,6 +24,7 @@ const SHAPE_TO_KIND: Record<string, WidgetKind> = {
   'opencanvas:sticky-note': 'sticky-note',
   'opencanvas:generic': 'generic',
   'opencanvas:time': 'time',
+  'opencanvas:plugin': 'plugin',
 };
 
 export type CanvasSnapshotShape = {
