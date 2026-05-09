@@ -122,6 +122,57 @@ describe('register_widget_kind tool', () => {
     expect(desc.description).toMatch(/Pass \{title/);
   });
 
+  it('auto-places an instance when `instance` is provided (single-call ergonomics)', async () => {
+    const result = await handler(
+      {
+        kind: 'crypto-bubbles',
+        label: 'Crypto Bubbles',
+        description: 'Floating crypto bubbles sized by market cap. Pass {coins}.',
+        srcdoc: '<!doctype html><html><body>bubbles here</body></html>',
+        instance: {
+          role: 'primary',
+          payload: { coins: ['BTC', 'ETH'], title: 'Top crypto' },
+        },
+      },
+      undefined,
+    );
+    expect(result.isError).toBeFalsy();
+    const data = JSON.parse(result.content[0]!.text!);
+    expect(data.ok).toBe(true);
+    expect(data.descriptor.kind).toBe('crypto-bubbles');
+    // The placement directive comes back so the dispatcher places it on the canvas.
+    expect(data.placed).toBeDefined();
+    expect(data.placed.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(data.placed.directive.type).toBe('place');
+    expect(data.placed.directive.kind).toBe('plugin');
+    expect(data.placed.directive.role).toBe('primary');
+    expect(data.placed.directive.payload.pluginKind).toBe('crypto-bubbles');
+    expect(data.placed.directive.payload.props).toEqual({
+      coins: ['BTC', 'ETH'],
+      title: 'Top crypto',
+    });
+    // Title hoisted from props (used by card header).
+    expect(data.placed.directive.payload.title).toBe('Top crypto');
+    // Registry should contain it too.
+    expect(registry.get('crypto-bubbles')).toBeDefined();
+  });
+
+  it('does NOT auto-place when `instance` is omitted (registers only)', async () => {
+    const result = await handler(
+      {
+        kind: 'lonely-template',
+        label: 'Lonely',
+        description: 'A template with no auto-instance for whatever reason.',
+        srcdoc: '<!doctype html><html><body>nope</body></html>',
+      },
+      undefined,
+    );
+    const data = JSON.parse(result.content[0]!.text!);
+    expect(data.ok).toBe(true);
+    expect(data.placed).toBeUndefined();
+    expect(registry.get('lonely-template')).toBeDefined();
+  });
+
   it('rejects invalid kind names via Zod schema (uppercase, special chars, too short)', () => {
     // The SDK's tool() wrapper applies Zod validation at the MCP protocol
     // layer, not when .handler() is called directly in unit tests. We test
