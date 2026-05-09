@@ -26,10 +26,17 @@ describe('applyToolDirective — focus', () => {
     expect(getShape).toHaveBeenCalledWith('shape:w-42');
   });
 
-  it('throws when the shape is not found', () => {
-    const editor = { getShape: () => undefined, zoomToBounds: vi.fn() } as never;
+  it('warns + no-ops when the shape is not found (was throwing — caused tool turns to fail on hallucinated/deleted ids)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const zoomToBounds = vi.fn();
+    const editor = { getShape: () => undefined, zoomToBounds } as never;
     expect(() =>
       applyToolDirective(editor, { type: 'focus', id: 'missing' }, 'ask-anything'),
-    ).toThrow(/not found/);
+    ).not.toThrow();
+    expect(zoomToBounds).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('focus: shape not found for id missing'),
+    );
+    warnSpy.mockRestore();
   });
 });
