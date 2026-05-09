@@ -766,22 +766,20 @@
   flex-direction: column;
   gap: 4px;
   padding: 6px;
-  border-radius: 12px;
-  background:
-    linear-gradient(rgba(var(--color-glass-rgb), 0.78), rgba(var(--color-glass-rgb), 0.78)) padding-box,
-    var(--grad-brand-soft) border-box;
-  border: 1px solid transparent;
-  backdrop-filter: blur(16px);
-  box-shadow:
-    0 12px 30px -10px rgba(0, 0, 0, 0.6),
-    0 0 24px -8px rgba(167, 139, 250, 0.3);
-  transition: transform 160ms ease, box-shadow 200ms ease, opacity 160ms ease;
+  border-radius: 10px;
+  background: rgb(var(--color-glass-rgb) / 0.72);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  box-shadow: var(--depth-2-shadow);
+  transition:
+    box-shadow var(--dur-firm) var(--ease-firm),
+    border-color var(--dur-firm) var(--ease-firm),
+    opacity var(--dur-firm) var(--ease-firm);
 }
 .opencanvas-canvas-map:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 16px 36px -8px rgba(0, 0, 0, 0.65),
-    0 0 32px -6px rgba(167, 139, 250, 0.45);
+  box-shadow: var(--depth-3-shadow);
+  border-color: var(--color-line-2);
 }
 .opencanvas-canvas-map-header {
   display: inline-flex;
@@ -801,12 +799,14 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: 6px;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0)),
-    rgba(0, 0, 0, 0.4);
+    radial-gradient(circle at 30% 25%, rgba(167, 139, 250, 0.08), transparent 60%),
+    radial-gradient(circle at 75% 80%, rgba(45, 212, 191, 0.06), transparent 60%),
+    rgb(var(--color-glass-rgb) / 0.55);
   cursor: crosshair;
   user-select: none;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 /* ──────────────────────────────────────────────────────────────────
