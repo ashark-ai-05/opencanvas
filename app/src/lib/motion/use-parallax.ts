@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import {
   useMotionValue,
   useSpring,
@@ -22,6 +22,15 @@ interface UseParallaxReturn {
   rotateX: MotionValue<number>;
   rotateY: MotionValue<number>;
   translateZ: MotionValue<number>;
+  /**
+   * True from first onPointerMove until ~400ms after onPointerLeave (long
+   * enough for the spring to settle near 0). Consumers should gate their
+   * `transform`/`transformPerspective` style on this flag — when false, the
+   * surface should render WITHOUT 3D transforms so text stays on the CPU
+   * rasterizer with full subpixel hinting (3D-transformed layers are
+   * texture-rasterized and ~5–10% softer).
+   */
+  isActive: boolean;
   bind: {
     onPointerMove: (e: PointerEvent | React.PointerEvent) => void;
     onPointerLeave: () => void;
@@ -61,6 +70,18 @@ export function useParallax(opts: UseParallaxOptions = {}): UseParallaxReturn {
 
   const reducedMotion = useReducedMotion();
 
+  // isActive: true while the surface is being interacted with, false after
+  // the spring has had time to settle back to 0. Gates the 3D transform
+  // pipeline so resting cards keep crisp CPU-rasterized text.
+  const [isActive, setIsActive] = useState(false);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    };
+  }, []);
+
   // When reduced motion is active, expose constant 0 motion values.
   // We can't conditionally call hooks, so we always create them and
   // return constants instead.
@@ -87,6 +108,12 @@ export function useParallax(opts: UseParallaxOptions = {}): UseParallaxReturn {
       if (rect.width === 0 || rect.height === 0) return;
       const px = (e.clientX - rect.left) / rect.width - 0.5;
       const py = (e.clientY - rect.top) / rect.height - 0.5;
+      // Cancel any pending settle — pointer is back inside the surface.
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+      setIsActive((prev) => prev || true);
       rawX.set(px);
       rawY.set(py);
     },
@@ -96,6 +123,15 @@ export function useParallax(opts: UseParallaxOptions = {}): UseParallaxReturn {
   const onPointerLeave = useCallback(() => {
     rawX.set(0);
     rawY.set(0);
+    // Wait for the spring to settle near 0 before flipping isActive false.
+    // 'firm' spring settles in ~300ms; 450ms gives a safety margin so we
+    // don't strip the 3D context mid-animation (which would snap the card
+    // visibly).
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => {
+      setIsActive(false);
+      settleTimerRef.current = null;
+    }, 450);
   }, [rawX, rawY]);
 
   if (reducedMotion) {
@@ -104,6 +140,7 @@ export function useParallax(opts: UseParallaxOptions = {}): UseParallaxReturn {
       rotateX: zeroX,
       rotateY: zeroY,
       translateZ: zeroZ,
+      isActive: false,
       bind: { onPointerMove, onPointerLeave },
     };
   }
@@ -113,6 +150,7 @@ export function useParallax(opts: UseParallaxOptions = {}): UseParallaxReturn {
     rotateX,
     rotateY,
     translateZ,
+    isActive,
     bind: { onPointerMove, onPointerLeave },
   };
 }

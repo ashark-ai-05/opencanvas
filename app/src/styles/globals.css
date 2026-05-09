@@ -10,8 +10,8 @@
   --color-bg:       #0a0a0c;     /* neutral near-black */
   --color-bg-2:     #131318;     /* surfaces / panels */
   --color-bg-3:     #1c1c22;     /* cards (true neutral, was violet-tinted) */
-  --color-line:     rgba(255, 255, 255, 0.09);
-  --color-line-2:   rgba(255, 255, 255, 0.14);
+  --color-line:     rgba(255, 255, 255, 0.13);
+  --color-line-2:   rgba(255, 255, 255, 0.18);
   /* Glass-surface RGB triplet — used inside rgba() for panels / popovers
      / chat shell so they tint to the theme. Per-theme overrides swap
      this to the appropriate background color (e.g. white in light
@@ -19,7 +19,7 @@
      replaced with `rgba(var(--color-glass-rgb), X)`. */
   --color-glass-rgb: 10, 10, 13;
   --color-fg:       #fafafa;     /* zinc-50 — cleaner pure white */
-  --color-fg-2:     #d4d4d8;
+  --color-fg-2:     #e4e4e7;     /* zinc-200 — brighter secondary, was zinc-300 */
   --color-muted:    #71717a;
   --color-muted-2:  #52525b;
 

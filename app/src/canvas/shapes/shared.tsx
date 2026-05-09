@@ -126,7 +126,7 @@ export function CardFrame({
     return () => clearTimeout(t);
   }, [fresh, shape.id]);
 
-  const { ref, rotateX, rotateY, translateZ, bind } = useParallax({ maxTilt: 3 });
+  const { ref, rotateX, rotateY, translateZ, bind, isActive } = useParallax({ maxTilt: 3 });
 
   const style: CSSProperties = { width: shape.props.w, height: shape.props.h };
   const sources = Array.isArray(shape.props.sources)
@@ -137,6 +137,21 @@ export function CardFrame({
     shape.props.source.length > 0 &&
     !shape.props.url;
 
+  // Gate the 3D transform style on isActive — when the card isn't being
+  // hovered, render WITHOUT rotateX/Y/perspective so text rasterizes via
+  // CPU subpixel hinting (3D-transformed layers texture-rasterize, ~5–10%
+  // softer text). isActive remains true through pointer-leave + spring
+  // settle, so the card doesn't snap mid-animation when the cursor leaves.
+  const activeStyle = isActive
+    ? ({
+        ...style,
+        rotateX,
+        rotateY,
+        z: translateZ,
+        transformPerspective: 1200,
+      } as CSSProperties)
+    : style;
+
   return (
     <motion.div
       ref={ref as React.RefObject<HTMLDivElement>}
@@ -145,13 +160,7 @@ export function CardFrame({
       data-role={role}
       data-fresh={fresh ? 'true' : 'false'}
       data-collapsed={collapsed ? 'true' : 'false'}
-      style={{
-        ...style,
-        rotateX,
-        rotateY,
-        z: translateZ,
-        transformPerspective: 1200,
-      }}
+      style={activeStyle}
     >
       {children}
       {showSingleSource && <CardSourceFooter source={shape.props.source!} />}
