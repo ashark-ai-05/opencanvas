@@ -420,7 +420,15 @@ export function applyToolDirective(
     }
     case 'focus': {
       const shape = editor.getShape(('shape:' + directive.id) as never);
-      if (!shape) throw new Error(`shape not found for id: ${directive.id}`);
+      if (!shape) {
+        // Agent may reference a hallucinated id, a freshly-deleted shape,
+        // or a shape from a different conversation. Warn + return rather
+        // than throwing — the throw was bubbling to the chat as a hard
+        // error and breaking the turn for what's a recoverable miss.
+        // Matches the 'update' case's handling at line 351.
+        console.warn(`[dispatcher] focus: shape not found for id ${directive.id}`);
+        return;
+      }
       const sx = (shape as { x: number }).x;
       const sy = (shape as { y: number }).y;
       const sw = (shape as { props: { w?: number } }).props.w ?? 320;
@@ -511,9 +519,14 @@ export function applyToolDirective(
       const from = editor.getShape(('shape:' + directive.fromId) as never);
       const to = editor.getShape(('shape:' + directive.toId) as never);
       if (!from || !to) {
-        throw new Error(
-          `link: missing shape (from=${directive.fromId}, to=${directive.toId})`,
+        // Either side may be hallucinated, deleted, or from another
+        // conversation. Warn + return rather than throwing — the throw
+        // was bubbling to the chat and breaking the turn for what's a
+        // recoverable miss. Matches the 'update' + 'focus' cases.
+        console.warn(
+          `[dispatcher] link: missing shape (from=${directive.fromId}, to=${directive.toId})`,
         );
+        return;
       }
       const fx =
         (from as { x: number }).x +

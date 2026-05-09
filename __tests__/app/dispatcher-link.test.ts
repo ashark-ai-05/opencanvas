@@ -51,10 +51,12 @@ describe('applyToolDirective — link', () => {
     expect(arg.props.text).toBe('');
   });
 
-  it('throws when either endpoint shape is missing', () => {
+  it('warns + no-ops when either endpoint shape is missing (was throwing — caused tool turns to fail on hallucinated/deleted ids)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const createShape = vi.fn();
     const editor = {
       getShape: vi.fn().mockReturnValue(undefined),
-      createShape: vi.fn(),
+      createShape,
     } as never;
     expect(() =>
       applyToolDirective(
@@ -62,6 +64,11 @@ describe('applyToolDirective — link', () => {
         { type: 'link', linkId: 'l-3', fromId: 'w-x', toId: 'w-y' },
         'ask-anything',
       ),
-    ).toThrow(/missing shape/);
+    ).not.toThrow();
+    expect(createShape).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('link: missing shape'),
+    );
+    warnSpy.mockRestore();
   });
 });
