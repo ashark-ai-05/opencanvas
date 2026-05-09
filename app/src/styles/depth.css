@@ -1,0 +1,69 @@
+/* app/src/styles/depth.css
+ *
+ * Spatial / Ambient depth design tokens.
+ *
+ * - Depth scale: 4 levels of z-axis layering, each bundling shadow + inset
+ *   highlight. The inset highlight reads as "lit from above" — without it,
+ *   deep shadows look like falling holes.
+ * - Blur scale: backdrop-filter intensities. Each step ≈ +30% GPU cost.
+ * - Glass utilities: composed via Tailwind v4 @utility — apply with
+ *   className="glass-thin|medium|heavy". Each composes --color-glass-rgb
+ *   (already theme-aware via globals.css per-theme blocks).
+ * - Motion: ease/duration tokens for surfaces using CSS transitions
+ *   instead of framer-motion springs.
+ *
+ * Spec: docs/superpowers/specs/2026-05-09-modernise-ui-design.md
+ */
+
+:root {
+  /* Depth scale */
+  --depth-1-shadow:
+    0 1px 2px -1px rgb(0 0 0 / 0.30);
+  --depth-2-shadow:
+    0 4px 16px -6px rgb(0 0 0 / 0.40),
+    0 0 0 1px rgb(255 255 255 / 0.04) inset;
+  --depth-3-shadow:
+    0 12px 32px -10px rgb(0 0 0 / 0.50),
+    0 0 0 1px rgb(255 255 255 / 0.05) inset;
+  --depth-4-shadow:
+    0 22px 48px -14px rgb(0 0 0 / 0.55),
+    0 0 32px -4px var(--role-color-soft, var(--role-primary-soft)),
+    0 0 0 1px rgb(255 255 255 / 0.08) inset;
+
+  /* Blur scale */
+  --blur-thin:   blur(14px) saturate(140%);
+  --blur-medium: blur(20px) saturate(160%);
+  --blur-heavy:  blur(28px) saturate(180%);
+
+  /* CSS-only motion (for surfaces not on framer-motion) */
+  --ease-soft:   cubic-bezier(0.22, 1.00, 0.36, 1.00);
+  --ease-firm:   cubic-bezier(0.40, 0.00, 0.20, 1.00);
+  --dur-soft:    280ms;
+  --dur-firm:    200ms;
+  --dur-snappy:  140ms;
+}
+
+/* Glass recipe utilities. Apply via className="glass-thin" etc., or via
+ * @apply inside an existing class definition. Each utility composes the
+ * theme-aware --color-glass-rgb triplet (defined per :root[data-theme=*]
+ * in globals.css) with a blur-scale step. */
+@utility glass-thin {
+  background: rgb(var(--color-glass-rgb) / 0.62);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-thin);
+  -webkit-backdrop-filter: var(--blur-thin);
+}
+
+@utility glass-medium {
+  background: rgb(var(--color-glass-rgb) / 0.72);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+}
+
+@utility glass-heavy {
+  background: rgb(var(--color-glass-rgb) / 0.82);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-heavy);
+  -webkit-backdrop-filter: var(--blur-heavy);
+}
