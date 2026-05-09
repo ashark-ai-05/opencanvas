@@ -15,7 +15,6 @@ import { SchedulesPanel } from './components/SchedulesPanel';
 import { RecallPanel } from './components/RecallPanel';
 import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
-import { TemplatePicker } from './components/TemplatePicker';
 import { HeaderDrawTools } from './components/HeaderDrawTools';
 import { HistoryScrubber } from './components/HistoryScrubber';
 import { useCanvasStats } from './state/canvas-stats-store';
@@ -141,7 +140,6 @@ export function App() {
           )}
           <span className="opencanvas-header-divider" aria-hidden />
           <HeaderCanvasControls />
-          <TemplatePicker />
           <span className="opencanvas-header-divider" aria-hidden />
           <HeaderDrawTools />
           <HistoryScrubber />
