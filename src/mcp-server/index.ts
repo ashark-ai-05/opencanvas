@@ -43,6 +43,16 @@ const AddTaskArgs = z.object({
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   notes: z.string().optional(),
 });
+const RegisterWidgetKindArgs = z.object({
+  kind: z.string().regex(/^[a-z][a-z0-9-]{2,30}$/),
+  label: z.string().min(1).max(40),
+  description: z.string().min(20),
+  srcdoc: z.string().min(50),
+  default_size: z.object({
+    w: z.number().int().min(120).max(1200),
+    h: z.number().int().min(80).max(900),
+  }).optional(),
+});
 const CompleteTaskArgs = z.object({ id: z.string() });
 const ReadNotesArgs = z.object({}).strict();
 const AppendToNotesArgs = z.object({
@@ -203,6 +213,29 @@ const TOOLS = [
       required: ['text'],
     },
   },
+  {
+    name: 'register_widget_kind',
+    description:
+      'Register a new widget kind at runtime so future place_widget calls can use it with just a small payload (instead of resending the full HTML each time). Use for REPEAT patterns ("stock-ticker", "weather-card") where the user will want multiple instances. For one-shot novel renders, use the built-in `html` widget instead.\n\nThe registered widget renders in a sandboxed iframe (allow-scripts only). srcdoc must read props from `window.opencanvas?.props` on load + listen for "opencanvas:props" events for live updates. Returns the registered descriptor on success, or an error if the kind already exists.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        kind: { type: 'string', pattern: '^[a-z][a-z0-9-]{2,30}$' },
+        label: { type: 'string', minLength: 1, maxLength: 40 },
+        description: { type: 'string', minLength: 20 },
+        srcdoc: { type: 'string', minLength: 50 },
+        default_size: {
+          type: 'object',
+          properties: {
+            w: { type: 'integer', minimum: 120, maximum: 1200 },
+            h: { type: 'integer', minimum: 80, maximum: 900 },
+          },
+          required: ['w', 'h'],
+        },
+      },
+      required: ['kind', 'label', 'description', 'srcdoc'],
+    },
+  },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
@@ -288,6 +321,24 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         const saved = out as { body: string; updatedAt: number };
         return {
           content: [{ type: 'text', text: JSON.stringify({ ok: true, body: saved.body, updated_at: saved.updatedAt }) }],
+        };
+      }
+      case 'register_widget_kind': {
+        const parsed = RegisterWidgetKindArgs.parse(args);
+        const body: Record<string, unknown> = {
+          kind: parsed.kind,
+          label: parsed.label,
+          description: parsed.description,
+          renderer: {
+            type: 'iframe',
+            sandbox: 'allow-scripts',
+            srcdoc: parsed.srcdoc,
+            ...(parsed.default_size ? { defaultSize: parsed.default_size } : {}),
+          },
+        };
+        const out = await backendPost('/v1/canvas/widget-kinds', body);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ ok: true, descriptor: out }) }],
         };
       }
       default:

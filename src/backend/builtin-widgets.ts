@@ -15,6 +15,19 @@ import type { WidgetRegistry } from './widget-registry.js';
  */
 export function registerBuiltinWidgets(registry: WidgetRegistry): void {
   registry.register({
+    kind: 'html',
+    label: 'HTML',
+    description:
+      'Render arbitrary HTML in a sandboxed iframe. Pass {html} as the prop — the entire HTML document or fragment to render. The HTML executes in an `allow-scripts`-only sandbox: it can run JavaScript, fetch from CDNs (e.g., Tailwind, D3, Three.js, Chart.js), and render anything visual, but cannot access localStorage, cookies, or the parent DOM. Use this for one-shot novel renders where there is no reusable template — for repeat patterns, use `register_widget_kind` first.',
+    renderer: {
+      type: 'iframe',
+      sandbox: 'allow-scripts',
+      defaultSize: { w: 480, h: 320 },
+      srcdoc: HTML_SRCDOC,
+    },
+  });
+
+  registry.register({
     kind: 'chart',
     label: 'Chart',
     description:
@@ -47,6 +60,75 @@ export function registerBuiltinWidgets(registry: WidgetRegistry): void {
     },
   });
 }
+
+/**
+ * HTML widget renderer template.
+ *
+ * A thin shim that takes `window.opencanvas.props.html` and renders it
+ * inside a NESTED sandboxed iframe (srcdoc=props.html). The nested iframe
+ * inherits the outer sandbox = `allow-scripts` only, with no
+ * `allow-same-origin` — so user-supplied HTML cannot access the parent
+ * iframe's DOM, localStorage, or cookies. This double-sandboxing is the
+ * standard pattern for safely rendering user-supplied HTML.
+ *
+ * Shows a friendly empty state when the `html` prop is absent.
+ */
+const HTML_SRCDOC = `<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;font-family:'Inter',system-ui,sans-serif}
+#wrap{height:100%;width:100%;display:flex;align-items:stretch;justify-content:stretch}
+.empty{color:#a1a1aa;font-size:12px;padding:24px;text-align:center;line-height:1.5}
+.empty .ck{background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;color:#ddd6fe;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
+</style></head>
+<body>
+<div id="wrap"></div>
+<script>
+(function(){
+  var wrap = document.getElementById('wrap');
+  var currentFrame = null;
+  var currentEmpty = null;
+  function clearWrap(){
+    while(wrap.firstChild)wrap.removeChild(wrap.firstChild);
+    currentFrame = null;
+    currentEmpty = null;
+  }
+  function render(props){
+    var html = props && typeof props.html === 'string' ? props.html : '';
+    if (!html) {
+      clearWrap();
+      var d = document.createElement('div');
+      d.className = 'empty';
+      d.appendChild(document.createTextNode('No html prop yet — pass '));
+      var ck = document.createElement('span');
+      ck.className = 'ck';
+      ck.textContent = '{html}';
+      d.appendChild(ck);
+      d.appendChild(document.createTextNode(' as a string.'));
+      wrap.appendChild(d);
+      currentEmpty = d;
+      return;
+    }
+    // Nested iframe with the user's HTML as srcdoc — inherits outer sandbox
+    // (allow-scripts only, no allow-same-origin). User HTML cannot reach the
+    // parent iframe DOM, localStorage, or cookies.
+    clearWrap();
+    var f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-scripts');
+    f.setAttribute('srcdoc', html);
+    f.style.cssText = 'width:100%;height:100%;border:0;background:transparent;flex:1';
+    wrap.appendChild(f);
+    currentFrame = f;
+  }
+  // Initial paint
+  render(window.opencanvas && window.opencanvas.props ? window.opencanvas.props : {});
+  // Live updates from the agent
+  window.addEventListener('opencanvas:props', function(e){
+    render(e && e.detail && e.detail.props ? e.detail.props : {});
+  });
+})();
+</script>
+</body></html>`;
 
 /**
  * Calendar renderer template.

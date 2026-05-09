@@ -75,4 +75,46 @@ describe('built-in widgets', () => {
     // sorted alphabetically: calendar < chart
     expect(kinds.indexOf('calendar')).toBeLessThan(kinds.indexOf('chart'));
   });
+
+  it('registers html plugin alongside chart + calendar', () => {
+    const reg = new WidgetRegistry();
+    registerBuiltinWidgets(reg);
+    expect(reg.get('html')).toBeDefined();
+    expect(reg.get('html')!.renderer.srcdoc).toContain('opencanvas:props');
+  });
+
+  it('html plugin has expected shape', () => {
+    const reg = new WidgetRegistry();
+    registerBuiltinWidgets(reg);
+    const html = reg.get('html');
+    expect(html).toBeDefined();
+    expect(html!.label).toBe('HTML');
+    expect(html!.renderer.type).toBe('iframe');
+    expect(html!.renderer.sandbox).toBe('allow-scripts');
+    expect(html!.renderer.defaultSize).toEqual({ w: 480, h: 320 });
+  });
+
+  it('html srcdoc uses nested iframe for sandboxing (no innerHTML with user content)', () => {
+    const reg = new WidgetRegistry();
+    registerBuiltinWidgets(reg);
+    const srcdoc = reg.get('html')!.renderer.srcdoc;
+    // Must use a nested iframe with sandbox attribute for user HTML
+    expect(srcdoc).toContain('allow-scripts');
+    expect(srcdoc).toContain('srcdoc');
+    // Must have doctype and style block
+    expect(srcdoc).toContain('<!doctype html>');
+    expect(srcdoc).toContain('<style>');
+    // Must listen for live prop updates
+    expect(srcdoc).toContain("'opencanvas:props'");
+    expect(srcdoc).toContain('window.opencanvas');
+  });
+
+  it('html srcdoc shows empty state when no html prop', () => {
+    const reg = new WidgetRegistry();
+    registerBuiltinWidgets(reg);
+    const srcdoc = reg.get('html')!.renderer.srcdoc;
+    // Empty state message
+    expect(srcdoc).toContain('html');
+    expect(srcdoc).toContain('empty');
+  });
 });

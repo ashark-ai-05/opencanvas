@@ -14,9 +14,11 @@ import { addTaskTool } from './add-task.js';
 import { completeTaskTool } from './complete-task.js';
 import { readNotesTool } from './read-notes.js';
 import { appendToNotesTool } from './append-to-notes.js';
+import { registerWidgetKindTool } from './register-widget-kind.js';
 import type { CanvasSnapshot } from '../canvas-snapshot.js';
 import type { WidgetStreamBus } from '../widget-stream-bus.js';
 import type { NotebookStore } from '../../backend/notebook-store.js';
+import type { WidgetRegistry } from '../../backend/widget-registry.js';
 
 export interface AgentToolDeps {
   search: {
@@ -67,6 +69,13 @@ export interface AgentToolDeps {
    * are simply omitted from the tool list when not provided.
    */
   getNotebookStore?: () => Promise<NotebookStore>;
+  /**
+   * Sync getter for the WidgetRegistry — used by the `register_widget_kind`
+   * tool to register new plugin kinds at runtime. Optional so existing
+   * callers without a registry continue to work; the tool is simply omitted
+   * when not provided.
+   */
+  getWidgetRegistry?: () => WidgetRegistry;
 }
 
 /**
@@ -103,6 +112,13 @@ export function buildAgentTools(deps: AgentToolDeps) {
       completeTaskTool(getStore) as unknown as ReturnType<typeof searchKbTool>,
       readNotesTool(getStore) as unknown as ReturnType<typeof searchKbTool>,
       appendToNotesTool(getStore) as unknown as ReturnType<typeof searchKbTool>,
+    );
+  }
+
+  if (deps.getWidgetRegistry) {
+    const getRegistry = deps.getWidgetRegistry;
+    tools.push(
+      registerWidgetKindTool(getRegistry) as unknown as ReturnType<typeof searchKbTool>,
     );
   }
 
