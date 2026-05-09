@@ -1,5 +1,6 @@
 import { motion, useMotionValue, useDragControls } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParallax } from '../lib/motion/use-parallax';
 import { GripVertical, Maximize2, Minimize2, Minus, X } from 'lucide-react';
 import { ChatBrandMark } from './ChatBrandMark';
 import { Chat } from './Chat';
@@ -30,6 +31,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
   const y = useMotionValue(chatWindow.dragY);
   const dragControls = useDragControls();
   const [dragging, setDragging] = useState(false);
+  const titlebarParallax = useParallax({ maxTilt: 2, lift: false });
 
   // Toggle fullMode AND snap the drag offset back to (0, 0) so the
   // larger size always anchors at the visible bottom-right corner.
@@ -98,7 +100,8 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
       className="opencanvas-chat-floating"
     >
       <ChatStatusBar />
-      <header
+      <motion.header
+        ref={titlebarParallax.ref as React.RefObject<HTMLElement>}
         className="opencanvas-chat-titlebar"
         onPointerDown={(e) => {
           // Only start a drag if the pointer isn't on a button —
@@ -118,6 +121,13 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           x.set(0);
           y.set(0);
           setChatWindow({ dragX: 0, dragY: 0 });
+        }}
+        onPointerMove={titlebarParallax.bind.onPointerMove}
+        onPointerLeave={titlebarParallax.bind.onPointerLeave}
+        style={{
+          rotateX: titlebarParallax.rotateX,
+          rotateY: titlebarParallax.rotateY,
+          transformPerspective: 1200,
         }}
       >
         <span className="opencanvas-chat-titlebar-grip">
@@ -174,7 +184,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
             <X className="size-3.5" />
           </button>
         </div>
-      </header>
+      </motion.header>
       <div className="opencanvas-chat-body">
         <Chat key={chatKey} />
       </div>

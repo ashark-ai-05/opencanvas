@@ -1104,19 +1104,17 @@
   height: min(540px, 80vh);
   display: flex;
   flex-direction: column;
-  background: rgba(var(--color-glass-rgb), 0.84);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--color-glass-rgb) / 0.82);
+  border: 1px solid var(--color-line);
   border-radius: 16px;
   /* `overflow: visible` so the ChatOptionsMenu dropdown can escape the
      shell. The inner .opencanvas-chat-body manages its own clipping
      (overflow:hidden) and the rounded corners come from border-radius
      alone, not from a clipped overflow. */
   overflow: visible;
-  backdrop-filter: blur(18px);
-  /* Drop shadow only — no inset shadow that would paint over the inner
-     edge of the conic gradient border. The animated border ring is the
-     visible accent, not a concentric ring. */
-  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.6);
+  backdrop-filter: var(--blur-heavy);
+  -webkit-backdrop-filter: var(--blur-heavy);
+  box-shadow: var(--depth-3-shadow);
   transition: width 200ms ease, height 200ms ease, border-color 240ms ease;
 }
 .opencanvas-chat-floating[data-fullmode='full'] {
@@ -1142,8 +1140,8 @@
    conic-gradient declaration. */
 .opencanvas-chat-floating[data-streaming='true'] {
   box-shadow:
-    0 24px 70px -22px rgba(0, 0, 0, 0.65),
-    0 0 32px -8px rgba(167, 139, 250, 0.3);
+    var(--depth-3-shadow),
+    0 0 24px -2px var(--role-color-soft, var(--role-primary-soft));
 }
 .opencanvas-chat-floating[data-dragging='true'] {
   cursor: grabbing;
@@ -1702,12 +1700,11 @@ header [aria-hidden].size-5.rounded-md {
    not a Christmas tree. A subtle hairline border with a soft violet
    glow handles "this is a focused panel" without the conic strobe. */
 .opencanvas-chat-floating {
-  background: rgba(var(--color-glass-rgb), 0.92);
-  border: 1px solid var(--color-line-2);
-  box-shadow:
-    0 24px 60px -20px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(167, 139, 250, 0.06) inset,
-    0 0 32px -16px rgba(167, 139, 250, 0.18);
+  background: rgb(var(--color-glass-rgb) / 0.82);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-heavy);
+  -webkit-backdrop-filter: var(--blur-heavy);
+  box-shadow: var(--depth-3-shadow);
   transition:
     width 200ms ease,
     height 200ms ease,
@@ -1715,15 +1712,11 @@ header [aria-hidden].size-5.rounded-md {
     transform 200ms ease,
     border-color 240ms ease;
 }
-/* Streaming: subtle border-color shift + a brighter ambient glow.
-   No animated gradient — the streaming pulse at the very top of
-   the panel (header-pulse rule elsewhere) is the "alive" indicator. */
+/* Streaming: depth-3 shadow + role-soft glow. */
 .opencanvas-chat-floating[data-streaming='true'] {
-  border-color: rgba(167, 139, 250, 0.32);
   box-shadow:
-    0 24px 60px -20px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(167, 139, 250, 0.14) inset,
-    0 0 48px -12px rgba(167, 139, 250, 0.32);
+    var(--depth-3-shadow),
+    0 0 24px -2px var(--role-color-soft, var(--role-primary-soft));
 }
 
 /* Chat title bar — clean hairline divider, no streaming sweep. */
