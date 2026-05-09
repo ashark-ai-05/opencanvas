@@ -10,6 +10,7 @@ import { indexConversationRoute } from './routes/index-conversation.js';
 import { teamRoute } from './routes/team.js';
 import { sourcesListRoute } from './routes/sources-list.js';
 import { canvasRoute } from './routes/canvas.js';
+import { schedulesRoute } from './routes/schedules.js';
 
 /**
  * The Hono app. Tests can hit `app.request(path)` directly without
@@ -209,6 +210,22 @@ app.post('/v1/query', async (c) => {
   lazyApp.all('/v1/canvas/*', async (c) => {
     const state = await getState();
     const sub = canvasRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  app.route('/', lazyApp);
+}
+
+// /v1/schedules — cron-driven background agent runs. CRUD + run-now.
+{
+  const lazyApp = new Hono();
+  lazyApp.all('/v1/schedules', async (c) => {
+    const state = await getState();
+    const sub = schedulesRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  lazyApp.all('/v1/schedules/*', async (c) => {
+    const state = await getState();
+    const sub = schedulesRoute(state);
     return sub.fetch(c.req.raw);
   });
   app.route('/', lazyApp);

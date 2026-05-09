@@ -37,6 +37,7 @@
     "@sourcegraph/amp-sdk": "*",
     "ai": "^6.0.0",
     "better-sqlite3": "^11.0.0",
+    "cron-parser": "^5.5.0",
     "framer-motion": "^12.38.0",
     "hono": "^4.0.0",
     "lucide-react": "^0.460.0",

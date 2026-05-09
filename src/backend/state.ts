@@ -20,6 +20,7 @@ import {
 } from './refresh-scheduler.js';
 import { WidgetRegistry } from './widget-registry.js';
 import { registerBuiltinWidgets } from './builtin-widgets.js';
+import { AgentScheduler } from './agent-scheduler.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -330,8 +331,26 @@ export class BackendState {
     return this.widgetRegistry;
   }
 
+  /**
+   * Cron-driven agent scheduler. Constructed once on first access;
+   * started immediately so schedules fire even before the first HTTP
+   * request. Production chatBaseUrl matches the port the server binds to.
+   */
+  private agentScheduler: AgentScheduler | null = null;
+  getAgentScheduler(): AgentScheduler {
+    if (!this.agentScheduler) {
+      this.agentScheduler = new AgentScheduler('http://127.0.0.1:3457');
+      // init() loads persisted schedules; start() begins polling.
+      this.agentScheduler.init().then(() => this.agentScheduler!.start()).catch((e) => {
+        console.error('[AgentScheduler] init error:', e);
+      });
+    }
+    return this.agentScheduler;
+  }
+
   async shutdown(): Promise<void> {
     this.refreshScheduler?.stopAll();
+    this.agentScheduler?.stop();
     await this.sourceRegistry.closeAll();
   }
 }
