@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
-import { Boxes, CalendarClock, History, Plus, Search, ServerCog, Trash2 } from 'lucide-react';
+import { Boxes, CalendarClock, History, Notebook, Plus, Search, ServerCog, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Canvas } from './canvas/Canvas';
 import { FloatingChat, FloatingChatLauncher } from './components/FloatingChat';
@@ -13,6 +13,7 @@ import { McpSourcesPanel } from './components/McpSourcesPanel';
 import { PluginsPanel } from './components/PluginsPanel';
 import { SchedulesPanel } from './components/SchedulesPanel';
 import { RecallPanel } from './components/RecallPanel';
+import { NotebookPanel } from './components/NotebookPanel';
 import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -55,6 +56,7 @@ export function App() {
   const [pluginsOpen, setPluginsOpen] = useState(false);
   const [schedulesOpen, setSchedulesOpen] = useState(false);
   const [recallOpen, setRecallOpen] = useState(false);
+  const [notebookOpen, setNotebookOpen] = useState(false);
 
   // Subscribe to /v1/canvas/events so any external app can drive
   // widgets on this canvas via the REST surface. The hook also
@@ -203,6 +205,15 @@ export function App() {
           </button>
           <button
             type="button"
+            onClick={() => setNotebookOpen(true)}
+            title="Notebook"
+            className="opencanvas-header-btn"
+            aria-label="Notebook"
+          >
+            <Notebook className="size-3.5" />
+          </button>
+          <button
+            type="button"
             onClick={() => setMcpOpen(true)}
             title="MCP servers"
             className="opencanvas-header-btn"
@@ -242,6 +253,7 @@ export function App() {
       <PluginsPanel open={pluginsOpen} onClose={() => setPluginsOpen(false)} />
       <SchedulesPanel open={schedulesOpen} onClose={() => setSchedulesOpen(false)} />
       <RecallPanel open={recallOpen} onClose={() => setRecallOpen(false)} />
+      <NotebookPanel open={notebookOpen} onClose={() => setNotebookOpen(false)} />
       <CommandPalette />
       <Toaster
         theme="dark"
