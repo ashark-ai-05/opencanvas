@@ -18,7 +18,7 @@ export function registerBuiltinWidgets(registry: WidgetRegistry): void {
     kind: 'html',
     label: 'HTML',
     description:
-      'Render arbitrary HTML in a sandboxed iframe. Pass {html} as the prop — the entire HTML document or fragment to render. The HTML executes in an `allow-scripts`-only sandbox: it can run JavaScript, fetch from CDNs (e.g., Tailwind, D3, Three.js, Chart.js), and render anything visual, but cannot access localStorage, cookies, or the parent DOM. Use this for one-shot novel renders where there is no reusable template — for repeat patterns, use `register_widget_kind` first.',
+      'Render arbitrary HTML in a sandboxed iframe. Pass {html} as the prop — the entire HTML document or fragment to render. The HTML executes in an `allow-scripts`-only sandbox: it can run JavaScript, fetch from CDNs (e.g., Tailwind, D3, Three.js, Chart.js), and render anything visual, but cannot access localStorage, cookies, or the parent DOM. Use this for one-shot novel renders where there is no reusable template — for repeat patterns, use `register_widget_kind` first. CORS note: the sandbox gives the iframe a null origin; to fetch from APIs that reject null-origin requests (most financial/private APIs), use the backend proxy: `fetch(\'/v1/plugin-fetch?url=\' + encodeURIComponent(targetUrl))`.',
     renderer: {
       type: 'iframe',
       sandbox: 'allow-scripts',

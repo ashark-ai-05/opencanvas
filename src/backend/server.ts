@@ -12,6 +12,7 @@ import { sourcesListRoute } from './routes/sources-list.js';
 import { canvasRoute } from './routes/canvas.js';
 import { schedulesRoute } from './routes/schedules.js';
 import { notebookRoute } from './routes/notebook.js';
+import { pluginFetchRoute } from './routes/plugin-fetch.js';
 
 /**
  * The Hono app. Tests can hit `app.request(path)` directly without
@@ -297,6 +298,21 @@ app.post('/v1/query', async (c) => {
   lazyApp.get('/v1/sources/list', async (c) => {
     const state = await getState();
     const sub = sourcesListRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  app.route('/', lazyApp);
+}
+
+// /v1/plugin-fetch — outbound HTTP proxy for sandboxed plugin iframes.
+// Iframes run with allow-scripts only (null origin); many APIs reject null-origin
+// CORS requests. This proxy performs the request server-side and returns the
+// response with Access-Control-Allow-Origin: * so the iframe can read it.
+// SSRF-guarded: blocks private/loopback IPs, localhost names, cloud metadata.
+{
+  const lazyApp = new Hono();
+  lazyApp.all('/v1/plugin-fetch', async (c) => {
+    const state = await getState();
+    const sub = pluginFetchRoute(state);
     return sub.fetch(c.req.raw);
   });
   app.route('/', lazyApp);
