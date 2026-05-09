@@ -1132,11 +1132,15 @@
   background: rgb(var(--color-glass-rgb) / 0.82);
   border: 1px solid var(--color-line);
   border-radius: 16px;
-  /* `overflow: visible` so the ChatOptionsMenu dropdown can escape the
-     shell. The inner .opencanvas-chat-body manages its own clipping
-     (overflow:hidden) and the rounded corners come from border-radius
-     alone, not from a clipped overflow. */
-  overflow: visible;
+  /* `overflow: hidden` so child backgrounds (composer form, status bar,
+     KbHits chip) are clipped to the panel's rounded corners. Previously
+     `visible` because the ChatOptionsMenu dropdown rendered as a child
+     and needed to escape — but that menu now portals to document.body
+     (commit 67e1f17), so the shell can clip again. Without this clip,
+     the composer's `bg-[var(--color-bg)]/95` rendered as a hard
+     rectangle past the panel's rounded bottom, looking like a broken
+     border. */
+  overflow: hidden;
   backdrop-filter: var(--blur-heavy);
   -webkit-backdrop-filter: var(--blur-heavy);
   box-shadow: var(--depth-3-shadow);
@@ -1150,13 +1154,14 @@
    typing without the full scroll surface taking up screen real estate.
    Compound selector wins the specificity race against [data-fullmode='full'].
    Height fits the title bar (~36px) + composer (~64px) + status row.
-   `overflow: visible` on the shell here so the ChatOptionsMenu popover
-   can extend beyond the chat box. */
+   `overflow: hidden` here too — the ChatOptionsMenu popover that used
+   to need `visible` now portals to body (67e1f17), so the shell can
+   clip its content to the rounded corners cleanly. */
 .opencanvas-chat-floating[data-mode='minimized'],
 .opencanvas-chat-floating[data-mode='minimized'][data-fullmode='full'],
 .opencanvas-chat-floating[data-mode='minimized'][data-fullmode='normal'] {
   height: auto;
-  overflow: visible;
+  overflow: hidden;
 }
 /* Streaming: brighter outer glow only. Don't override border-color
    (the border is `solid transparent` so the conic gradient shows
