@@ -183,14 +183,28 @@
     font-family: var(--font-sans);
     font-feature-settings: 'cv11', 'ss01', 'ss03';
     color: var(--color-fg);
-    background: var(--color-bg);
+    /* Ambient backdrop: deep base + two faint role-tinted vignettes (top-left
+       violet, bottom-right teal) so glass surfaces have *somewhere to float in*
+       rather than sitting on pure black void. Each vignette is ~3% alpha — close
+       to subliminal, which is the point. Tldraw's canvas covers most of this
+       once content is placed; the ambient remains visible through the chrome
+       gaps + behind translucent panels. */
+    background:
+      radial-gradient(ellipse 70% 60% at 25% 20%, rgba(167, 139, 250, 0.07), transparent 70%),
+      radial-gradient(ellipse 65% 55% at 80% 90%, rgba(45, 212, 191, 0.05), transparent 70%),
+      var(--color-bg);
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
-  /* Keep the body completely flat — no ambient gradients. The aliveness
-     comes from streaming indicators + widget motion, not background wash. */
+  /* Tldraw canvas: make it transparent so the body's ambient backdrop shows
+     through. Tldraw's --color-background was being forced to var(--color-bg)
+     (solid) below — we now want to see ambient instead. */
+  .tl-container, .tl-svg-container {
+    background-color: transparent !important;
+  }
 
   code, pre, kbd, samp {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
