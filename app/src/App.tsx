@@ -15,6 +15,7 @@ import { SchedulesPanel } from './components/SchedulesPanel';
 import { RecallPanel } from './components/RecallPanel';
 import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
+import { ThemeToggle } from './components/ThemeToggle';
 import { HeaderDrawTools } from './components/HeaderDrawTools';
 import { HistoryScrubber } from './components/HistoryScrubber';
 import { useCanvasStats } from './state/canvas-stats-store';
@@ -209,6 +210,7 @@ export function App() {
           >
             <ServerCog className="size-3.5" />
           </button>
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => newChat?.()}
