@@ -5,6 +5,12 @@ dist
 *.log
 .vitest-cache
 
+# Brainstorming companion mockups (transient — survive restarts but not commit)
+.superpowers/
+
+# Git worktrees — isolated branches for parallel feature work
+.worktrees/
+
 # spikes have their own node_modules
 spikes/node_modules
 
