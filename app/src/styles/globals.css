@@ -240,25 +240,18 @@
      from the surface itself, so cards in different roles feel
      genuinely different instead of "violet card with role accent." */
   background:
-    linear-gradient(180deg, rgba(34, 34, 38, 0.86) 0%, rgba(20, 20, 24, 0.86) 100%),
+    linear-gradient(180deg, rgb(var(--color-glass-rgb) / 0.78) 0%, rgb(var(--color-glass-rgb) / 0.86) 100%),
     radial-gradient(
       ellipse at top left,
       var(--role-color-soft, var(--role-primary-soft)) 0%,
       transparent 60%
     );
   background-blend-mode: screen, normal;
-  backdrop-filter: blur(12px) saturate(1.1);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
   color: var(--color-fg);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    /* Polished top edge */
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    /* Visible role-colored aura — the headline of the new look */
-    0 0 24px -4px var(--role-color-soft, var(--role-primary-soft)),
-    /* Crisp drop shadow */
-    0 12px 32px -10px rgba(0, 0, 0, 0.7),
-    0 2px 6px -1px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--depth-2-shadow);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 14px;
   line-height: 1.5;
@@ -323,16 +316,8 @@
 }
 
 .opencanvas-card:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in oklab, var(--role-color, var(--role-primary)) 45%, var(--color-line-2));
-  box-shadow:
-    /* Top edge highlight */
-    0 1px 0 rgba(255, 255, 255, 0.10) inset,
-    /* Brighter role-tinted aura — the "card knows you're hovering" cue */
-    0 0 36px -2px color-mix(in oklab, var(--role-color, var(--role-primary)) 45%, transparent),
-    /* Deeper drop shadow for the hover lift */
-    0 24px 64px -16px rgba(0, 0, 0, 0.9),
-    0 6px 16px -4px rgba(0, 0, 0, 0.65);
+  box-shadow: var(--depth-4-shadow);
+  border-color: color-mix(in oklab, var(--role-color, var(--role-primary)) 50%, var(--color-line));
 }
 .opencanvas-card:hover::before {
   box-shadow:
