@@ -17,13 +17,23 @@ export function KbBadge({ onClick }: { onClick: () => void }) {
   // delta is large (initial hydrate) so we don't spend 30s counting up.
   const display = useTweenedNumber(total, lastDelta > 12 ? 0 : 600);
 
-  // Show a "+N" floater when bump fires. Visible only briefly.
+  // Show a "+N" floater when bump fires. Visible only briefly — the
+  // store never resets `lastDelta` (it's a write-once-on-bump value the
+  // header reads), so without an explicit dismissal the floater would
+  // stay mounted at its `animate` state forever (AnimatePresence's exit
+  // only triggers on unmount, not on animation-complete).
   const [pulseKey, setPulseKey] = useState(0);
+  const [pulseVisible, setPulseVisible] = useState(false);
   const lastDeltaShownRef = useRef(0);
   useEffect(() => {
     if (lastDelta > 0 && lastDelta !== lastDeltaShownRef.current) {
       lastDeltaShownRef.current = lastDelta;
       setPulseKey((k) => k + 1);
+      setPulseVisible(true);
+      // Stay visible long enough for the entrance animation (0.9s) to
+      // play, then flip false so AnimatePresence runs the exit.
+      const t = setTimeout(() => setPulseVisible(false), 1100);
+      return () => clearTimeout(t);
     }
   }, [lastDelta]);
 
@@ -58,14 +68,14 @@ export function KbBadge({ onClick }: { onClick: () => void }) {
       <span className="hidden sm:inline">KB</span>
       <span
         className="font-mono text-zinc-400 tabular-nums"
-        style={{ color: lastDelta > 0 ? '#c4b5fd' : undefined, transition: 'color 800ms ease' }}
+        style={{ color: pulseVisible && lastDelta > 0 ? '#c4b5fd' : undefined, transition: 'color 800ms ease' }}
       >
         {formatCount(display)}
       </span>
 
       {/* Floating "+N" delta — appears on bump, drifts up + fades out. */}
       <AnimatePresence>
-        {pulseKey > 0 && lastDelta > 0 && (
+        {pulseVisible && lastDelta > 0 && (
           <motion.span
             key={pulseKey}
             initial={{ opacity: 0, y: 0, scale: 0.85 }}
