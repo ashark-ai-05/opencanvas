@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./depth.css";
+@import "./typography.css";
 
 @theme {
   /* Neutral charcoal base — no blue undertone. The previous #050507
