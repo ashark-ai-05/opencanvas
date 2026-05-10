@@ -6,6 +6,8 @@
  */
 import { create } from 'zustand';
 
+const UI_STORE_KEY = 'opencanvas:ui-store';
+
 export type ChatWindowMode = 'open' | 'minimized' | 'collapsed';
 export type ChatWindowFullMode = 'normal' | 'full';
 
@@ -44,6 +46,13 @@ export type UiState = {
    */
   canvasMapCollapsed: boolean;
   setCanvasMapCollapsed: (collapsed: boolean) => void;
+  /**
+   * When true the horizontal conversation tab strip is shown between the
+   * chat titlebar and the chat body. Persisted to localStorage so the
+   * preference survives page reloads.
+   */
+  chatTabsVisible: boolean;
+  setChatTabsVisible: (visible: boolean) => void;
 };
 
 const DEFAULT_CHAT_WINDOW: ChatWindowState = {
@@ -53,6 +62,32 @@ const DEFAULT_CHAT_WINDOW: ChatWindowState = {
   dragY: 0,
   autoBob: false,
 };
+
+/** Hand-rolled persistence for the few flags we want to survive reloads. */
+function loadPersistedUiFlags(): { chatTabsVisible: boolean } {
+  try {
+    const raw = localStorage.getItem(UI_STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      return {
+        chatTabsVisible: typeof parsed.chatTabsVisible === 'boolean' ? parsed.chatTabsVisible : true,
+      };
+    }
+  } catch {
+    // ignore — fall through to defaults
+  }
+  return { chatTabsVisible: true };
+}
+
+function persistUiFlags(flags: { chatTabsVisible: boolean }): void {
+  try {
+    localStorage.setItem(UI_STORE_KEY, JSON.stringify(flags));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+const persistedFlags = loadPersistedUiFlags();
 
 export const useUiStore = create<UiState>((set) => ({
   chatWindow: DEFAULT_CHAT_WINDOW,
@@ -68,4 +103,9 @@ export const useUiStore = create<UiState>((set) => ({
   setCanvasWheelLocked: (canvasWheelLocked) => set({ canvasWheelLocked }),
   canvasMapCollapsed: false,
   setCanvasMapCollapsed: (canvasMapCollapsed) => set({ canvasMapCollapsed }),
+  chatTabsVisible: persistedFlags.chatTabsVisible,
+  setChatTabsVisible: (chatTabsVisible) => {
+    persistUiFlags({ chatTabsVisible });
+    set({ chatTabsVisible });
+  },
 }));

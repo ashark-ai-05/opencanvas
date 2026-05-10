@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MoreHorizontal, History, Database, Sparkles, Eraser } from 'lucide-react';
+import { MoreHorizontal, History, Database, Sparkles, Eraser, Rows3 } from 'lucide-react';
 import { useUiStore } from '../state/ui-store';
 
 /**
@@ -24,6 +24,8 @@ export function ChatOptionsMenu() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [coords, setCoords] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
   const setSourcesOpen = useUiStore((s) => s.setSourcesOpen);
+  const chatTabsVisible = useUiStore((s) => s.chatTabsVisible);
+  const setChatTabsVisible = useUiStore((s) => s.setChatTabsVisible);
 
   // Compute viewport-relative position from the trigger button's rect
   // each time the menu opens. Re-run on scroll/resize while open.
@@ -98,6 +100,14 @@ export function ChatOptionsMenu() {
             zIndex: 60,
           }}
         >
+          <MenuRow
+            icon={<Rows3 className="size-3.5" />}
+            label={chatTabsVisible ? 'Hide tabs' : 'Show tabs'}
+            onClick={() => {
+              setOpen(false);
+              setChatTabsVisible(!chatTabsVisible);
+            }}
+          />
           <MenuRow
             icon={<History className="size-3.5" />}
             label="Conversation history"
