@@ -1442,12 +1442,15 @@
     0 1px 0 rgba(255, 255, 255, 0.4) inset,
     0 6px 18px -4px rgba(0, 0, 0, 0.4);
 }
-.opencanvas-sticky[data-colour='yellow'] { background: linear-gradient(180deg, #fde68a, #fcd34d); }
-.opencanvas-sticky[data-colour='pink']   { background: linear-gradient(180deg, #fbcfe8, #f9a8d4); }
-.opencanvas-sticky[data-colour='blue']   { background: linear-gradient(180deg, #bfdbfe, #93c5fd); }
-.opencanvas-sticky[data-colour='green']  { background: linear-gradient(180deg, #bbf7d0, #86efac); }
-.opencanvas-sticky[data-colour='violet'] { background: linear-gradient(180deg, #ddd6fe, #c4b5fd); }
-.opencanvas-sticky[data-colour='orange'] { background: linear-gradient(180deg, #fed7aa, #fdba74); }
+/* Pastel sticky-note palette — one Tailwind shade lighter than highlighter
+   colours. Reads as "soft paper in a dim room" against the dark canvas
+   instead of the previous "lime/grass" saturation. */
+.opencanvas-sticky[data-colour='yellow'] { background: linear-gradient(180deg, #fef3c7, #fde68a); }
+.opencanvas-sticky[data-colour='pink']   { background: linear-gradient(180deg, #fce7f3, #fbcfe8); }
+.opencanvas-sticky[data-colour='blue']   { background: linear-gradient(180deg, #dbeafe, #bfdbfe); }
+.opencanvas-sticky[data-colour='green']  { background: linear-gradient(180deg, #dcfce7, #bbf7d0); }
+.opencanvas-sticky[data-colour='violet'] { background: linear-gradient(180deg, #ede9fe, #ddd6fe); }
+.opencanvas-sticky[data-colour='orange'] { background: linear-gradient(180deg, #ffedd5, #fed7aa); }
 .opencanvas-sticky-actions {
   position: absolute;
   top: 6px;

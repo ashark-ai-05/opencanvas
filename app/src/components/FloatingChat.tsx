@@ -6,7 +6,6 @@ import { ChatBrandMark } from './ChatBrandMark';
 import { Chat } from './Chat';
 import { ChatStatusBar } from './ChatStatusBar';
 import { ChatOptionsMenu } from './ChatOptionsMenu';
-import { ChatTabs } from './ChatTabs';
 import { useUiStore } from '../state/ui-store';
 
 /**
@@ -186,7 +185,6 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           </button>
         </div>
       </motion.header>
-      <ChatTabs />
       <div className="opencanvas-chat-body">
         <Chat key={chatKey} />
       </div>

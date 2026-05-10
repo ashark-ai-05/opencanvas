@@ -102,7 +102,7 @@ export function ChatOptionsMenu() {
         >
           <MenuRow
             icon={<Rows3 className="size-3.5" />}
-            label={chatTabsVisible ? 'Hide tabs' : 'Show tabs'}
+            label={chatTabsVisible ? 'Hide canvas tabs' : 'Show canvas tabs'}
             onClick={() => {
               setOpen(false);
               setChatTabsVisible(!chatTabsVisible);

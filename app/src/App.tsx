@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { Boxes, CalendarClock, History, Notebook, Plus, Search, ServerCog, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Canvas } from './canvas/Canvas';
+import { ChatTabs } from './components/ChatTabs';
 import { FloatingChat, FloatingChatLauncher } from './components/FloatingChat';
 import { getEditor } from './state/editor-ref';
 import { useTemplateStore } from './state/template-store';
@@ -236,6 +237,11 @@ export function App() {
           <HealthBadge />
         </div>
       </header>
+      {/* Canvas tabs — one tab per conversation. Lives at the app shell
+          (not inside the chat panel) so they remain visible even when
+          the chat is minimized or hidden. Toggle visibility from the
+          chat options menu (labelled "canvas tabs"). */}
+      <ChatTabs />
       <main className="flex-1 min-h-0 relative bg-[var(--color-bg)]">
         {/* key=activeId forces a clean remount when the user switches
             conversations, so the tldraw editor hydrates with the new
