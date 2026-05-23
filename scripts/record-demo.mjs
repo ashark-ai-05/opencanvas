@@ -26,7 +26,7 @@
  *   node scripts/record-demo.mjs
  */
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { mkdir, readdir, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -38,7 +38,16 @@ const OUT_DIR = join(REPO, 'docs', 'demo-frames');
 const GIF_PATH = join(REPO, 'docs', 'demo.gif');
 const APP_URL = 'http://127.0.0.1:3458/';
 const BACKEND = 'http://127.0.0.1:3457';
-const FFMPEG = (await import('ffmpeg-static')).default;
+// System ffmpeg (install via `brew install ffmpeg` on macOS). We used
+// ffmpeg-static before but dropping the dep saves ~50MB and the modern
+// option is just to use the system binary.
+const FFMPEG = (() => {
+  try {
+    return execFileSync('which', ['ffmpeg'], { encoding: 'utf8' }).trim();
+  } catch {
+    throw new Error('ffmpeg not found in PATH — install via brew/apt/dnf');
+  }
+})();
 const W = 1280;
 const H = 800;
 const FPS = 5;        // playback rate of the gif (one frame every 200ms)

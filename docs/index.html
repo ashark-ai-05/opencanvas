@@ -147,7 +147,7 @@
           <a href="#features" class="hover:text-zinc-100 transition">Features</a>
           <a href="#demo" class="hover:text-zinc-100 transition">Demo</a>
           <a href="#install" class="hover:text-zinc-100 transition">Install</a>
-          <a href="#api" class="hover:text-zinc-100 transition">API</a>
+          <a href="api.html" class="hover:text-zinc-100 transition">API</a>
         </nav>
         <div class="ml-auto flex items-center gap-2">
           <a
@@ -415,11 +415,18 @@ pnpm electron:dev          <span class="text-zinc-500"># full stack: backend + V
             </p>
             <div class="mt-6 flex flex-wrap gap-3">
               <a
-                href="https://github.com/ashark-ai-05/opencanvas/blob/main/docs/openapi.yaml"
-                target="_blank"
-                rel="noreferrer noopener"
+                href="api.html"
+                class="btn-primary rounded-lg px-4 py-2 text-sm flex items-center gap-2"
+              >
+                Browse the API
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M5 12h10M11 8l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a
+                href="openapi.yaml"
                 class="btn-secondary rounded-lg px-4 py-2 text-sm"
-              >View OpenAPI spec</a>
+              >Raw spec (YAML)</a>
             </div>
           </div>
           <div class="card rounded-2xl p-5 font-mono text-xs md:text-[13px]">
@@ -456,7 +463,7 @@ curl -X POST http://127.0.0.1:3457/v1/canvas/widgets \
           <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/SECURITY.md" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">Security</a>
           <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">Contribute</a>
           <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">Changelog</a>
-          <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/docs/openapi.yaml" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">API</a>
+          <a href="api.html" class="hover:text-zinc-100 transition">API</a>
         </div>
       </div>
     </footer>

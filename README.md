@@ -14,9 +14,9 @@ Ask anything. The agent renders **typed widgets** on a tldraw canvas — markdow
 
 ![demo](docs/demo.gif)
 
-[Watch the 1-minute walkthrough →](docs/demo.mp4)
+🌐 **[ashark-ai-05.github.io/opencanvas](https://ashark-ai-05.github.io/opencanvas/)** &nbsp;·&nbsp; 📺 [1-minute walkthrough](docs/demo.mp4) &nbsp;·&nbsp; 📡 [Live API reference](https://ashark-ai-05.github.io/opencanvas/api.html)
 
-**[Install](#install) · [Why it's different](#why-its-different) · [Pick any LLM](#pick-any-llm) · [Drive it from any process](#drive-it-from-any-process) · [Security model](./SECURITY.md)**
+**[Install](#install) · [Why](#why-its-different) · [Pick a model](#pick-any-llm) · [REST API](#drive-it-from-any-process) · [Security](./SECURITY.md)**
 
 </div>
 
@@ -29,7 +29,7 @@ git clone https://github.com/ashark-ai-05/opencanvas.git
 cd opencanvas
 pnpm install
 cp .env.example .env       # at least one provider key
-pnpm electron:dev          # full stack: backend + Vite + Electron
+pnpm electron:dev          # backend + Vite + Electron, one command
 ```
 
 Headless without Electron: `pnpm dev` → http://127.0.0.1:3458
@@ -89,7 +89,7 @@ Embedders are pluggable too: bundled ONNX (runs offline), OpenAI, Voyage, or Oll
 
 **15 kinds.** Markdown · code blocks · tables · timelines · file trees · kanban · tasks · sticky notes · composite cards · charts (Vega-Lite) · calendars · clock/timer/stopwatch/pomodoro · web embeds (sandboxed iframes) · plugin-rendered iframes · generic fallback.
 
-All draggable, resizable, role-tinted, exportable. Every widget is a **typed contract** — Zod schema for props + a React component. Add a new kind without retraining anything.
+Every widget is a **typed contract** — Zod schema for props + a React component. Add a new kind without retraining anything.
 
 **Runtime plugins.** The agent can call `register_widget_kind` mid-conversation to declare a new widget on the fly. Ships with a Python REPL (Pyodide) and a JS REPL example. Plugin iframes run with `sandbox="allow-scripts"`, no `allow-same-origin` — null origin, no parent DOM access.
 
@@ -97,7 +97,7 @@ All draggable, resizable, role-tinted, exportable. Every widget is a **typed con
 
 ## MCP-native
 
-Add any MCP server under `profiles[].sources`. Works with any LLM provider:
+Add any MCP server under `profiles[].sources` — works with any LLM provider:
 
 ```jsonc
 {
@@ -116,7 +116,7 @@ Add any MCP server under `profiles[].sources`. Works with any LLM provider:
 
 ## Drive it from any process
 
-Any local process — cron jobs, watchers, scripts — can render widgets on a running OpenCanvas. The browser keeps an SSE connection open to `/v1/canvas/events`; external `POST`s push directives into the per-conversation event bus.
+Any local process — cron jobs, watchers, scripts — can render widgets. The browser keeps an SSE connection open to `/v1/canvas/events`; external `POST`s push directives into the per-conversation event bus.
 
 ```bash
 # Place a Vega-Lite chart from your terminal
@@ -126,7 +126,7 @@ curl -X POST http://127.0.0.1:3457/v1/canvas/widgets \
   -d '{"kind":"chart","role":"primary","payload":{"title":"Sales","spec":{...}}}'
 ```
 
-The full REST surface (~30 endpoints — `POST /v1/canvas/widgets`, `PATCH /v1/canvas/widgets/:id`, streaming, plugin registry, …) is documented at `/docs` (Swagger UI) when the backend is running.
+**Full REST reference**: browse the [live API docs](https://ashark-ai-05.github.io/opencanvas/api.html) (Scalar / Swagger UI), or read the raw [OpenAPI 3.1 spec](./docs/openapi.yaml). When the backend is running, the same UI is served at `http://127.0.0.1:3457/docs`.
 
 **Auth.** A 256-bit token is generated on first run and persisted to `~/.opencanvas/auth-token` (mode `0600`). Required on state-mutating routes. See [SECURITY.md](./SECURITY.md).
 
@@ -134,7 +134,7 @@ The full REST surface (~30 endpoints — `POST /v1/canvas/widgets`, `PATCH /v1/c
 
 ## Self-improving KB
 
-Every conversation auto-indexes into the same SQLite + sqlite-vec store as your docs and code. Old turns become searchable via `search_kb`. Hybrid BM25 + vector retrieval (RRF, k=60). Idempotent re-indexing — re-running on unchanged content costs zero LLM calls.
+Every conversation auto-indexes into the same SQLite + sqlite-vec store as your docs and code. Old turns become searchable via `search_kb`. Hybrid BM25 + vector retrieval. Idempotent re-indexing — re-running on unchanged content costs zero LLM calls.
 
 ```bash
 pnpm cli --index ./docs            # markdown / text → chunks + embeddings
@@ -146,24 +146,23 @@ The agent also learns *you* — kinds you keep + pin score higher; kinds you dis
 
 ---
 
-## Architecture in one diagram
+## Architecture
 
 ```
 ┌────────────────────┐                ┌─────────────────────────┐
 │  Vite + React +    │   /v1/chat     │  Hono backend           │
-│  tldraw            │ ─────────────→ │  (provider abstraction) │
-│  • floating chat   │                │                         │
-│  • canvas          │                │  6 LLM adapters         │
-│  • palette ⌘K      │                │  12 in-process tools    │
-│  • history         │ ←── SSE ────── │  + external MCP servers │
-│                    │  /v1/canvas/   │  + plugin registry      │
+│  tldraw            │ ─────────────→ │                         │
+│  • floating chat   │                │  6 LLM adapters         │
+│  • canvas          │                │  12 in-process tools    │
+│  • palette ⌘K      │ ←── SSE ────── │  + external MCP servers │
+│  • history         │  /v1/canvas/   │  + plugin registry      │
 └────────────────────┘    events      │       │                 │
                                       │       ▼                 │
                                       │  SQLite + sqlite-vec    │
                                       └─────────────────────────┘
 ```
 
-Frontend uses tldraw v3 with custom shape utils for each widget. Zustand for app state, AI SDK 6 for chat streaming. Backend is Hono + better-sqlite3 + sqlite-vec. Electron wrapper for the desktop install.
+tldraw v3 with one shape util per widget kind. Zustand for app state. AI SDK 6 for chat streaming. Hono + better-sqlite3 + sqlite-vec on the backend. Electron wrapper for the desktop install.
 
 ---
 
@@ -177,12 +176,12 @@ pnpm app:build                                     # production bundle
 pnpm dist                                          # electron-builder installer
 ```
 
-**596 tests passing** — 383 backend, 213 frontend.
+**596 tests passing** · 383 backend, 213 frontend.
 
 ---
 
 ## Status
 
-Experimental. Solo project, MIT, no telemetry, no remote services unless you point it at one.
+Experimental. Solo project, MIT. No telemetry, no remote services unless you point it at one.
 
-Issues and PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md). For security issues, [SECURITY.md](./SECURITY.md).
+Issues + PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md). For security issues, [SECURITY.md](./SECURITY.md).

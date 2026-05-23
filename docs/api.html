@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>OpenCanvas API · reference</title>
+    <meta
+      name="description"
+      content="REST API for driving the local OpenCanvas instance — place widgets, stream content, register plugin kinds, inspect canvas state."
+    />
+
+    <!-- Social cards reuse the main OG image. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OpenCanvas" />
+    <meta property="og:title" content="OpenCanvas API · reference" />
+    <meta property="og:description" content="REST surface for the local OpenCanvas instance." />
+    <meta property="og:image" content="og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="og-image.png" />
+
+    <link rel="icon" type="image/png" href="icon-256.png" />
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0a0a0a;
+        color: #fafafa;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      /* Thin sticky header matching the marketing site, with a "back"
+         link so visitors don't bounce. */
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: rgba(10,10,10,0.78);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+      .site-header-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .site-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: #fafafa;
+        text-decoration: none;
+      }
+      .site-brand img { width: 22px; height: 22px; border-radius: 6px; }
+      .site-nav {
+        display: flex;
+        gap: 22px;
+        font-size: 14px;
+        color: #a1a1aa;
+      }
+      .site-nav a { color: #a1a1aa; text-decoration: none; transition: color 0.15s; }
+      .site-nav a:hover { color: #fafafa; }
+      .site-nav a.active { color: #c4b5fd; }
+      .site-cta {
+        margin-left: auto;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #fafafa;
+        text-decoration: none;
+        transition: background 0.15s;
+      }
+      .site-cta:hover { background: rgba(255,255,255,0.08); }
+      /* Override Scalar's full-page background so it slots under the header. */
+      .scalar-app .references-header,
+      .scalar-app .sidebar {
+        background: rgba(10,10,10,0.92);
+      }
+      .scalar-app a { color: #c4b5fd; }
+    </style>
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="index.html">
+          <img src="icon-256.png" alt="" />
+          OpenCanvas
+        </a>
+        <nav class="site-nav">
+          <a href="index.html#features">Features</a>
+          <a href="index.html#demo">Demo</a>
+          <a href="index.html#install">Install</a>
+          <a class="active" href="api.html">API</a>
+        </nav>
+        <a
+          class="site-cta"
+          href="https://github.com/ashark-ai-05/opencanvas"
+          target="_blank"
+          rel="noreferrer noopener"
+        >GitHub ↗</a>
+      </div>
+    </header>
+
+    <!-- Scalar API Reference — single-file renderer for OpenAPI specs.
+         The spec lives at /openapi.yaml (sibling of this page on GitHub Pages).
+         Loaded from the public CDN; no npm dep needed. -->
+    <script
+      id="api-reference"
+      data-url="openapi.yaml"
+      data-configuration='{"theme":"purple","layout":"modern","darkMode":true,"defaultHttpClient":{"targetKey":"shell","clientKey":"curl"},"metaData":{"title":"OpenCanvas API"},"authentication":{"preferredSecurityScheme":"bearerToken","apiKey":{"token":""}},"hideDownloadButton":false,"hideTestRequestButton":false}'
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>

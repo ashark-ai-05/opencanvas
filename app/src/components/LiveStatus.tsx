@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import type { UIMessage } from 'ai';
 
 /**
@@ -12,83 +11,6 @@ export type LiveStep = {
   emoji: string;
   label: string;
 };
-
-/**
- * Inline variant — rendered INSIDE the latest streaming assistant
- * message body so live progress reads as part of the conversation
- * rather than as a separate floating pill. Smaller chrome (no gradient
- * border, no breathing animation) so it sits naturally between
- * text-deltas and tool-call indicators.
- */
-export function InlineLiveStep({
-  step,
-}: {
-  step: LiveStep | null;
-}) {
-  return (
-    <AnimatePresence mode="wait">
-      {step && (
-        <motion.div
-          key={step.key}
-          initial={{ opacity: 0, y: 2 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -2 }}
-          transition={{ duration: 0.16 }}
-          className="opencanvas-inline-step"
-          role="status"
-          aria-live="polite"
-        >
-          <span className="opencanvas-inline-step-emoji" aria-hidden>
-            {step.emoji}
-          </span>
-          <span className="opencanvas-inline-step-label">{step.label}</span>
-          <span className="opencanvas-live-status-dots" aria-hidden>
-            <span /><span /><span />
-          </span>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-/**
- * Renders an inline status pill ABOVE the chat composer that updates as
- * the agent moves through phases. Replaces the previous flat "thinking…"
- * indicator with something that tracks what's actually happening.
- *
- * Now unused by Chat.tsx (the inline variant lives in the message body
- * instead), but exported in case external surfaces want it.
- */
-export function LiveStatus({
-  step,
-}: {
-  step: LiveStep | null;
-}) {
-  return (
-    <AnimatePresence mode="wait">
-      {step && (
-        <motion.div
-          key={step.key}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -2 }}
-          transition={{ duration: 0.18 }}
-          className="opencanvas-live-status"
-          role="status"
-          aria-live="polite"
-        >
-          <span className="opencanvas-live-status-emoji" aria-hidden>
-            {step.emoji}
-          </span>
-          <span className="opencanvas-live-status-label">{step.label}</span>
-          <span className="opencanvas-live-status-dots" aria-hidden>
-            <span /><span /><span />
-          </span>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
 
 type ToolPart = {
   type: string;
