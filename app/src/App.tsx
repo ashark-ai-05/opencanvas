@@ -9,6 +9,7 @@ import { getEditor } from './state/editor-ref';
 import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
+import { OnboardingModal } from './components/OnboardingModal';
 // Drawer panels are large + rarely-opened on the first session — lazy-load
 // them so initial JS payload drops. The conditional `{open && ...}`
 // guard at the render site means the chunk only fires when the user
@@ -278,6 +279,7 @@ export function App() {
       </main>
       <FloatingChat chatKey={activeId} />
       <FloatingChatLauncher />
+      <OnboardingModal />
       <ConversationsSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background: rounded square with a violet → magenta diagonal gradient.
+       Keeps brand palette aligned with the in-app accents. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset=".55" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f0abfc"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#0a0a0a" stop-opacity=".82"/>
+      <stop offset="1" stop-color="#18181b" stop-opacity=".82"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="14"/>
+      <feOffset dx="0" dy="10" result="o"/>
+      <feComponentTransfer in="o"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded-square background. 224 corner radius reads cleanly at 16px. -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+
+  <!-- Three stacked widget cards — implies "canvas with content".
+       Slight rotations break grid monotony; staggered z-order. -->
+  <g filter="url(#shadow)">
+    <g transform="translate(180 240) rotate(-6)">
+      <rect width="420" height="280" rx="40" fill="url(#card)" stroke="rgba(255,255,255,.18)" stroke-width="3"/>
+      <rect x="40" y="42" width="180" height="22" rx="11" fill="rgba(255,255,255,.85)"/>
+      <rect x="40" y="84" width="320" height="12" rx="6" fill="rgba(255,255,255,.55)"/>
+      <rect x="40" y="108" width="260" height="12" rx="6" fill="rgba(255,255,255,.40)"/>
+      <rect x="40" y="132" width="290" height="12" rx="6" fill="rgba(255,255,255,.40)"/>
+    </g>
+    <g transform="translate(440 460) rotate(4)">
+      <rect width="380" height="260" rx="36" fill="url(#card)" stroke="rgba(255,255,255,.18)" stroke-width="3"/>
+      <!-- A tiny chart inside the second card — sparkline -->
+      <polyline points="40,200 100,140 160,160 220,90 280,120 340,60"
+        fill="none" stroke="#f0abfc" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="340" cy="60" r="8" fill="#f0abfc"/>
+    </g>
+    <g transform="translate(120 580) rotate(2)">
+      <rect width="260" height="160" rx="28" fill="url(#card)" stroke="rgba(255,255,255,.18)" stroke-width="3"/>
+      <rect x="28" y="32" width="80" height="16" rx="8" fill="rgba(255,255,255,.7)"/>
+      <rect x="28" y="64" width="180" height="10" rx="5" fill="rgba(255,255,255,.35)"/>
+      <rect x="28" y="84" width="140" height="10" rx="5" fill="rgba(255,255,255,.35)"/>
+    </g>
+  </g>
+</svg>

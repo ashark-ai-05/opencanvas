@@ -1,16 +1,36 @@
 <div align="center">
 
+<img src="build/icons/icon-256.png" alt="OpenCanvas" width="128" height="128" />
+
 # OpenCanvas
 
-**An infinite canvas that the agent draws on.**
+### An infinite canvas your LLM draws on.
 
-Ask anything → the agent searches your knowledge, the web, and your MCP servers → it places typed widgets on a tldraw canvas and replies with a short note pointing to what it built.
+Ask anything. The agent searches your KB, the web, and your MCP servers, then renders **typed widgets** on a tldraw canvas — markdown, charts, kanbans, code, web embeds, calendars, plugin iframes, and more. Conversations index back into a local SQLite KB so the canvas gets smarter with every turn.
 
-[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-596%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![byo](https://img.shields.io/badge/BYO-credentials-fb7185)]()
+**BYO model. MCP-native. Single-user. Runs entirely on your machine.**
+
+[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-596%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![byo](https://img.shields.io/badge/BYO-credentials-fb7185)]() [![security](https://img.shields.io/badge/audit-clean-22c55e)](./SECURITY.md)
 
 ![demo](docs/demo.gif)
 
+**[60-second tour](#60-second-tour) · [Quick start](#quick-start) · [Why it's different](#why-its-different) · [Security model](./SECURITY.md) · [Contributing](./CONTRIBUTING.md)**
+
 </div>
+
+---
+
+## Install
+
+```bash
+git clone https://github.com/ashark-ai-05/opencanvas.git
+cd opencanvas
+pnpm install
+cp .env.example .env             # set at least one provider key
+pnpm electron:dev                # full stack: backend + Vite + Electron
+```
+
+> Packaged installers (`.dmg` / `.exe` / `.AppImage`) ship via GitHub Releases — see the [Releases tab](https://github.com/ashark-ai-05/opencanvas/releases). For now, `pnpm electron:dev` is the canonical path.
 
 ---
 
