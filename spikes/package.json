@@ -12,8 +12,8 @@
     "@sourcegraph/amp-sdk": "*",
     "onnxruntime-node": "*",
     "@huggingface/transformers": "*",
-    "ajv": "*",
-    "ajv-formats": "*"
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
     "tsx": "*",
