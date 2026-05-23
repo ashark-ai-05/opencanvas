@@ -15,6 +15,7 @@ import { notebookRoute } from './routes/notebook.js';
 import { pluginFetchRoute } from './routes/plugin-fetch.js';
 import { docsRoute } from './routes/docs.js';
 import { authMiddleware, getAuthToken, getAuthTokenPath } from './auth.js';
+import { isDemoMode, demoRateLimit } from './demo.js';
 
 /**
  * The Hono app. Tests can hit `app.request(path)` directly without
@@ -44,6 +45,8 @@ app.use(
   '/*',
   cors({
     origin: (origin) => {
+      // Demo mode: any origin is fine, visitors hit the Railway URL.
+      if (isDemoMode()) return origin ?? '';
       if (!origin) return ''; // no Origin → same-origin or curl → allow
       // Electron loads the app from file:// — origin is "null" string.
       if (origin === 'null') return origin;
@@ -55,8 +58,16 @@ app.use(
 );
 
 // Token auth on state-mutating /v1/* routes. See auth.ts for the
-// bypass rules (NODE_ENV=test, OPENCANVAS_REQUIRE_AUTH=0, GETs).
-app.use('/v1/*', authMiddleware);
+// bypass rules (NODE_ENV=test, OPENCANVAS_REQUIRE_AUTH=0, GETs). Demo
+// mode disables auth entirely so visitors don't need a token — the
+// per-IP rate limiter below is what stops abuse instead.
+if (!isDemoMode()) {
+  app.use('/v1/*', authMiddleware);
+}
+
+// Public-demo rate limiter on /v1/chat (5 messages per hour per IP).
+// No-op when OPENCANVAS_DEMO is not set.
+app.use('/v1/chat', demoRateLimit);
 
 // /docs (Scalar API Reference) + /openapi.yaml (the spec).
 // Public — exposed at the backend root rather than under /v1 so it
@@ -426,19 +437,66 @@ app.post('/v1/query', async (c) => {
   app.route('/', lazyApp);
 }
 
+/**
+ * Static SPA serving for the public demo build. Mounted last so /v1/*
+ * routes still match first. Looks for app/dist/index.html relative to
+ * the running module — present after `pnpm app:build` runs. In
+ * Electron + dev we never reach this branch because the renderer is
+ * loaded directly by Vite or Electron's loadFile; only the Railway
+ * deploy uses it.
+ */
+async function maybeWireStaticSpa(): Promise<void> {
+  const { existsSync } = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  const { dirname, join } = await import('node:path');
+  // dist-backend/server.js → ../../app/dist (compiled). src/backend/server.ts
+  // → ../../app/dist (dev). Either way the prefix is two levels up.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    join(here, '../../app/dist'),
+    join(here, '../app/dist'),
+    join(here, 'app/dist'),
+  ];
+  const root = candidates.find((p) => existsSync(join(p, 'index.html')));
+  if (!root) {
+    console.log('[opencanvas backend] no app/dist found — SPA not served');
+    return;
+  }
+  const { serveStatic } = await import('@hono/node-server/serve-static');
+  // Files at the root of dist (assets/*, favicons, og-image)
+  app.use('/*', serveStatic({ root, precompressed: true }));
+  // SPA fallback: any unmatched GET that wasn't a /v1/* route → index.html
+  // so deep-link reloads don't 404. Hono's app.get('*') runs after the
+  // static middleware misses.
+  app.get('*', async (c) => {
+    if (c.req.path.startsWith('/v1/')) return c.notFound();
+    const indexPath = join(root, 'index.html');
+    const { readFileSync } = await import('node:fs');
+    return c.html(readFileSync(indexPath, 'utf8'));
+  });
+  console.log(`[opencanvas backend] serving SPA from ${root}`);
+}
+
 export async function start(port: number): Promise<void> {
   const { serve } = await import('@hono/node-server');
   const s = await getState();
   // Prime the auth token before we begin accepting requests. Reads/creates
   // ~/.opencanvas/auth-token. The path is logged (but never the token) so
-  // operators know where to grab it for curl use.
-  void getAuthToken();
-  serve({ fetch: app.fetch, port });
-  console.log(`[opencanvas backend] listening on http://127.0.0.1:${port}`);
+  // operators know where to grab it for curl use. Skipped in demo mode
+  // where auth is disabled anyway.
+  if (!isDemoMode()) void getAuthToken();
+  await maybeWireStaticSpa();
+  // Railway / containers expect us to listen on 0.0.0.0 + read $PORT.
+  // Local dev keeps 127.0.0.1 so loopback-only binding still holds.
+  const hostname = isDemoMode() || process.env['HOST'] === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
+  serve({ fetch: app.fetch, port, hostname });
+  console.log(`[opencanvas backend] listening on http://${hostname}:${port}`);
   console.log(`[opencanvas backend] profile: ${s.profileName}`);
   console.log(`[opencanvas backend] llm:     ${s.getLLMProvider().id}`);
   console.log(`[opencanvas backend] embed:   ${s.getEmbedder().id}`);
-  if (process.env['OPENCANVAS_REQUIRE_AUTH'] !== '0') {
+  if (isDemoMode()) {
+    console.log(`[opencanvas backend] DEMO MODE — auth disabled, CORS open, rate limit on /v1/chat`);
+  } else if (process.env['OPENCANVAS_REQUIRE_AUTH'] !== '0') {
     console.log(`[opencanvas backend] auth:    token at ${getAuthTokenPath()}`);
   } else {
     console.log(`[opencanvas backend] auth:    DISABLED (OPENCANVAS_REQUIRE_AUTH=0)`);
@@ -453,7 +511,13 @@ const isMainModule =
   process.argv[1] === fileURLToPath(import.meta.url);
 
 if (isMainModule) {
-  const port = Number(process.env['OPENCANVAS_BACKEND_PORT'] ?? 3457);
+  // Port resolution order:
+  //   1. PORT — Railway / Heroku / Fly / Render / generic PaaS convention
+  //   2. OPENCANVAS_BACKEND_PORT — explicit override used by Electron
+  //   3. 3457 — local dev default
+  const port = Number(
+    process.env['PORT'] ?? process.env['OPENCANVAS_BACKEND_PORT'] ?? 3457,
+  );
   start(port).catch((e) => {
     console.error('[opencanvas backend] fatal:', e);
     process.exit(1);

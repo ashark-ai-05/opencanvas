@@ -79,6 +79,11 @@ export const ProfileSchema = z.object({
       baseUrl: z.string().url().default('https://openrouter.ai/api/v1'),
     }),
     z.object({
+      provider: z.literal('groq'),
+      model: z.string().default('llama-3.1-70b-versatile'),
+      baseUrl: z.string().url().default('https://api.groq.com/openai/v1'),
+    }),
+    z.object({
       provider: z.literal('ollama'),
       model: z.string().default('llama3.2'),
       baseUrl: z.string().url().default('http://localhost:11434'),

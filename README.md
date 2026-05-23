@@ -34,7 +34,7 @@ pnpm electron:dev          # backend + Vite + Electron, one command
 
 Headless without Electron: `pnpm dev` → http://127.0.0.1:3458
 
-> Packaged installers (`.dmg` / `.exe` / `.AppImage`) ship via the [Releases tab](https://github.com/ashark-ai-05/opencanvas/releases).
+> Packaged installers (`.dmg` / `.exe` / `.AppImage`) ship via the [Releases tab](https://github.com/ashark-ai-05/opencanvas/releases). Want to host a public demo? See [docs/deploy-railway.md](./docs/deploy-railway.md) — Railway + Groq Llama 3.1 70B, ~10 minutes.
 
 ---
 

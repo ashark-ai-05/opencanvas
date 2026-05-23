@@ -89,6 +89,20 @@ export function loadConfig(profileOverride?: string): LoadedConfig {
     );
   }
 
+  // Env-driven LLM provider override — primarily for the public Railway
+  // demo where there's no ~/.opencanvas/config.json to edit. Setting
+  // OPENCANVAS_LLM_PROVIDER (and optionally OPENCANVAS_LLM_MODEL) at
+  // boot replaces the resolved profile's llm config. Keeps everything
+  // else (sources, embed, name) intact.
+  const envProvider = process.env['OPENCANVAS_LLM_PROVIDER'];
+  const envModel = process.env['OPENCANVAS_LLM_MODEL'];
+  if (envProvider) {
+    (activeProfile as { llm: { provider: string; model?: string } }).llm = {
+      provider: envProvider,
+      ...(envModel ? { model: envModel } : {}),
+    };
+  }
+
   return {
     activeProfile: ProfileSchema.parse(activeProfile),
     allProfiles: config.profiles,

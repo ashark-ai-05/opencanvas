@@ -22,6 +22,14 @@ export function indexConversationRoute(state: BackendState): Hono {
   const r = new Hono();
 
   r.post('/v1/index-conversation', async (c) => {
+    // Public demo: visitor conversations must NOT bleed into the shared
+    // KB (would expose other visitors' chats via search_kb). Silently
+    // accept the call with a no-op response so the frontend doesn't
+    // throw, but skip the actual indexing work.
+    if (process.env['OPENCANVAS_DEMO'] === '1') {
+      return c.json({ ok: true, indexed: 0, sourceId: '', skipped: 'demo' });
+    }
+
     const body = (await c.req.json().catch(() => ({}))) as {
       conversationId?: string;
       messages?: Array<{

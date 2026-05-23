@@ -10,6 +10,7 @@ import { ClaudeAgentSdkAdapter } from './claude-agent-sdk.js';
 import { AnthropicDirectAdapter } from './anthropic-direct.js';
 import { OpenAIAdapter } from './openai.js';
 import { OpenRouterAdapter } from './openrouter.js';
+import { GroqAdapter } from './groq.js';
 import { OllamaAdapter } from './ollama.js';
 import { AmpAdapter } from './amp.js';
 
@@ -47,6 +48,9 @@ export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMPr
     case 'openrouter':
       return new OpenRouterAdapter({ model: llm.model, baseUrl: llm.baseUrl });
 
+    case 'groq':
+      return new GroqAdapter({ model: llm.model, baseUrl: llm.baseUrl });
+
     case 'ollama':
       return new OllamaAdapter({ model: llm.model, baseUrl: llm.baseUrl });
 
@@ -66,6 +70,7 @@ export {
   AnthropicDirectAdapter,
   OpenAIAdapter,
   OpenRouterAdapter,
+  GroqAdapter,
   OllamaAdapter,
   AmpAdapter,
 };

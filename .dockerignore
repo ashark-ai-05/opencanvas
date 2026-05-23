@@ -1,0 +1,34 @@
+.git
+.github
+.remember
+.opencanvas
+
+# Local builds
+node_modules
+**/node_modules
+app/dist
+dist-backend
+release
+build/icons
+build/AppIcon.iconset
+
+# Spikes — not part of the runtime image
+spikes
+
+# Editor / IDE
+.vscode
+.idea
+.DS_Store
+
+# Demo recordings + heavy artefacts (downloaded fresh in CI if needed)
+docs/demo-frames
+docs/superpowers
+*.log
+
+# Test caches
+__tests__/app/.cache
+.vitest-cache
+
+# Environment files
+.env
+.env.local
