@@ -54,6 +54,53 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Vendor split. Without manualChunks, Rollup throws everything
+    // not lazy-imported into one big `index-*.js` (~2.4 MB / 720 KB
+    // gzip). Splitting tldraw + ai-sdk + shiki + markdown out gives
+    // the browser parallel downloads on first paint and lets the
+    // already-cached vendor chunks survive across app updates.
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('/tldraw/') || id.includes('/@tldraw/')) {
+            return 'vendor-tldraw';
+          }
+          if (
+            id.includes('/ai/') ||
+            id.includes('/@ai-sdk/') ||
+            id.includes('/@anthropic-ai/') ||
+            id.includes('/openai/')
+          ) {
+            return 'vendor-ai';
+          }
+          if (id.includes('/shiki/') || id.includes('/@shikijs/')) {
+            return 'vendor-shiki';
+          }
+          if (
+            id.includes('/react-markdown/') ||
+            id.includes('/remark-') ||
+            id.includes('/micromark-') ||
+            id.includes('/mdast-')
+          ) {
+            return 'vendor-markdown';
+          }
+          if (id.includes('/framer-motion/') || id.includes('/motion-')) {
+            return 'vendor-motion';
+          }
+          if (id.includes('/lucide-react/')) {
+            return 'vendor-icons';
+          }
+          if (id.includes('/react/') || id.includes('/react-dom/')) {
+            return 'vendor-react';
+          }
+          return 'vendor';
+        },
+      },
+    },
+    // Raise the warning threshold — even split, the tldraw chunk is
+    // ~500-700 KB by itself. That's intrinsic to the library.
+    chunkSizeWarningLimit: 800,
   },
   test: {
     environment: 'jsdom',

@@ -5,6 +5,29 @@
     <link rel="icon" href="data:," />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
+    <!--
+      Renderer Content-Security-Policy. Hybrid that works for both Vite
+      dev (HMR needs 'unsafe-eval' + ws:) and Electron prod (file://
+      renderer talking to 127.0.0.1:3457). Defense-in-depth on top of
+      tldraw/widget input sanitization — a compromised dependency or a
+      malicious plugin still can't load 3rd-party scripts, exfil via
+      img-src, or pop an <object> escape hatch.
+
+      Loose where we have to be:
+        - script-src 'unsafe-inline' 'unsafe-eval'  (Vite, Shiki, some libs)
+        - style-src 'unsafe-inline'                 (framer-motion + tldraw)
+        - frame-src 'self' data: blob: https:      (plugin sandboxed iframes)
+
+      Strict where we can:
+        - object-src 'none'                         (no Flash/ActiveX escape)
+        - base-uri 'self'                           (no <base href> hijack)
+        - connect-src pinned to localhost backend + Vite HMR
+        - default-src 'self'                        (everything else off)
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' http://127.0.0.1:3457 http://localhost:3457 ws://127.0.0.1:3458 ws://localhost:3458 https:; frame-src 'self' data: blob: https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'"
+    />
     <title>OpenCanvas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

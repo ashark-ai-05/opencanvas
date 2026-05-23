@@ -67,13 +67,26 @@ when scripting against the API from another local process where
 plumbing the header is friction. **Do not** ship a build with this
 default — it re-opens the cross-process tampering window.
 
-### Custom Content-Security-Policy
+### Content-Security-Policy
 
 The Electron renderer applies a default CSP via `Content-Security-Policy`
-meta tag in the bundled `index.html`. Plugins that need to load
-external scripts (Tailwind, D3 CDN, etc.) must declare their sources
-in the plugin manifest. We do not currently auto-merge plugin CSP into
-the host CSP — this is a v0.2 task tracked in the public roadmap.
+meta tag in `app/index.html`:
+
+- `default-src 'self'` — block 3rd-party resources by default
+- `connect-src` pinned to `127.0.0.1:3457` / `localhost:3457` (backend)
+  + `ws://*:3458` (Vite HMR)
+- `object-src 'none'` and `base-uri 'self'` — no plugin escape via
+  `<object>`/`<base>`
+- `script-src` still allows `'unsafe-inline' 'unsafe-eval'` because
+  Vite HMR and a few libs (Shiki) need it. Tightening this for the
+  bundled prod build is a v0.2 task — would need a build-time CSP
+  swap (separate `index.prod.html`) or nonce injection.
+
+Plugins that need to load external scripts inside their sandboxed
+iframe declare their sources in the plugin manifest. We do not
+auto-merge plugin CSP into the host CSP — plugin iframes are sandboxed
+(`allow-scripts` only, no `allow-same-origin`) so their CSP scope is
+isolated by design.
 
 ## Disclosure
 

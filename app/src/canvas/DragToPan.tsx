@@ -2,36 +2,41 @@ import { useEffect } from 'react';
 import { useEditor } from 'tldraw';
 
 /**
- * Figma-style "drag empty space to pan" with click-to-deselect and
- * post-release inertia.
+ * Drag-empty-canvas-to-pan with cinematic inertia + click-to-deselect.
  *
- * Gesture model:
- *   - Pointerdown on a shape           → return; tldraw handles the move
- *   - Pointerdown on empty + shift     → return; tldraw runs marquee select
- *   - Pointerdown on empty + no shift  → tentatively claim, BUT don't
- *                                        commit to pan until movement
- *                                        exceeds PAN_THRESHOLD_PX
- *   - Click without movement           → editor.setSelectedShapes([]) so
- *                                        clicking empty deselects (we
- *                                        stopPropagation tldraw's own
- *                                        click handling to keep the
- *                                        gesture deterministic)
- *   - Drag past threshold              → enter pan mode; track windowed
- *                                        velocity for inertia on release
- *   - Pointerup with active pan        → start an exponential-decay
- *                                        rAF loop that applies the last
- *                                        velocity, multiplied by DECAY
- *                                        each frame, until below
- *                                        STOP_VELOCITY — gives the
- *                                        camera a fluid glide instead
- *                                        of a hard stall
- *   - New pointerdown during glide     → cancel inertia immediately so
- *                                        the next gesture takes over
+ * Event policy (this is the subtle bit):
+ *   We DON'T block pointerdown or click-pointerup at all. tldraw's
+ *   select-tool natively handles "click empty → deselect", so letting
+ *   those events through means we get deselect-on-click for free.
+ *   We only `stopPropagation` on pointermove (so tldraw doesn't start
+ *   a marquee mid-pan) and on pointerup-after-pan (so tldraw doesn't
+ *   try to finalize a brush we never let it start).
+ *
+ * Gesture states:
+ *   - Idle                  → no listeners doing anything special
+ *   - Pending (pointerdown
+ *     on empty, no shift)   → recording start coords; tldraw is also
+ *                             in its own "pointing canvas" sub-state
+ *   - Panning (after        → we own the gesture: stopProp moves,
+ *     PAN_THRESHOLD_PX)       update camera with immediate:true
+ *   - Inertia               → after pointerup-pan, exponential decay
+ *                             rAF loop applies remaining velocity
+ *
+ * Cancellation:
+ *   - New pointerdown → cancels active inertia
+ *   - pointercancel   → drops state, no glide
+ *   - shift+drag      → returns immediately; tldraw runs marquee
+ *   - shape under cursor → returns immediately; tldraw moves the shape
  */
 const PAN_THRESHOLD_PX = 4;
+// Inertia glide tuning. The decay is the "look" (how the curve eases
+// out); the stop-velocity is the "tail" (how long it crawls before
+// snapping to a halt). 0.92 + 0.1 lands at ~1 second of glide with
+// total distance ≈ 12× release velocity — still slow-motion in feel,
+// but travels half as far as the previous 0.96/0.03 tuning.
 const DECAY_PER_FRAME = 0.92;
-const STOP_VELOCITY_PX_PER_FRAME = 0.05;
-const VELOCITY_WINDOW_MS = 50;
+const STOP_VELOCITY_PX_PER_FRAME = 0.1;
+const VELOCITY_WINDOW_MS = 60;
 
 type Sample = { t: number; dx: number; dy: number };
 
@@ -41,14 +46,13 @@ export function DragToPan() {
   useEffect(() => {
     const container = editor.getContainer();
     let activePointerId: number | null = null;
-    let pendingShape = false; // true between pointerdown and threshold cross
+    let pending = false;
     let panning = false;
     let startScreenX = 0;
     let startScreenY = 0;
     let startCam = { x: 0, y: 0, z: 1 };
     let lastScreenX = 0;
     let lastScreenY = 0;
-    let lastMoveAt = 0;
     let prevCursor = '';
     let inertiaRaf: number | null = null;
     const samples: Sample[] = [];
@@ -61,8 +65,8 @@ export function DragToPan() {
     };
 
     const onPointerDown = (e: PointerEvent) => {
-      // A new pointerdown always cancels any in-flight inertia glide so
-      // the user feels in control.
+      // A new pointerdown always cancels any in-flight inertia glide
+      // so the next gesture feels in-control.
       cancelInertia();
 
       if (e.button !== 0) return;
@@ -74,59 +78,59 @@ export function DragToPan() {
         hitInside: true,
         margin: 4,
       });
-      if (shape) return; // pointer is on a widget — let tldraw handle it
+      if (shape) return; // tldraw moves the shape — don't claim the gesture
 
-      // Block tldraw from running its own select-tool state machine for
-      // this gesture. We'll either pan (on movement) or deselect (on
-      // release with no movement) ourselves. This keeps the gesture
-      // deterministic — no marquee flicker, no race with tldraw's
-      // pointing-canvas sub-state.
-      e.stopPropagation();
-      e.preventDefault();
-
+      // Note: we DON'T stopPropagation here. tldraw enters its own
+      // "pointing canvas" state, which (a) keeps existing selection
+      // alive during a potential pan, and (b) deselects on
+      // pointerup-without-movement — exactly the behavior we want.
       activePointerId = e.pointerId;
-      pendingShape = true;
+      pending = true;
       panning = false;
       startScreenX = lastScreenX = e.clientX;
       startScreenY = lastScreenY = e.clientY;
       startCam = editor.getCamera();
-      lastMoveAt = performance.now();
       samples.length = 0;
     };
 
     const onPointerMove = (e: PointerEvent) => {
       if (e.pointerId !== activePointerId) return;
-      if (!pendingShape && !panning) return;
+      if (!pending && !panning) return;
 
-      const now = performance.now();
       const dxTotal = e.clientX - startScreenX;
       const dyTotal = e.clientY - startScreenY;
 
-      // Commit to pan once we move past the click threshold. Without
-      // this gate, a single-pixel cursor jitter on click would steal
-      // the deselect.
+      // Commit to pan once movement clears the click-vs-drag threshold.
       if (!panning && Math.hypot(dxTotal, dyTotal) >= PAN_THRESHOLD_PX) {
         panning = true;
         prevCursor = container.style.cursor;
         container.style.cursor = 'grabbing';
+        // Once we own the gesture, hide it from tldraw so it doesn't
+        // start drawing a marquee on top of our pan. The pointerdown
+        // was already through, so tldraw's "pointing canvas" → idle
+        // transition will happen later when we stop blocking events.
       }
 
       if (panning) {
+        // Block tldraw from seeing further moves. With pointermove
+        // suppressed, tldraw's select-tool stays in "pointing canvas"
+        // and never escalates to "brushing" — so no marquee flicker.
         e.stopPropagation();
+
         const z = startCam.z;
         editor.setCamera(
           { x: startCam.x + dxTotal / z, y: startCam.y + dyTotal / z, z },
           { immediate: true },
         );
-        // Record a velocity sample (px since last move). Used for the
-        // inertia glide computed on pointerup.
+
+        const now = performance.now();
         samples.push({
           t: now,
           dx: e.clientX - lastScreenX,
           dy: e.clientY - lastScreenY,
         });
-        // Drop samples older than the rolling window so a long, slow
-        // gesture doesn't pollute the final-release velocity.
+        // Drop samples older than the rolling window so a long slow
+        // gesture doesn't pollute final-release velocity.
         while (samples.length > 0 && now - samples[0]!.t > VELOCITY_WINDOW_MS) {
           samples.shift();
         }
@@ -134,15 +138,10 @@ export function DragToPan() {
 
       lastScreenX = e.clientX;
       lastScreenY = e.clientY;
-      lastMoveAt = now;
     };
 
     const computeReleaseVelocity = (): { vx: number; vy: number } => {
-      if (samples.length === 0) return { vx: 0, vy: 0 };
-      // Average screen-px delta per frame across the sample window.
-      // We assume ~60fps, so frame = 16.67ms; the sum-of-deltas over
-      // the window divided by (window_ms / 16.67) yields per-frame
-      // velocity in screen pixels.
+      if (samples.length < 2) return { vx: 0, vy: 0 };
       let sumDx = 0;
       let sumDy = 0;
       for (const s of samples) {
@@ -154,20 +153,15 @@ export function DragToPan() {
         samples[samples.length - 1]!.t - samples[0]!.t,
       );
       const framesInSpan = span / 16.67;
-      return {
-        vx: sumDx / framesInSpan,
-        vy: sumDy / framesInSpan,
-      };
+      return { vx: sumDx / framesInSpan, vy: sumDy / framesInSpan };
     };
 
     const startInertia = (vx: number, vy: number) => {
-      // Bail if the gesture wasn't fast enough to bother gliding.
-      const speed = Math.hypot(vx, vy);
-      if (speed < STOP_VELOCITY_PX_PER_FRAME) return;
+      if (Math.hypot(vx, vy) < STOP_VELOCITY_PX_PER_FRAME) return;
 
       let curVx = vx;
       let curVy = vy;
-      let glideStartCam = editor.getCamera();
+      const glideStartCam = editor.getCamera();
       let accumDx = 0;
       let accumDy = 0;
       const z = glideStartCam.z;
@@ -196,37 +190,36 @@ export function DragToPan() {
 
     const onPointerUp = (e: PointerEvent) => {
       if (e.pointerId !== activePointerId) return;
-      e.stopPropagation();
 
-      const wasClick = pendingShape && !panning;
       const wasPan = panning;
 
       activePointerId = null;
-      pendingShape = false;
+      pending = false;
       panning = false;
       container.style.cursor = prevCursor;
 
-      if (wasClick) {
-        // Click on empty canvas — clear selection. We blocked tldraw's
-        // pointer handling, so we own this behavior.
-        const selected = editor.getSelectedShapeIds();
-        if (selected.length > 0) {
-          editor.setSelectedShapes([]);
-        }
-      } else if (wasPan) {
-        // Glide to a fluid stop based on the recent velocity window.
+      if (wasPan) {
+        // Suppress tldraw's pointerup so it doesn't try to finalize a
+        // brushing state we never entered, then glide to a fluid stop.
+        e.stopPropagation();
         const { vx, vy } = computeReleaseVelocity();
         startInertia(vx, vy);
+        return;
       }
+
+      // Click on empty canvas — pointerup propagates and tldraw's
+      // select-tool naturally clears selection. We call selectNone()
+      // belt-and-braces in case a future tldraw version changes that
+      // default; it's idempotent.
+      editor.selectNone();
     };
 
     const onPointerCancel = (e: PointerEvent) => {
       if (e.pointerId !== activePointerId) return;
       activePointerId = null;
-      pendingShape = false;
+      pending = false;
       panning = false;
       container.style.cursor = prevCursor;
-      // Don't glide on cancel — the gesture was aborted, not released.
     };
 
     container.addEventListener('pointerdown', onPointerDown, { capture: true });

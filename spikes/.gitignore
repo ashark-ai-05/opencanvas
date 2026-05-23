@@ -5,3 +5,7 @@ models/
 .env.local
 *.log
 05-space-agent-fork/space-agent/
+# Spikes are one-off experiments — don't pin transitive deps. A stale
+# lockfile here is the only source of Dependabot noise.
+package-lock.json
+pnpm-lock.yaml
