@@ -1,15 +1,22 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Search, LayoutGrid, Globe } from 'lucide-react';
-import { useCanvasStats } from '../state/canvas-stats-store';
+import { useEditor, useValue } from 'tldraw';
 
 /**
- * Shown when the canvas has zero OpenCanvas widgets. Disappears with a fade as
- * soon as the first widget is placed. Positioned absolutely; doesn't block
+ * Shown when the canvas has zero shapes — any shape (widget OR a
+ * native draw/arrow/geo stroke) hides it. Previously gated on
+ * opencanvas-widget count only, so the banner stuck around while the
+ * user was actively drawing. Positioned absolutely; doesn't block
  * canvas interactions (pointer-events: none everywhere except the chip itself).
  */
 export function EmptyCanvasHint() {
-  const widgetCount = useCanvasStats((s) => s.widgetCount);
-  const visible = widgetCount === 0;
+  const editor = useEditor();
+  const shapeCount = useValue(
+    'canvas shape count',
+    () => editor.getCurrentPageShapes().length,
+    [editor],
+  );
+  const visible = shapeCount === 0;
 
   return (
     <AnimatePresence>

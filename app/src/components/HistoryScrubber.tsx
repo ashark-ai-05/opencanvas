@@ -114,6 +114,7 @@ function Drawer({ onClose }: { onClose: () => void }) {
           className="opencanvas-chat-titlebar-btn"
           onClick={onClose}
           title="Close"
+          aria-label="Close history scrubber"
         >
           <X className="size-3.5" />
         </button>

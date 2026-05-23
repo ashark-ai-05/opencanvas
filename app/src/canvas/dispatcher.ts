@@ -11,6 +11,7 @@ import type {
   WidgetStreamOp,
 } from '../../../src/agent/types';
 import { applyOps } from './stream-mutator';
+import { logger } from '../lib/logger';
 
 /**
  * Place results on the canvas using the active template's layout.
@@ -348,7 +349,7 @@ export function applyToolDirective(
       if (!target) {
         // Don't throw — the agent may reference an id that's been
         // deleted. Surface in console and bail.
-        console.warn(`[dispatcher] update: shape not found for id ${directive.id}`);
+        logger.warn(`[dispatcher] update: shape not found for id ${directive.id}`);
         return;
       }
 
@@ -386,7 +387,9 @@ export function applyToolDirective(
     case 'clear': {
       // Pinned widgets (meta.pinned === true) survive a clear — they
       // act as a per-conversation scratchpad. The user toggles pinning
-      // via /pin-selected and /unpin-selected.
+      // via /pin-selected and /unpin-selected. Everything else goes,
+      // including native tldraw draw/arrow/geo shapes left over from
+      // hand drawing.
       const ids = (
         editor.getCurrentPageShapes() as Array<{
           id: string;
@@ -394,11 +397,7 @@ export function applyToolDirective(
           meta?: Record<string, unknown>;
         }>
       )
-        .filter(
-          (s) =>
-            s.type.startsWith('opencanvas:') &&
-            (s.meta?.['pinned'] as boolean | undefined) !== true,
-        )
+        .filter((s) => (s.meta?.['pinned'] as boolean | undefined) !== true)
         .map((s) => s.id);
       if (ids.length > 0) editor.deleteShapes(ids as never[]);
       return;
@@ -426,7 +425,7 @@ export function applyToolDirective(
         // than throwing — the throw was bubbling to the chat as a hard
         // error and breaking the turn for what's a recoverable miss.
         // Matches the 'update' case's handling at line 351.
-        console.warn(`[dispatcher] focus: shape not found for id ${directive.id}`);
+        logger.warn(`[dispatcher] focus: shape not found for id ${directive.id}`);
         return;
       }
       const sx = (shape as { x: number }).x;
@@ -480,7 +479,7 @@ export function applyToolDirective(
       // UIMS over a single SSE connection is reliable in practice; we'll
       // wire resync when we observe a real gap.
       if (directive.seq <= s.lastSeq) {
-        console.warn(
+        logger.warn(
           `[dispatcher] stream-op out-of-order: id=${directive.id} ` +
             `seq=${directive.seq} lastSeq=${s.lastSeq}`,
         );
@@ -523,7 +522,7 @@ export function applyToolDirective(
         // conversation. Warn + return rather than throwing — the throw
         // was bubbling to the chat and breaking the turn for what's a
         // recoverable miss. Matches the 'update' + 'focus' cases.
-        console.warn(
+        logger.warn(
           `[dispatcher] link: missing shape (from=${directive.fromId}, to=${directive.toId})`,
         );
         return;

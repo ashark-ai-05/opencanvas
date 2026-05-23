@@ -201,6 +201,7 @@ function SchedulesPanelBody({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           title="Close"
+          aria-label="Close schedules panel"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

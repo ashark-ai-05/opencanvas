@@ -13,6 +13,7 @@ import { canvasRoute } from './routes/canvas.js';
 import { schedulesRoute } from './routes/schedules.js';
 import { notebookRoute } from './routes/notebook.js';
 import { pluginFetchRoute } from './routes/plugin-fetch.js';
+import { authMiddleware, getAuthToken, getAuthTokenPath } from './auth.js';
 
 /**
  * The Hono app. Tests can hit `app.request(path)` directly without
@@ -25,11 +26,36 @@ import { pluginFetchRoute } from './routes/plugin-fetch.js';
  */
 export const app = new Hono();
 
-// CORS: the Vite dev server proxies /v1/* to this backend (same-origin from
-// the browser's POV) so CORS is technically not needed in dev. We mirror the
-// request origin anyway as a belt-and-braces measure for direct curl/SDK use
-// from other localhost ports. Safe for localhost-only deployments.
-app.use('/*', cors({ origin: (o) => o, allowMethods: ['GET', 'POST', 'OPTIONS'] }));
+// CORS: explicit localhost-only allowlist. The previous `origin: (o) => o`
+// reflected any origin, which let a malicious tab visited while OpenCanvas
+// was running POST to the local backend. Now we only allow the Vite dev
+// server origin, the Electron app file:// origin, and direct same-origin
+// requests (which arrive with no Origin header — those return null from
+// the function and hono/cors treats that as same-origin).
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:3458',
+  'http://127.0.0.1:3458',
+  // Vite preview port (rare, but used when verifying production bundles).
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+]);
+app.use(
+  '/*',
+  cors({
+    origin: (origin) => {
+      if (!origin) return ''; // no Origin → same-origin or curl → allow
+      // Electron loads the app from file:// — origin is "null" string.
+      if (origin === 'null') return origin;
+      return ALLOWED_ORIGINS.has(origin) ? origin : null;
+    },
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'X-OpenCanvas-Token'],
+  }),
+);
+
+// Token auth on state-mutating /v1/* routes. See auth.ts for the
+// bypass rules (NODE_ENV=test, OPENCANVAS_REQUIRE_AUTH=0, GETs).
+app.use('/v1/*', authMiddleware);
 
 let statePromise: Promise<BackendState> | null = null;
 
@@ -396,11 +422,20 @@ app.post('/v1/query', async (c) => {
 export async function start(port: number): Promise<void> {
   const { serve } = await import('@hono/node-server');
   const s = await getState();
+  // Prime the auth token before we begin accepting requests. Reads/creates
+  // ~/.opencanvas/auth-token. The path is logged (but never the token) so
+  // operators know where to grab it for curl use.
+  void getAuthToken();
   serve({ fetch: app.fetch, port });
   console.log(`[opencanvas backend] listening on http://127.0.0.1:${port}`);
   console.log(`[opencanvas backend] profile: ${s.profileName}`);
   console.log(`[opencanvas backend] llm:     ${s.getLLMProvider().id}`);
   console.log(`[opencanvas backend] embed:   ${s.getEmbedder().id}`);
+  if (process.env['OPENCANVAS_REQUIRE_AUTH'] !== '0') {
+    console.log(`[opencanvas backend] auth:    token at ${getAuthTokenPath()}`);
+  } else {
+    console.log(`[opencanvas backend] auth:    DISABLED (OPENCANVAS_REQUIRE_AUTH=0)`);
+  }
 }
 
 // Run via `pnpm tsx src/backend/server.ts` or `pnpm backend`.

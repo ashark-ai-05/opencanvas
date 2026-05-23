@@ -1,6 +1,37 @@
 {
   "name": "opencanvas",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "An infinite canvas that your local LLM draws typed widgets on. BYO model (Claude / OpenAI / OpenRouter / Ollama / Amp), MCP-native, self-improving knowledge base, single-user, runs entirely on your machine.",
+  "author": {
+    "name": "Krunal Ashar",
+    "email": "krunal.ashar@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ashark-ai-05/opencanvas#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashark-ai-05/opencanvas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ashark-ai-05/opencanvas/issues"
+  },
+  "keywords": [
+    "infinite-canvas",
+    "tldraw",
+    "llm",
+    "agent",
+    "anthropic",
+    "claude",
+    "openai",
+    "ollama",
+    "mcp",
+    "model-context-protocol",
+    "knowledge-base",
+    "rag",
+    "local-first",
+    "electron",
+    "byo-model"
+  ],
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
@@ -97,7 +128,10 @@
       "tar": "^7.5.11",
       "@tootallnate/once": "^3.0.1",
       "@anthropic-ai/sdk": "^0.95.1",
-      "ip-address": "^10.1.1"
+      "ip-address": "^10.1.1",
+      "protobufjs": "^7.5.8",
+      "qs": "^6.15.2",
+      "ws": "^8.20.1"
     }
   },
   "build": {

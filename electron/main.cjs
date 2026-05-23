@@ -10,15 +10,42 @@
  *
  * Spec: REPLICATION-PROMPT.md §16.
  */
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 const http = require('node:http');
+const fs = require('node:fs');
+const os = require('node:os');
+const crypto = require('node:crypto');
 
 const isDev = !app.isPackaged;
 const APP_PORT = 3458;
 const BACKEND_PORT = 3457;
 const userDataDir = app.getPath('userData');
+
+// Backend auth token. Generated once and shared between the spawned
+// backend (via OPENCANVAS_AUTH_TOKEN env) and the renderer (via preload
+// + IPC). Reusing a stable file in ~/.opencanvas means dev (Vite proxy)
+// and packaged Electron point at the same token, so curl from the
+// terminal also works for power users.
+const TOKEN_FILE = path.join(os.homedir(), '.opencanvas', 'auth-token');
+function ensureAuthToken() {
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const t = fs.readFileSync(TOKEN_FILE, 'utf8').trim();
+      if (t.length >= 16) return t;
+    }
+  } catch {
+    // fall through and regenerate
+  }
+  const generated = crypto.randomBytes(32).toString('hex');
+  fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+  fs.writeFileSync(TOKEN_FILE, generated, 'utf8');
+  try { fs.chmodSync(TOKEN_FILE, 0o600); } catch { /* windows */ }
+  return generated;
+}
+const AUTH_TOKEN = ensureAuthToken();
+ipcMain.handle('opencanvas:get-auth-token', () => AUTH_TOKEN);
 
 let backendProcess = null;
 let mainWindow = null;
@@ -31,6 +58,7 @@ function spawnBackend() {
       ELECTRON_RUN_AS_NODE: '1',
       OPENCANVAS_BACKEND_PORT: String(BACKEND_PORT),
       OPENCANVAS_CONFIG: path.join(userDataDir, 'config.json'),
+      OPENCANVAS_AUTH_TOKEN: AUTH_TOKEN,
     },
     stdio: 'inherit',
   });
@@ -80,6 +108,7 @@ async function createWindow() {
       // configured, so we drop sandbox to avoid the SETUID_SANDBOX error
       // that would otherwise abort startup. See electron/electron#17972.
       sandbox: !isDev,
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

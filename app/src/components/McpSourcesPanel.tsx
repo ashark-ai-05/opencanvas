@@ -126,6 +126,7 @@ function McpSourcesPanelBody({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           title="Close"
+          aria-label="Close MCP servers panel"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

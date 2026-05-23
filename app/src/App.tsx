@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import { Boxes, CalendarClock, History, Notebook, Plus, Search, ServerCog, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,12 +9,28 @@ import { getEditor } from './state/editor-ref';
 import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
-import { SourcesPanel } from './components/SourcesPanel';
-import { McpSourcesPanel } from './components/McpSourcesPanel';
-import { PluginsPanel } from './components/PluginsPanel';
-import { SchedulesPanel } from './components/SchedulesPanel';
-import { RecallPanel } from './components/RecallPanel';
-import { NotebookPanel } from './components/NotebookPanel';
+// Drawer panels are large + rarely-opened on the first session — lazy-load
+// them so initial JS payload drops. The conditional `{open && ...}`
+// guard at the render site means the chunk only fires when the user
+// actually opens the panel for the first time.
+const SourcesPanel = lazy(() =>
+  import('./components/SourcesPanel').then((m) => ({ default: m.SourcesPanel })),
+);
+const McpSourcesPanel = lazy(() =>
+  import('./components/McpSourcesPanel').then((m) => ({ default: m.McpSourcesPanel })),
+);
+const PluginsPanel = lazy(() =>
+  import('./components/PluginsPanel').then((m) => ({ default: m.PluginsPanel })),
+);
+const SchedulesPanel = lazy(() =>
+  import('./components/SchedulesPanel').then((m) => ({ default: m.SchedulesPanel })),
+);
+const RecallPanel = lazy(() =>
+  import('./components/RecallPanel').then((m) => ({ default: m.RecallPanel })),
+);
+const NotebookPanel = lazy(() =>
+  import('./components/NotebookPanel').then((m) => ({ default: m.NotebookPanel })),
+);
 import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -153,20 +169,32 @@ export function App() {
               const editor = getEditor();
               if (!editor) return;
               const tplId = useTemplateStore.getState().activeTemplateId;
-              const widgetCount = editor
-                .getCurrentPageShapes()
-                .filter((s) => s.type.startsWith('opencanvas:')).length;
-              if (widgetCount === 0) {
+              const shapes = editor.getCurrentPageShapes() as Array<{
+                id: string;
+                type: string;
+                meta?: Record<string, unknown>;
+              }>;
+              const clearable = shapes.filter(
+                (s) => (s.meta?.['pinned'] as boolean | undefined) !== true,
+              );
+              if (clearable.length === 0) {
                 toast('Canvas is already empty');
                 return;
               }
+              const widgetCount = clearable.filter((s) =>
+                s.type.startsWith('opencanvas:'),
+              ).length;
+              const drawCount = clearable.length - widgetCount;
               const { applyToolDirective } = await import(
                 './canvas/dispatcher'
               );
               applyToolDirective(editor, { type: 'clear' }, tplId);
-              toast(
-                `Cleared ${widgetCount} widget${widgetCount === 1 ? '' : 's'}`,
-              );
+              const parts: string[] = [];
+              if (widgetCount > 0)
+                parts.push(`${widgetCount} widget${widgetCount === 1 ? '' : 's'}`);
+              if (drawCount > 0)
+                parts.push(`${drawCount} drawing${drawCount === 1 ? '' : 's'}`);
+              toast(`Cleared ${parts.join(' + ')}`);
             }}
             title="Clear all widgets from the canvas"
             aria-label="Clear canvas"
@@ -254,12 +282,33 @@ export function App() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <SourcesPanel open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
-      <McpSourcesPanel open={mcpOpen} onClose={() => setMcpOpen(false)} />
-      <PluginsPanel open={pluginsOpen} onClose={() => setPluginsOpen(false)} />
-      <SchedulesPanel open={schedulesOpen} onClose={() => setSchedulesOpen(false)} />
-      <RecallPanel open={recallOpen} onClose={() => setRecallOpen(false)} />
-      <NotebookPanel open={notebookOpen} onClose={() => setNotebookOpen(false)} />
+      {/* All drawer panels are lazy-loaded — render only when open so
+          we don't fetch the chunk until the user actually opens one.
+          The empty Suspense fallback is fine: panels animate in via
+          framer; a single frame of nothing is invisible. */}
+      <Suspense fallback={null}>
+        {sourcesOpen && (
+          <SourcesPanel open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
+        )}
+        {mcpOpen && (
+          <McpSourcesPanel open={mcpOpen} onClose={() => setMcpOpen(false)} />
+        )}
+        {pluginsOpen && (
+          <PluginsPanel open={pluginsOpen} onClose={() => setPluginsOpen(false)} />
+        )}
+        {schedulesOpen && (
+          <SchedulesPanel
+            open={schedulesOpen}
+            onClose={() => setSchedulesOpen(false)}
+          />
+        )}
+        {recallOpen && (
+          <RecallPanel open={recallOpen} onClose={() => setRecallOpen(false)} />
+        )}
+        {notebookOpen && (
+          <NotebookPanel open={notebookOpen} onClose={() => setNotebookOpen(false)} />
+        )}
+      </Suspense>
       <CommandPalette />
       <Toaster
         theme="dark"

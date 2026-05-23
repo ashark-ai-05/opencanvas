@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { applyToolDirective } from '../canvas/dispatcher';
+import { logger } from '../lib/logger';
 import { getLatestSnapshot } from '../state/snapshot-ref';
 import { getEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
@@ -311,7 +312,7 @@ async function indexConversation(
     }
   } catch (e) {
     // Best-effort; don't bother the user with toasts on failure.
-    console.warn('[chat] index-conversation failed:', e);
+    logger.warn('[chat] index-conversation failed:', e);
   }
 }
 
@@ -488,7 +489,7 @@ export function Chat() {
             try {
               applyToolDirective(editor, directive, tplId);
             } catch (e) {
-              console.error('[chat] stream directive failed:', e);
+              logger.error('[chat] stream directive failed:', e);
             }
           }
           appliedRef.current.add(partId);
@@ -508,7 +509,7 @@ export function Chat() {
           applyToolDirective(editor, parsed.directive, tplId);
         } catch (e) {
           const message = e instanceof Error ? e.message : String(e);
-          console.error('[chat] applyToolDirective failed:', e);
+          logger.error('[chat] applyToolDirective failed:', e);
           toast.error('Could not place widget', { description: message });
         }
         appliedRef.current.add(op.toolCallId);
@@ -695,7 +696,7 @@ export function Chat() {
                             mod.placeResultsOnCanvas(editor, [hit]),
                           )
                           .catch((e) => {
-                            console.error('[chat] place from KB failed:', e);
+                            logger.error('[chat] place from KB failed:', e);
                             toast.error('Could not place from KB');
                           });
                       }}
@@ -810,7 +811,7 @@ export function Chat() {
                                 useTemplateStore.getState().activeTemplateId,
                               );
                             } catch (e) {
-                              console.warn('[chat] focus failed:', e);
+                              logger.warn('[chat] focus failed:', e);
                               toast('Widget no longer on the canvas');
                             }
                           }}
@@ -893,7 +894,7 @@ export function Chat() {
           import('../canvas/dispatcher')
             .then((m) => m.placeResultsOnCanvas(editor, [hit]))
             .catch((e) => {
-              console.error('[chat] place from KB failed:', e);
+              logger.error('[chat] place from KB failed:', e);
               toast.error('Could not place from KB');
             });
         }}

@@ -110,6 +110,7 @@ function PluginsPanelBody({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           title="Close"
+          aria-label="Close plugins panel"
           style={{
             marginLeft: 'auto',
             display: 'inline-flex',

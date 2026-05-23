@@ -394,6 +394,7 @@ function TimeControls({
         className="opencanvas-time-btn opencanvas-time-btn--primary"
         onClick={togglePlay}
         title={running ? 'Pause' : 'Start'}
+        aria-label={running ? 'Pause' : 'Start'}
       >
         {running ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
       </button>
@@ -402,6 +403,7 @@ function TimeControls({
         className="opencanvas-time-btn"
         onClick={reset}
         title="Reset"
+        aria-label="Reset"
       >
         <RotateCcw className="size-3.5" />
       </button>
@@ -411,6 +413,7 @@ function TimeControls({
           className="opencanvas-time-btn"
           onClick={onSkip}
           title="Skip phase"
+          aria-label="Skip phase"
         >
           <SkipForward className="size-3.5" />
         </button>

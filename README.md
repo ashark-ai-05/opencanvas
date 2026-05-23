@@ -6,7 +6,7 @@
 
 Ask anything → the agent searches your knowledge, the web, and your MCP servers → it places typed widgets on a tldraw canvas and replies with a short note pointing to what it built.
 
-[![tests](https://img.shields.io/badge/tests-450%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)]() [![byo](https://img.shields.io/badge/BYO-credentials-fb7185)]()
+[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-596%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![byo](https://img.shields.io/badge/BYO-credentials-fb7185)]()
 
 ![demo](docs/demo.gif)
 

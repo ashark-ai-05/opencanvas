@@ -2,12 +2,20 @@ import { describe, it, expect, vi } from 'vitest';
 import { applyToolDirective } from '../../app/src/canvas/dispatcher';
 import { useTemplateStore } from '../../app/src/state/template-store';
 
-function makeEditor() {
-  const shapes: { id: string; type: string }[] = [
-    { id: 'shape:w-1', type: 'opencanvas:markdown' },
-    { id: 'shape:w-2', type: 'opencanvas:ticket' },
-    { id: 'shape:other', type: 'geo' },
-  ];
+type ShapeLite = {
+  id: string;
+  type: string;
+  meta?: Record<string, unknown>;
+};
+
+function makeEditor(initial?: ShapeLite[]) {
+  const shapes: ShapeLite[] =
+    initial ?? [
+      { id: 'shape:w-1', type: 'opencanvas:markdown' },
+      { id: 'shape:w-2', type: 'opencanvas:ticket' },
+      { id: 'shape:draw-1', type: 'draw' },
+      { id: 'shape:pinned', type: 'opencanvas:markdown', meta: { pinned: true } },
+    ];
   return {
     shapes,
     getCurrentPageShapes: () => shapes,
@@ -23,25 +31,20 @@ function makeEditor() {
 }
 
 describe('applyToolDirective — clear & switchTemplate', () => {
-  it('clear directive removes only opencanvas:* shapes', () => {
+  it('clear removes all non-pinned shapes (including native drawings)', () => {
     const editor = makeEditor();
     applyToolDirective(editor as never, { type: 'clear' }, 'ask-anything');
     expect(editor.shapes).toHaveLength(1);
-    expect(editor.shapes[0]!.type).toBe('geo');
+    expect(editor.shapes[0]!.id).toBe('shape:pinned');
   });
 
-  it('clear directive is a no-op when no opencanvas shapes are present', () => {
-    const editor = {
-      shapes: [{ id: 'shape:other', type: 'geo' }],
-      getCurrentPageShapes: function () {
-        return this.shapes;
-      },
-      deleteShapes: vi.fn(),
-      getViewportPageBounds: () => ({ x: 0, y: 0, w: 1200, h: 800 }),
-      createShape: vi.fn(),
-    };
+  it('clear is a no-op when only pinned shapes remain', () => {
+    const editor = makeEditor([
+      { id: 'shape:pinned', type: 'opencanvas:markdown', meta: { pinned: true } },
+    ]);
+    const spy = vi.spyOn(editor, 'deleteShapes');
     applyToolDirective(editor as never, { type: 'clear' }, 'ask-anything');
-    expect(editor.deleteShapes).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('switchTemplate updates the Zustand store', () => {

@@ -3,6 +3,7 @@ import { Tldraw, type Editor, type TLUiComponents } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { TextNoteShapeUtil } from './shapes/text-note';
 import { ToolsBridge } from './ToolsBridge';
+import { DragToPan } from './DragToPan';
 import { CanvasGrid } from '../components/CanvasGrid';
 import { CanvasMap } from '../components/CanvasMap';
 import { MarkdownShapeUtil } from './shapes/markdown';
@@ -227,6 +228,7 @@ export function Canvas() {
         components={tldrawUiComponents}
       >
         <ToolsBridge />
+        <DragToPan />
         <EmptyCanvasHint />
         {/* CanvasMap mounts INSIDE Tldraw so useEditor()+useValue() can
             subscribe to viewport + shape state without manual store-listen.

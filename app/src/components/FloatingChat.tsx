@@ -1,7 +1,7 @@
 import { motion, useMotionValue, useDragControls } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParallax } from '../lib/motion/use-parallax';
-import { GripVertical, Maximize2, Minimize2, Minus, X } from 'lucide-react';
+import { ChevronUp, GripVertical, Maximize2, Minimize2, Minus, X } from 'lucide-react';
 import { ChatBrandMark } from './ChatBrandMark';
 import { Chat } from './Chat';
 import { ChatStatusBar } from './ChatStatusBar';
@@ -32,39 +32,68 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
   const dragControls = useDragControls();
   const [dragging, setDragging] = useState(false);
   const titlebarParallax = useParallax({ maxTilt: 2, lift: false });
+  const asideRef = useRef<HTMLElement | null>(null);
 
-  // Toggle fullMode AND snap the drag offset back to (0, 0) so the
-  // larger size always anchors at the visible bottom-right corner.
-  // Without the snap, a user who dragged the chat upward and then
-  // hit "expand" could end up with the title bar pushed above the
-  // viewport — and no way to grab the restore button.
+  // Measure the chat's actual rect and nudge x/y just enough to bring
+  // any off-viewport edge back in. Bottom-anchored layout means a
+  // minimize → restore can grow the body upward past the viewport's
+  // top edge; this is the canonical fix-up.
+  const clampToViewport = useCallback(() => {
+    const el = asideRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const margin = 20;
+    let dx = 0;
+    let dy = 0;
+    if (rect.right > window.innerWidth - margin) {
+      dx = window.innerWidth - margin - rect.right;
+    }
+    if (rect.left < margin) {
+      // Left-edge correction wins over right-edge (title bar grip
+      // sits on the left, so prefer keeping that grabbable).
+      dx = margin - rect.left;
+    }
+    if (rect.bottom > window.innerHeight - margin) {
+      dy = window.innerHeight - margin - rect.bottom;
+    }
+    if (rect.top < margin) {
+      // Title bar sits at the top of the chat — prefer keeping it in
+      // view over the bottom edge.
+      dy = margin - rect.top;
+    }
+    if (dx === 0 && dy === 0) return;
+    const nx = x.get() + dx;
+    const ny = y.get() + dy;
+    x.set(nx);
+    y.set(ny);
+    setChatWindow({ dragX: nx, dragY: ny });
+  }, [x, y, setChatWindow]);
+
+  // Toggle fullMode. The clamp effect below handles bringing the
+  // larger variant back into view if the previous drag offset would
+  // leave it partially off-screen — no need to hard-reset to (0, 0).
   const toggleFullMode = () => {
     const next = chatWindow.fullMode === 'full' ? 'normal' : 'full';
-    x.set(0);
-    y.set(0);
-    setChatWindow({ fullMode: next, dragX: 0, dragY: 0 });
+    setChatWindow({ fullMode: next });
   };
 
-  // Belt-and-braces: if persisted drag offsets came from a previous
-  // session in a smaller window, clamp them to keep the title bar
-  // reachable. Runs once per mount.
-  // (Uses window.innerWidth/Height directly — framer's dragConstraints
-  //  fires only during drag, so this catches the "open in a smaller
-  //  monitor than where you last left it" case.)
+  // Clamp whenever the chat's effective bounding box can change:
+  //   - mode flip (minimized ↔ open) changes height (restore grows
+  //     the body upward from the bottom anchor — main bug path)
+  //   - fullMode flip changes width
+  //   - viewport resize changes the safe area
+  // rAF waits one frame so the DOM reflects the new size before we
+  // measure with getBoundingClientRect.
   useEffect(() => {
-    const safeMinX = -window.innerWidth + 120;
-    const safeMaxX = 80;
-    const safeMinY = -window.innerHeight + 120;
-    const safeMaxY = 80;
-    const cx = Math.max(safeMinX, Math.min(safeMaxX, x.get()));
-    const cy = Math.max(safeMinY, Math.min(safeMaxY, y.get()));
-    if (cx !== x.get() || cy !== y.get()) {
-      x.set(cx);
-      y.set(cy);
-      setChatWindow({ dragX: cx, dragY: cy });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const id = requestAnimationFrame(() => clampToViewport());
+    return () => cancelAnimationFrame(id);
+  }, [chatWindow.mode, chatWindow.fullMode, clampToViewport]);
+
+  useEffect(() => {
+    const onResize = () => clampToViewport();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [clampToViewport]);
 
   if (chatWindow.mode === 'collapsed') {
     return null;
@@ -72,6 +101,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
 
   return (
     <motion.aside
+      ref={asideRef as React.RefObject<HTMLElement>}
       drag
       dragControls={dragControls}
       dragListener={false}
@@ -80,7 +110,11 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
       // The chat is anchored bottom-right; x/y are translate offsets,
       // so negative values move it up-left. We allow it to nearly
       // exit the screen but always reserve ~120px of overlap so the
-      // title bar (with the restore button) is grabbable.
+      // title bar (with the restore button) is grabbable. The
+      // post-drag clamp below additionally measures the actual rect
+      // — required when the chat shrinks (minimize) and then regrows
+      // (restore), since constraints sized for the SMALLER variant
+      // would leave the larger one partially off-screen.
       dragConstraints={{
         left: -window.innerWidth + 120,
         top: -window.innerHeight + 120,
@@ -91,6 +125,10 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
       onDragEnd={() => {
         setDragging(false);
         setChatWindow({ dragX: x.get(), dragY: y.get() });
+        // Catch the case where the user released the drag at the
+        // very edge of the constraint and the bounding rect is
+        // technically partly off-screen — bring it back.
+        requestAnimationFrame(() => clampToViewport());
       }}
       style={{ x, y, right: 24, bottom: 24 }}
       data-mode={chatWindow.mode}
@@ -159,7 +197,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           <button
             type="button"
             className="opencanvas-chat-titlebar-btn"
-            title={chatWindow.mode === 'minimized' ? 'Expand' : 'Minimize'}
+            title={chatWindow.mode === 'minimized' ? 'Restore' : 'Minimize'}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
@@ -168,7 +206,11 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
               });
             }}
           >
-            <Minus className="size-3.5" />
+            {chatWindow.mode === 'minimized' ? (
+              <ChevronUp className="size-3.5" />
+            ) : (
+              <Minus className="size-3.5" />
+            )}
           </button>
           <button
             type="button"
