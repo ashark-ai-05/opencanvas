@@ -27,8 +27,8 @@ OPENCANVAS_DEMO        = "1"
 HOST                   = "0.0.0.0"
 NODE_ENV               = "production"
 # Provider profile:
-#   - GROQ_API_KEY (set in Railway dashboard) → required
-#   - OPENCANVAS_LLM_PROVIDER=groq            → switches the default profile
-#   - OPENCANVAS_LLM_MODEL=llama-3.1-70b-versatile
-OPENCANVAS_LLM_PROVIDER = "groq"
-OPENCANVAS_LLM_MODEL    = "llama-3.1-70b-versatile"
+#   - GOOGLE_API_KEY (set in Railway dashboard) → required, from aistudio.google.com
+#   - OPENCANVAS_LLM_PROVIDER=gemini            → switches the default profile
+#   - OPENCANVAS_LLM_MODEL=gemini-2.0-flash     → free tier, ~15 RPM, 1500 RPD
+OPENCANVAS_LLM_PROVIDER = "gemini"
+OPENCANVAS_LLM_MODEL    = "gemini-2.0-flash"

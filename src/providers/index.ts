@@ -11,6 +11,7 @@ import { AnthropicDirectAdapter } from './anthropic-direct.js';
 import { OpenAIAdapter } from './openai.js';
 import { OpenRouterAdapter } from './openrouter.js';
 import { GroqAdapter } from './groq.js';
+import { GeminiAdapter } from './gemini.js';
 import { OllamaAdapter } from './ollama.js';
 import { AmpAdapter } from './amp.js';
 
@@ -51,6 +52,9 @@ export function createProvider(profile: Profile, deps: ProviderDeps = {}): LLMPr
     case 'groq':
       return new GroqAdapter({ model: llm.model, baseUrl: llm.baseUrl });
 
+    case 'gemini':
+      return new GeminiAdapter({ model: llm.model, baseUrl: llm.baseUrl });
+
     case 'ollama':
       return new OllamaAdapter({ model: llm.model, baseUrl: llm.baseUrl });
 
@@ -71,6 +75,7 @@ export {
   OpenAIAdapter,
   OpenRouterAdapter,
   GroqAdapter,
+  GeminiAdapter,
   OllamaAdapter,
   AmpAdapter,
 };

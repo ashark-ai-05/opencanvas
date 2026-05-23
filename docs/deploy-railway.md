@@ -1,8 +1,8 @@
 # Deploy the public demo to Railway
 
 A walkthrough for getting an OpenCanvas demo live on Railway in ~10
-minutes, using **Groq** as the free LLM provider (Llama 3.1 70B,
-no $ cap on the free tier).
+minutes, using **Google Gemini Flash** as the free LLM provider
+(~15 requests/minute, 1500/day on the free tier, available globally).
 
 The deployed demo runs in **demo mode**:
 - Token auth is disabled (visitors don't have a token)
@@ -15,17 +15,25 @@ These are all gated on `OPENCANVAS_DEMO=1`. For a local install you
 get the normal hardened model — token auth, strict CORS, no rate
 limiting.
 
+> **Why Gemini instead of Groq?** Groq blocks signups from a list of
+> regions. Gemini Flash works globally (with a couple of exceptions),
+> has comparable quality, and the free tier is generous enough for
+> a public demo. If Groq works from your region the adapter is also
+> available — swap `OPENCANVAS_LLM_PROVIDER=gemini` → `=groq` and the
+> matching key.
+
 ---
 
-## 1. Get a free Groq API key
+## 1. Get a free Google AI API key
 
-1. Go to <https://console.groq.com> and create an account.
-2. Generate an API key under **API Keys** → **Create API Key**.
-3. Copy the key (starts with `gsk_…`). You'll paste it into Railway
-   in a moment.
+1. Go to <https://aistudio.google.com/app/apikey> and sign in.
+2. Click **Create API key** → **Create API key in new project** (or
+   pick an existing GCP project).
+3. Copy the key. You'll paste it into Railway in a moment.
 
-Groq's free tier has generous per-minute rate limits and no $ cap.
-Llama 3.1 70B is a strong default for the demo.
+The Gemini Flash family (`gemini-2.0-flash`, `gemini-1.5-flash`) is
+free at low-to-moderate traffic. Higher-tier `gemini-2.5-pro` is also
+available but costs after the trial.
 
 ## 2. Create the Railway service
 
@@ -41,10 +49,10 @@ In Railway's dashboard → your service → **Variables**, add:
 
 | Variable | Value | Why |
 |---|---|---|
-| `GROQ_API_KEY` | `gsk_…` (from step 1) | LLM provider auth |
+| `GOOGLE_API_KEY` | (your key from step 1) | LLM provider auth |
 | `OPENCANVAS_DEMO` | `1` | enables the demo gates (also in `railway.toml`) |
-| `OPENCANVAS_LLM_PROVIDER` | `groq` | overrides the default Claude profile |
-| `OPENCANVAS_LLM_MODEL` | `llama-3.1-70b-versatile` | model id |
+| `OPENCANVAS_LLM_PROVIDER` | `gemini` | overrides the default Claude profile |
+| `OPENCANVAS_LLM_MODEL` | `gemini-2.0-flash` | model id |
 | `HOST` | `0.0.0.0` | bind container to all interfaces |
 | `NODE_ENV` | `production` | drop dev-only behaviours |
 
@@ -68,7 +76,7 @@ DEMO=https://<your-railway-domain>
 curl $DEMO/v1/health
 
 # Should respond with something like:
-# {"ok":true,"profile":"...","llm":"groq","embedder":"onnx-bundled:..."}
+# {"ok":true,"profile":"...","llm":"gemini","embedder":"onnx-bundled:..."}
 
 # Place a widget from your terminal (no token required)
 curl -X POST $DEMO/v1/canvas/widgets \
@@ -101,11 +109,11 @@ Redeploy by pushing to `main` — Railway auto-builds.
 | Component | Cost |
 |---|---|
 | Railway service (Hobby plan) | ~$5/mo credit included; demo uses ~$2-3/mo idle |
-| Groq API | $0 — free tier covers conservative demo traffic |
+| Google AI Studio (Gemini Flash) | $0 — free tier covers conservative demo traffic |
 | GitHub Actions (Pages deploy) | Free |
 
 If demo traffic exceeds the free quotas, the worst case is the chat
-endpoint starts returning 429 from Groq — the canvas still renders,
+endpoint starts returning 429 from Google — the canvas still renders,
 widget placement via REST still works.
 
 ## 8. What visitors see
@@ -113,7 +121,7 @@ widget placement via REST still works.
 - Land on the Railway URL → empty canvas + the onboarding modal
   appears
 - Modal lets them skip ("Skip for now") — no API key needed since
-  the backend already has `GROQ_API_KEY`
+  the backend already has `GOOGLE_API_KEY`
 - They type a question in the chat → up to 5 turns per hour
 - Widgets stream onto the canvas as the agent works
 - Their browser cookie keeps their conversation history scoped to
@@ -127,14 +135,19 @@ widget placement via REST still works.
 is using `Dockerfile` mode (not Nixpacks). Check `railway.toml`.
 
 **Backend boots but `/v1/health` returns `llm: "unconfigured"`**
-→ `GROQ_API_KEY` is missing or `OPENCANVAS_LLM_PROVIDER` isn't set.
+→ `GOOGLE_API_KEY` is missing or `OPENCANVAS_LLM_PROVIDER` isn't set.
 Both must be present.
 
 **Visitors see a CORS error**
 → Confirm `OPENCANVAS_DEMO=1` is set. Without it the backend enforces
 the localhost-only allowlist.
 
-**Chat times out**
-→ Groq's free tier rate limit is per-token-per-minute. If you hit it
-during a turn, the request hangs. Switch the model to a smaller one
-(`llama-3.1-8b-instant`) by updating `OPENCANVAS_LLM_MODEL`.
+**Chat times out / 429 from Gemini**
+→ Free tier RPM cap is per-key. Switch the model to a smaller one
+(`gemini-1.5-flash-8b`) by updating `OPENCANVAS_LLM_MODEL`, or
+narrow the per-IP cap in `src/backend/demo.ts`.
+
+**`{"error":{"message":"Access denied..."}}`**
+→ Geo-restriction from the provider. Gemini is available globally;
+double-check the API key origin matches the Railway region you
+deployed in (US-East / EU-West / Singapore).
