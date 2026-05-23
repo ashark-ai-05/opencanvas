@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>OpenCanvas — an infinite canvas your LLM draws on</title>
+    <meta
+      name="description"
+      content="An infinite canvas your local LLM draws on. Typed widgets, BYO model (Claude/OpenAI/Ollama), MCP-native, local-first, MIT."
+    />
+
+    <!-- Social cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OpenCanvas" />
+    <meta property="og:title" content="OpenCanvas — an infinite canvas your LLM draws on" />
+    <meta
+      property="og:description"
+      content="Ask anything → the agent renders typed widgets on a tldraw canvas. BYO model, MCP-native, local-first, MIT."
+    />
+    <meta property="og:url" content="https://github.com/ashark-ai-05/opencanvas" />
+    <meta property="og:image" content="og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="og-image.png" />
+
+    <link rel="icon" type="image/png" href="icon-256.png" />
+
+    <!-- Fonts: Inter for body, Geist Mono for code. System fallback if CDN fails. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind via Play CDN. No build step — production sites pay an
+         80KB tax for the runtime, which is fine for a static landing. -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'Menlo', 'monospace'],
+            },
+            colors: {
+              ink: '#0a0a0a',
+              ink2: '#18181b',
+              violet1: '#a78bfa',
+              violet2: '#c4b5fd',
+              fuchsia1: '#f0abfc',
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      html { scroll-behavior: smooth; }
+      body {
+        background: #0a0a0a;
+        color: #fafafa;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+      }
+      /* Subtle drifting gradient behind the hero. Pure CSS, GPU-cheap. */
+      .hero-bg {
+        background:
+          radial-gradient(1100px 600px at 75% 10%, rgba(124,58,237,0.30), transparent 60%),
+          radial-gradient(900px 500px at 15% 80%, rgba(240,171,252,0.18), transparent 60%),
+          #0a0a0a;
+      }
+      .grid-bg {
+        background-image:
+          linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+        background-size: 64px 64px;
+      }
+      .glow-violet {
+        box-shadow: 0 24px 80px -20px rgba(167,139,250,0.45),
+                    0 0 0 1px rgba(167,139,250,0.18) inset;
+      }
+      .card {
+        background: rgba(24,24,27,0.55);
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(167,139,250,0.12);
+        border: 1px solid rgba(167,139,250,0.3);
+        color: #c4b5fd;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .btn-primary {
+        background: linear-gradient(180deg, #a78bfa, #7c3aed);
+        color: #0a0a0a;
+        font-weight: 600;
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 32px -12px rgba(167,139,250,0.55); }
+      .btn-secondary {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #fafafa;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .btn-secondary:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); }
+
+      /* Animated sparkle on the eyebrow chip */
+      @keyframes pulseDot {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50%      { opacity: 1;   transform: scale(1.2); }
+      }
+      .pulse-dot { animation: pulseDot 2.4s ease-in-out infinite; }
+
+      /* Demo video frame: clip with a small radius + the canvas grid underneath
+         shows through translucent edges. Looks deliberate. */
+      .demo-frame {
+        background: #0a0a0a;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 32px 80px -24px rgba(0,0,0,0.6);
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen font-sans antialiased">
+    <!-- Top nav -->
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-ink/70 border-b border-white/5">
+      <div class="max-w-6xl mx-auto px-5 h-14 flex items-center gap-4">
+        <a href="#" class="flex items-center gap-2.5 font-semibold tracking-tight">
+          <img src="icon-256.png" width="22" height="22" class="rounded-md" alt="" />
+          OpenCanvas
+        </a>
+        <nav class="hidden md:flex items-center gap-6 text-sm text-zinc-400 ml-2">
+          <a href="#features" class="hover:text-zinc-100 transition">Features</a>
+          <a href="#demo" class="hover:text-zinc-100 transition">Demo</a>
+          <a href="#install" class="hover:text-zinc-100 transition">Install</a>
+          <a href="#api" class="hover:text-zinc-100 transition">API</a>
+        </nav>
+        <div class="ml-auto flex items-center gap-2">
+          <a
+            href="https://github.com/ashark-ai-05/opencanvas"
+            target="_blank"
+            rel="noreferrer noopener"
+            class="btn-secondary text-sm rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.34c-2.22.48-2.69-1.07-2.69-1.07-.36-.92-.89-1.16-.89-1.16-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.88 2.34.67.07-.52.28-.88.51-1.08-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82a7.66 7.66 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.51.56.82 1.28.82 2.15 0 3.07-1.87 3.74-3.65 3.94.29.25.54.73.54 1.48v2.19c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/>
+            </svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero-bg relative overflow-hidden">
+      <div class="absolute inset-0 grid-bg opacity-40 pointer-events-none" aria-hidden="true"></div>
+      <div class="relative max-w-6xl mx-auto px-5 pt-24 pb-20 md:pt-32 md:pb-28">
+        <div class="chip mb-6">
+          <span class="pulse-dot inline-block w-1.5 h-1.5 rounded-full bg-violet1"></span>
+          OpenCanvas · agent-driven canvas
+        </div>
+        <h1 class="text-4xl md:text-6xl font-bold tracking-tight leading-[1.05] max-w-4xl">
+          An infinite canvas <br class="hidden md:block" />
+          <span class="bg-gradient-to-r from-violet2 via-violet1 to-fuchsia1 bg-clip-text text-transparent">
+            your LLM draws on.
+          </span>
+        </h1>
+        <p class="mt-6 max-w-2xl text-lg md:text-xl text-zinc-400 leading-relaxed">
+          Ask anything. The agent renders <strong class="text-zinc-100">typed widgets</strong>
+          on a tldraw canvas — markdown, charts, kanbans, code, tables, web embeds,
+          sandboxed plugins. Every conversation indexes back into a local SQLite KB,
+          so the canvas gets smarter with every turn.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a
+            href="https://github.com/ashark-ai-05/opencanvas"
+            target="_blank"
+            rel="noreferrer noopener"
+            class="btn-primary rounded-lg px-5 py-3 text-sm flex items-center gap-2"
+          >
+            Get it on GitHub
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M5 12h10M11 8l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#demo" class="btn-secondary rounded-lg px-5 py-3 text-sm flex items-center gap-2">
+            Watch demo
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M6 4l10 6-10 6V4z"/>
+            </svg>
+          </a>
+        </div>
+        <div class="mt-8 flex flex-wrap gap-2">
+          <span class="chip">BYO model</span>
+          <span class="chip">MCP-native</span>
+          <span class="chip">Local-first</span>
+          <span class="chip">MIT</span>
+          <span class="chip">596 tests</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo section -->
+    <section id="demo" class="relative py-20">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <div class="chip mb-3">demo</div>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight">
+              One minute, six widgets, zero markdown walls.
+            </h2>
+          </div>
+          <a href="demo.mp4" class="text-sm text-violet2 hover:text-fuchsia1 transition hidden md:inline">Open MP4 →</a>
+        </div>
+        <div class="demo-frame">
+          <video
+            src="demo.mp4"
+            poster="og-image.png"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            class="block w-full h-auto"
+          >
+            <!-- GIF fallback for browsers that don't autoplay -->
+            <img src="demo.gif" alt="OpenCanvas demo: widgets rendering on a canvas" class="block w-full h-auto" />
+          </video>
+        </div>
+        <p class="mt-3 text-sm text-zinc-500 text-center">
+          User types a question · agent renders six typed widgets · drag, pin, link, export.
+        </p>
+      </div>
+    </section>
+
+    <!-- Why it's different -->
+    <section id="features" class="py-20">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="mb-12 max-w-3xl">
+          <div class="chip mb-3">why it's different</div>
+          <h2 class="text-3xl md:text-4xl font-bold tracking-tight">
+            Chat is a stream. Real work is a canvas.
+          </h2>
+          <p class="mt-4 text-lg text-zinc-400">
+            Every output is a typed contract between the agent and the renderer.
+            Add new widget kinds without fine-tuning. Plug in any MCP server.
+            Drive the canvas from any process.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Card 1 -->
+          <div class="card rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-xl bg-violet1/15 border border-violet1/30 flex items-center justify-center mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M3 9h18M9 3v18"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-1.5">Typed widgets, not text</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              15 built-in widget kinds — markdown, code, tables, charts, kanban,
+              calendars, web embeds, sandboxed plugins. Each is a Zod schema +
+              a React component. Add more without retraining.
+            </p>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="card rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-xl bg-violet1/15 border border-violet1/30 flex items-center justify-center mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v6m0 8v6M2 12h6m8 0h6M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-1.5">BYO model</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Six provider adapters: Claude (Agent SDK or direct), OpenAI,
+              OpenRouter, Ollama (fully local), Sourcegraph Amp. Switch via
+              one config field. Run it 100% offline if you want.
+            </p>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="card rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-xl bg-violet1/15 border border-violet1/30 flex items-center justify-center mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11v3a2 2 0 0 1-2 2H8l-5 5V5a2 2 0 0 1 2-2h6"/>
+                <path d="M15 3h6v6"/>
+                <path d="M10 14L21 3"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-1.5">MCP-native</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Drop in any Model Context Protocol server — Confluence, Jira,
+              filesystem, GitHub. Every LLM provider gets them via tool-use,
+              whether it's Claude, GPT, or a local Llama.
+            </p>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="card rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-xl bg-violet1/15 border border-violet1/30 flex items-center justify-center mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                <path d="M8 21h8M12 17v4"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-1.5">Self-improving KB</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Every conversation auto-indexes into a local SQLite + sqlite-vec store.
+              Old turns become searchable across all your chats. Hybrid BM25 +
+              vector retrieval. Bigger context with use.
+            </p>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="card rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-xl bg-violet1/15 border border-violet1/30 flex items-center justify-center mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-1.5">REST-driven</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Any local process — cron jobs, watchers, scripts — can render
+              widgets via <code class="font-mono text-violet2 bg-white/5 rounded px-1.5 py-0.5">POST /v1/canvas/widgets</code>.
+              Authenticated. Browser tab sees them live via SSE.
+            </p>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="card rounded-2xl p-6">
+            <div class="w-10 h-10 rounded-xl bg-violet1/15 border border-violet1/30 flex items-center justify-center mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-1.5">Local-first + secure</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Token-authenticated local backend. Strict CORS. Sandboxed plugin
+              iframes (null origin, no parent DOM access). No telemetry, no
+              remote services unless you point it at one.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section id="install" class="py-20">
+      <div class="max-w-3xl mx-auto px-5">
+        <div class="mb-8 text-center">
+          <div class="chip mb-3 mx-auto">install</div>
+          <h2 class="text-3xl md:text-4xl font-bold tracking-tight">
+            Four commands. Local. MIT.
+          </h2>
+        </div>
+
+        <div class="card rounded-2xl p-6 font-mono text-sm">
+          <div class="flex items-center gap-2 text-zinc-500 text-xs uppercase tracking-wider mb-3">
+            <span class="w-2 h-2 rounded-full bg-red-500/70"></span>
+            <span class="w-2 h-2 rounded-full bg-yellow-500/70"></span>
+            <span class="w-2 h-2 rounded-full bg-green-500/70"></span>
+            <span class="ml-2">terminal</span>
+          </div>
+<pre class="text-zinc-200 leading-relaxed overflow-x-auto"><span class="text-zinc-500"># Clone, install, configure, run.</span>
+git clone https://github.com/ashark-ai-05/opencanvas.git
+cd opencanvas
+pnpm install
+cp .env.example .env       <span class="text-zinc-500"># set at least one provider key</span>
+pnpm electron:dev          <span class="text-zinc-500"># full stack: backend + Vite + Electron</span></pre>
+        </div>
+
+        <p class="mt-6 text-center text-sm text-zinc-500">
+          Packaged installers (<code class="text-zinc-300">.dmg</code> /
+          <code class="text-zinc-300">.exe</code> /
+          <code class="text-zinc-300">.AppImage</code>) ship via the
+          <a href="https://github.com/ashark-ai-05/opencanvas/releases" target="_blank" rel="noreferrer noopener" class="text-violet2 hover:text-fuchsia1 transition">Releases tab</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- API teaser -->
+    <section id="api" class="py-20">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+          <div>
+            <div class="chip mb-3">REST API</div>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight">
+              Drive the canvas from anywhere.
+            </h2>
+            <p class="mt-4 text-lg text-zinc-400 leading-relaxed">
+              The canvas isn't just for the agent. Any local process can place
+              widgets, stream long answers, register custom widget kinds, and
+              inspect canvas state via a REST API. Full
+              <code class="font-mono text-violet2 bg-white/5 rounded px-1.5 py-0.5">/openapi.yaml</code>
+              spec ships in the repo; Swagger UI lives at
+              <code class="font-mono text-violet2 bg-white/5 rounded px-1.5 py-0.5">/docs</code>
+              when the backend's running.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a
+                href="https://github.com/ashark-ai-05/opencanvas/blob/main/docs/openapi.yaml"
+                target="_blank"
+                rel="noreferrer noopener"
+                class="btn-secondary rounded-lg px-4 py-2 text-sm"
+              >View OpenAPI spec</a>
+            </div>
+          </div>
+          <div class="card rounded-2xl p-5 font-mono text-xs md:text-[13px]">
+            <div class="text-zinc-500 mb-3 uppercase tracking-wider">terminal</div>
+<pre class="text-zinc-200 leading-relaxed overflow-x-auto"><span class="text-zinc-500"># Place a chart from your shell.</span>
+curl -X POST http://127.0.0.1:3457/v1/canvas/widgets \
+  -H 'content-type: application/json' \
+  -H "x-opencanvas-token: <span class="text-violet2">$(cat ~/.opencanvas/auth-token)</span>" \
+  -d '{
+    "kind": "chart",
+    "role": "primary",
+    "payload": {
+      "title": "Sales",
+      "spec": { ... }
+    }
+  }'</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 mt-10">
+      <div class="max-w-6xl mx-auto px-5 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <img src="icon-256.png" width="32" height="32" class="rounded-md" alt="" />
+          <div>
+            <div class="font-semibold">OpenCanvas</div>
+            <div class="text-xs text-zinc-500">An infinite canvas your LLM draws on · MIT</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4 text-sm text-zinc-400">
+          <a href="https://github.com/ashark-ai-05/opencanvas" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">GitHub</a>
+          <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/SECURITY.md" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">Security</a>
+          <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">Contribute</a>
+          <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">Changelog</a>
+          <a href="https://github.com/ashark-ai-05/opencanvas/blob/main/docs/openapi.yaml" target="_blank" rel="noreferrer noopener" class="hover:text-zinc-100 transition">API</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

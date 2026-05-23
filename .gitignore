@@ -1,0 +1,46 @@
+node_modules
+dist
+.env
+.env.local
+*.log
+.vitest-cache
+
+# Brainstorming companion mockups (transient — survive restarts but not commit)
+.superpowers/
+
+# Git worktrees — isolated branches for parallel feature work
+.worktrees/
+
+# spikes have their own node_modules
+spikes/node_modules
+
+# Legacy vendored directories — kept ignored in case anyone still has
+# a local clone with old artefacts on disk.
+vendor/
+customware/
+
+# Vite build output
+app/dist/
+.vite/
+
+# Electron-builder output + bundled backend
+release/
+dist-backend/
+
+# Per-user OpenCanvas cache + DB (when devving from inside a clone of the repo)
+.opencanvas/
+
+# Test environment artifacts
+__tests__/app/.cache/
+
+# demo recorder intermediate frames (the produced docs/demo.gif IS committed)
+docs/demo-frames/
+
+# Internal planning docs — kept private to the maintainer.
+docs/superpowers/
+docs/launch-*.md
+__tests__/manual/
+
+# Demo recording artifacts — built outputs only, not raw frames or intermediate clips.
+# The final docs/demo.gif and docs/demo.mp4 ARE committed (referenced from README).
+docs/demo-rec/

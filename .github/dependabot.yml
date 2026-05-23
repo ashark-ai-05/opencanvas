@@ -1,0 +1,31 @@
+# Dependabot config — scans the runtime app, ignores the throwaway
+# spikes/ directory.
+#
+# spikes/ is for one-off experiments; its package.json declares loose
+# `*` ranges that resolve to whatever's current at the time of `npm
+# install`. Dependabot keeps flagging transitive vulns in a lockfile
+# that gets regenerated whenever anyone touches that dir — high noise,
+# zero impact on the shipped app. Limit Dependabot to the main
+# manifest at the repo root.
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      patch-and-minor:
+        update-types: ["patch", "minor"]
+    # Don't touch the pnpm-managed overrides that exist for CVE pinning;
+    # those are intentionally locked at specific versions.
+    ignore:
+      - dependency-name: "protobufjs"
+      - dependency-name: "qs"
+      - dependency-name: "ws"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

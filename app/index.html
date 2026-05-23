@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Social card metadata. The og:image renders 1200×630 with the
+         OpenCanvas wordmark + tagline + a canvas vignette — generated
+         from build/og-image.svg via `pnpm icons:og`. Without these,
+         links shared on HN, Twitter, Slack, iMessage etc. look like
+         bare URLs. -->
+    <meta name="description" content="An infinite canvas your local LLM draws on. BYO model, MCP-native, single-user, runs entirely on your machine." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OpenCanvas" />
+    <meta property="og:title" content="OpenCanvas — an infinite canvas your LLM draws on" />
+    <meta property="og:description" content="Ask anything → the agent renders typed widgets on a tldraw canvas. BYO model, MCP-native, local-first, MIT." />
+    <meta property="og:url" content="https://github.com/ashark-ai-05/opencanvas" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/ashark-ai-05/opencanvas/main/app/public/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="OpenCanvas — an infinite canvas your LLM draws on" />
+    <meta name="twitter:description" content="Ask anything → the agent renders typed widgets on a tldraw canvas. BYO model, MCP-native, local-first." />
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/ashark-ai-05/opencanvas/main/app/public/og-image.png" />
+
+    <!--
+      Renderer Content-Security-Policy. Hybrid that works for both Vite
+      dev (HMR needs 'unsafe-eval' + ws:) and Electron prod (file://
+      renderer talking to 127.0.0.1:3457). Defense-in-depth on top of
+      tldraw/widget input sanitization — a compromised dependency or a
+      malicious plugin still can't load 3rd-party scripts, exfil via
+      img-src, or pop an <object> escape hatch.
+
+      Loose where we have to be:
+        - script-src 'unsafe-inline' 'unsafe-eval'  (Vite, Shiki, some libs)
+        - style-src 'unsafe-inline'                 (framer-motion + tldraw)
+        - frame-src 'self' data: blob: https:      (plugin sandboxed iframes)
+
+      Strict where we can:
+        - object-src 'none'                         (no Flash/ActiveX escape)
+        - base-uri 'self'                           (no <base href> hijack)
+        - connect-src pinned to localhost backend + Vite HMR
+        - default-src 'self'                        (everything else off)
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' http://127.0.0.1:3457 http://localhost:3457 ws://127.0.0.1:3458 ws://localhost:3458 https:; frame-src 'self' data: blob: https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'"
+    />
+    <title>OpenCanvas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="h-screen text-zinc-100">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

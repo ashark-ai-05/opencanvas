@@ -1,0 +1,3665 @@
+@import "tailwindcss";
+@import "./depth.css";
+@import "./typography.css";
+
+@theme {
+  /* Neutral charcoal base — no blue undertone. The previous #050507
+     had a faint cool cast that clashed with warmer role colors
+     (amber, rose). Slightly lifted from pure black so cards read
+     as raised against it without going stark. */
+  --color-bg:       #0a0a0c;     /* neutral near-black */
+  --color-bg-2:     #131318;     /* surfaces / panels */
+  --color-bg-3:     #1c1c22;     /* cards (true neutral, was violet-tinted) */
+  --color-line:     rgba(255, 255, 255, 0.24);
+  --color-line-2:   rgba(255, 255, 255, 0.34);
+  /* Glass-surface RGB triplet — used inside rgba() for panels / popovers
+     / chat shell so they tint to the theme. Per-theme overrides swap
+     this to the appropriate background color (e.g. white in light
+     theme). All historic `rgba(var(--color-glass-rgb), X)` literals were
+     replaced with `rgba(var(--color-glass-rgb), X)`. */
+  --color-glass-rgb: 10, 10, 13;
+  --color-fg:       #fafafa;     /* zinc-50 — cleaner pure white */
+  --color-fg-2:     #e4e4e7;     /* zinc-200 — brighter secondary, was zinc-300 */
+  --color-muted:    #71717a;
+  --color-muted-2:  #52525b;
+
+  /* Brand accent — violet → magenta → pink. Same warm-magenta family
+     end-to-end (no cyan), so the gradient harmonizes with the role
+     palette below instead of fighting it. The previous violet→cyan
+     was the "AI app of 2023" cliché — clean break from that here. */
+  --color-accent:    #a78bfa;     /* violet-400 — primary brand */
+  --color-accent-2:  #d946ef;     /* fuchsia-500 — middle stop */
+  --color-accent-3:  #ec4899;     /* pink-500 — warmer end stop */
+  --color-ok:        #34d399;
+  --color-warn:      #fbbf24;
+  --color-fail:      #f87171;
+
+  /* Pre-baked gradient strings — reused on text fills, border masks,
+     and box-shadow glows. Three stops same as before, but ALL in the
+     warm-magenta family so the gradient reads as "iridescent" rather
+     than "rainbow." */
+  --grad-brand:      linear-gradient(135deg, #a78bfa 0%, #d946ef 50%, #ec4899 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(167,139,250,0.18) 0%, rgba(217,70,239,0.18) 50%, rgba(236,72,153,0.18) 100%);
+  --glow-violet:     0 0 0 1px rgba(167,139,250,0.40), 0 8px 28px -8px rgba(167,139,250,0.45);
+  --glow-fuchsia:    0 0 0 1px rgba(217,70,239,0.40), 0 8px 28px -8px rgba(217,70,239,0.45);
+
+  /* Role accents — six distinct hues, each at Tailwind-400 saturation
+     so they read consistently against each other. Soft variants at
+     18% alpha for backdrop tints (header gradient, card aura) so
+     they bleed into the surface without overwhelming the body. */
+  --role-primary:        #a78bfa;     /* violet  */
+  --role-primary-soft:   rgba(167, 139, 250, 0.26);
+  --role-detail:         #60a5fa;     /* blue    */
+  --role-detail-soft:    rgba(96, 165, 250, 0.26);
+  --role-related:        #2dd4bf;     /* teal    */
+  --role-related-soft:   rgba(45, 212, 191, 0.26);
+  --role-reference:      #fbbf24;     /* amber   */
+  --role-reference-soft: rgba(251, 191, 36, 0.26);
+  --role-timeline:       #fb7185;     /* rose    */
+  --role-timeline-soft:  rgba(251, 113, 133, 0.26);
+  --role-node:           #34d399;     /* emerald */
+  --role-node-soft:      rgba(52, 211, 153, 0.26);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Midnight theme — deep navy + electric blue.
+ *
+ * Every override is a CSS-variable swap
+ * so downstream rules (cards, chat panel, palette, stripe roles)
+ * recolor automatically. Role hues are kept stable across themes —
+ * only chrome / surfaces / brand accent shift.
+ * ──────────────────────────────────────────────────────────────────*/
+:root[data-theme='midnight'] {
+  --color-bg:       #070a14;     /* deep navy near-black */
+  --color-bg-2:     #0d1226;
+  --color-bg-3:     #131a2e;
+  --color-line:     rgba(180, 200, 255, 0.10);
+  --color-line-2:   rgba(180, 200, 255, 0.16);
+  --color-fg:       #e2e8f0;     /* slate-200 — slight cool tint reads natural here */
+  --color-fg-2:     #cbd5e1;
+  --color-muted:    #64748b;
+  --color-muted-2:  #475569;
+  --color-glass-rgb: 7, 10, 20;
+  --color-accent:    #60a5fa;     /* blue-400 */
+  --color-accent-2:  #818cf8;     /* indigo-400 */
+  --color-accent-3:  #6366f1;     /* indigo-500 */
+  --grad-brand:      linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #6366f1 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(129,140,248,0.18) 50%, rgba(99,102,241,0.18) 100%);
+}
+:root[data-theme='midnight'] .opencanvas-card {
+  background:
+    linear-gradient(180deg, rgba(28, 36, 60, 0.86) 0%, rgba(15, 20, 36, 0.86) 100%),
+    radial-gradient(
+      ellipse at top left,
+      var(--role-color-soft, var(--role-primary-soft)) 0%,
+      transparent 60%
+    );
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Sunset theme — warm wine/brown + orange/amber accent.
+ *
+ * Notable: --color-line uses a cream-tinted alpha (rather than pure
+ * white) so borders pick up the warmth instead of looking grey.
+ * ──────────────────────────────────────────────────────────────────*/
+:root[data-theme='sunset'] {
+  --color-bg:       #1a0f0a;     /* deep wine-brown near-black */
+  --color-bg-2:     #2a1814;
+  --color-bg-3:     #321e18;
+  --color-line:     rgba(255, 220, 200, 0.10);
+  --color-line-2:   rgba(255, 220, 200, 0.17);
+  --color-fg:       #fef3e8;     /* warm cream — reads as "candlelit" */
+  --color-fg-2:     #fed7aa;
+  --color-muted:    #b8a89a;
+  --color-muted-2:  #8a7a6d;
+  --color-glass-rgb: 26, 15, 10;
+  --color-accent:    #fb923c;     /* orange-400 */
+  --color-accent-2:  #f97316;     /* orange-500 */
+  --color-accent-3:  #ef4444;     /* red-500 */
+  --grad-brand:      linear-gradient(135deg, #fbbf24 0%, #fb923c 50%, #f97316 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(251,146,60,0.18) 50%, rgba(249,115,22,0.18) 100%);
+}
+:root[data-theme='sunset'] .opencanvas-card {
+  background:
+    linear-gradient(180deg, rgba(56, 36, 28, 0.86) 0%, rgba(35, 22, 18, 0.86) 100%),
+    radial-gradient(
+      ellipse at top left,
+      var(--role-color-soft, var(--role-primary-soft)) 0%,
+      transparent 60%
+    );
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Mono theme — pure grayscale. No chromatic accent anywhere.
+ *
+ * Role colors are desaturated to mid-grays so cards still encode
+ * placement role via *brightness* rather than *hue*. This is the
+ * trade-off of mono: less glanceable role-by-color, but a
+ * distraction-free monochrome aesthetic (Linear/Vercel feel).
+ * ──────────────────────────────────────────────────────────────────*/
+:root[data-theme='mono'] {
+  --color-bg:       #0a0a0a;
+  --color-bg-2:     #141414;
+  --color-bg-3:     #1f1f1f;
+  --color-line:     rgba(255, 255, 255, 0.10);
+  --color-line-2:   rgba(255, 255, 255, 0.17);
+  --color-fg:       #ffffff;     /* pure white — max contrast */
+  --color-fg-2:     #d4d4d4;
+  --color-muted:    #737373;
+  --color-muted-2:  #525252;
+  --color-glass-rgb: 10, 10, 10;
+  --color-accent:    #fafafa;
+  --color-accent-2:  #d4d4d4;
+  --color-accent-3:  #a3a3a3;
+  --grad-brand:      linear-gradient(135deg, #fafafa 0%, #d4d4d4 50%, #a3a3a3 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(212,212,212,0.16) 50%, rgba(163,163,163,0.16) 100%);
+  /* Roles → grayscale brightness ramp so cards still differ but
+     within the monochrome aesthetic. Brightest = primary → darkest
+     = node, in the same order as the original palette. */
+  --role-primary:        #fafafa;
+  --role-primary-soft:   rgba(250, 250, 250, 0.16);
+  --role-detail:         #d4d4d4;
+  --role-detail-soft:    rgba(212, 212, 212, 0.16);
+  --role-related:        #a3a3a3;
+  --role-related-soft:   rgba(163, 163, 163, 0.16);
+  --role-reference:      #737373;
+  --role-reference-soft: rgba(115, 115, 115, 0.18);
+  --role-timeline:       #525252;
+  --role-timeline-soft:  rgba(82, 82, 82, 0.20);
+  --role-node:           #404040;
+  --role-node-soft:      rgba(64, 64, 64, 0.22);
+}
+:root[data-theme='mono'] .opencanvas-card {
+  background:
+    linear-gradient(180deg, rgba(30, 30, 30, 0.88) 0%, rgba(18, 18, 18, 0.88) 100%);
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    color: var(--color-fg);
+    /* Ambient backdrop: brand-aligned 3-stop wash echoing the violet→fuchsia
+       →pink gradient (--grad-brand). Visible (not subliminal) so the canvas
+       has actual atmosphere rather than reading as a void. Tldraw's canvas
+       covers most of this once content is placed; the ambient remains
+       visible through chrome gaps + behind translucent panels. */
+    background:
+      radial-gradient(ellipse 70% 60% at 18% 22%, rgba(167, 139, 250, 0.22), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 60% 75%, rgba(217, 70, 239, 0.16), transparent 65%),
+      radial-gradient(ellipse 65% 55% at 92% 95%, rgba(236, 72, 153, 0.18), transparent 65%),
+      var(--color-bg);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tldraw canvas: make it transparent so the body's ambient backdrop shows
+     through. Tldraw's --color-background was being forced to var(--color-bg)
+     (solid) below — we now want to see ambient instead. */
+  .tl-container, .tl-svg-container {
+    background-color: transparent !important;
+  }
+
+  code, pre, kbd, samp {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-feature-settings: 'liga' 0, 'calt' 0;
+  }
+
+  ::selection {
+    background: rgba(167, 139, 250, 0.28);
+    color: #fff;
+  }
+
+  /* Scrollbars — barely-there, neutral. */
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.12); background-clip: padding-box; }
+}
+
+/* ---------- tldraw theme override ----------
+   Force tldraw's canvas to use our base color so the canvas + chat surface
+   read as one continuous dark surface (rather than tldraw's slightly bluer
+   default dark theme jarring against our background). */
+.tl-theme__dark {
+  --color-background: var(--color-bg) !important;
+  --color-low: var(--color-bg-2) !important;
+}
+
+/* ---------- Widget cards ---------- */
+/* Centralized so all 5 shape components (markdown, code-block, ticket, web-embed,
+   key-value-card) consume the same visual language. Shapes opt into a role accent
+   via data-role; opt into the freshly-placed pulse via data-fresh="true". */
+
+.opencanvas-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  /* Glassmorphism — neutral charcoal surface (was violet-tinted at
+     38,38,50 → made everything feel "default-violet"). The role
+     color now comes ENTIRELY from the radial tint at top-left, not
+     from the surface itself, so cards in different roles feel
+     genuinely different instead of "violet card with role accent." */
+  background:
+    linear-gradient(180deg, rgb(var(--color-glass-rgb) / 0.78) 0%, rgb(var(--color-glass-rgb) / 0.86) 100%),
+    radial-gradient(
+      ellipse at top left,
+      var(--role-color-soft, var(--role-primary-soft)) 0%,
+      transparent 60%
+    );
+  background-blend-mode: screen, normal;
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  color: var(--color-fg);
+  border: 1px solid var(--color-line);
+  /* depth-2 + visible resting role rim — cards always show their role
+     identity, not flat-then-flash. 70% mix gives a clear color signature
+     at rest; hover then amplifies (depth-4) without state-flipping. */
+  box-shadow:
+    var(--depth-2-shadow),
+    0 0 18px -6px color-mix(in oklab, var(--role-color-soft, var(--role-primary-soft)) 70%, transparent);
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  pointer-events: all;
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 220ms ease;
+}
+
+/* Left-edge role accent — bolder stripe + stacked role glow. */
+.opencanvas-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--role-color, var(--role-primary));
+  box-shadow:
+    0 0 24px 0 var(--role-color, var(--role-primary)),
+    0 0 8px 0 var(--role-color, var(--role-primary));
+  opacity: 1;
+  z-index: 1;
+}
+
+/* Top sheen — readable highlight across the upper portion of the card. */
+.opencanvas-card::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 38%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.opencanvas-card[data-role="primary"] {
+  --role-color: var(--role-primary);
+  --role-color-soft: var(--role-primary-soft);
+}
+.opencanvas-card[data-role="detail"] {
+  --role-color: var(--role-detail);
+  --role-color-soft: var(--role-detail-soft);
+}
+.opencanvas-card[data-role="related"] {
+  --role-color: var(--role-related);
+  --role-color-soft: var(--role-related-soft);
+}
+.opencanvas-card[data-role="reference"] {
+  --role-color: var(--role-reference);
+  --role-color-soft: var(--role-reference-soft);
+}
+.opencanvas-card[data-role="timeline"] {
+  --role-color: var(--role-timeline);
+  --role-color-soft: var(--role-timeline-soft);
+}
+.opencanvas-card[data-role="node"] {
+  --role-color: var(--role-node);
+  --role-color-soft: var(--role-node-soft);
+}
+
+.opencanvas-card:hover {
+  box-shadow: var(--depth-4-shadow);
+  border-color: color-mix(in oklab, var(--role-color, var(--role-primary)) 50%, var(--color-line));
+}
+.opencanvas-card:hover::before {
+  box-shadow:
+    0 0 36px 0 var(--role-color, var(--role-primary)),
+    0 0 12px 0 var(--role-color, var(--role-primary));
+}
+
+.opencanvas-card-header {
+  padding: 11px 16px 9px 18px;
+  border-bottom: 1px solid var(--color-line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  /* Soft role-tinted gradient across the header bar — pulls the card's
+     identity into the top region without competing with the content
+     below. Fades to transparent so the body stays neutral. */
+  background: linear-gradient(
+    90deg,
+    var(--role-color-soft, var(--role-primary-soft)) 0%,
+    transparent 65%
+  );
+  position: relative;
+  z-index: 1;
+}
+
+.opencanvas-card-title {
+  font-weight: 650;
+  font-size: 14px;
+  color: var(--color-fg);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.014em;
+  text-shadow: 0 0 14px color-mix(in oklab, var(--role-color, transparent) 18%, transparent);
+}
+
+.opencanvas-card-body {
+  padding: 12px 16px;
+  flex: 1;
+  overflow: auto;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.6;
+  color: var(--color-fg-2);
+}
+
+.opencanvas-card-body--mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.4);
+  line-height: 1.6;
+  color: #e4e4e7;
+}
+
+.opencanvas-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2.5px 8px;
+  border-radius: 999px;
+  background: var(--role-color-soft, rgba(255, 255, 255, 0.04));
+  color: var(--role-color, var(--color-muted));
+  border: 1px solid color-mix(in oklab, var(--role-color, var(--color-line-2)) 35%, transparent);
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease,
+    transform 200ms ease;
+  text-shadow: 0 0 10px color-mix(in oklab, var(--role-color, transparent) 35%, transparent);
+}
+.opencanvas-card:hover .opencanvas-tag {
+  background: color-mix(in oklab, var(--role-color, var(--role-primary)) 22%, transparent);
+  border-color: color-mix(in oklab, var(--role-color, var(--role-primary)) 60%, transparent);
+}
+/* Tags inside a freshly-placed card slide-in subtly so they don't pop
+   in stale during the card's pop animation. */
+.opencanvas-card[data-fresh="true"] .opencanvas-tag {
+  animation: opencanvas-tag-slide-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) 240ms both;
+}
+@keyframes opencanvas-tag-slide-in {
+  from { opacity: 0; transform: translateX(4px); }
+  to   { opacity: 1; transform: translateX(0);  }
+}
+
+.opencanvas-tag--accent {
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.16), rgba(240, 171, 252, 0.16));
+  color: #ddd6fe;
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+/* Source-attribution footer — rendered by CardFrame when shape.props.source
+   is set. Sits at the bottom of the card; click-through if URL. */
+.opencanvas-card-footer {
+  flex-shrink: 0;
+  padding: 6px 14px 7px;
+  border-top: 1px solid var(--color-line);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-muted);
+  background: rgba(0, 0, 0, 0.18);
+}
+.opencanvas-card-footer-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--color-muted-2);
+}
+.opencanvas-card-footer-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.opencanvas-card-footer:hover .opencanvas-card-footer-value {
+  color: #c4b5fd;
+}
+
+/* Collapsed card — only the header is visible, height shrinks to ~44px.
+   The toggle handler in shared.tsx also writes `props.h = 44` so tldraw's
+   geometry agrees with what we render (no phantom selection space). */
+.opencanvas-card[data-collapsed="true"] > :not(.opencanvas-card-header) {
+  display: none;
+}
+.opencanvas-card[data-collapsed="true"] .opencanvas-card-header {
+  border-bottom: none;
+}
+.opencanvas-card[data-collapsed="true"]::after {
+  /* The "top sheen" gradient overlay would clip oddly on a tiny card. */
+  display: none;
+}
+
+/* Hover-action bar in card headers — appears on card hover, fades away
+   otherwise. Clicks are handled with stopPropagation by CardActionButton
+   so tldraw's shape selection doesn't fight the buttons. */
+.opencanvas-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  opacity: 0;
+  transform: translateY(-1px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.opencanvas-card:hover .opencanvas-card-actions,
+.opencanvas-card:focus-within .opencanvas-card-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+.opencanvas-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-line);
+  color: #a1a1aa;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms ease;
+  pointer-events: all;
+}
+.opencanvas-card-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #fafafa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -4px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-card-action:active {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(0) scale(0.94);
+  transition-duration: 80ms;
+}
+
+/* Freshly-placed pulse — punchier two-stage entrance: scale + glow + tilt. */
+.opencanvas-card[data-fresh="true"] {
+  animation: opencanvas-fresh 900ms cubic-bezier(0.16, 1.2, 0.3, 1) 1;
+}
+@keyframes opencanvas-fresh {
+  0% {
+    transform: scale(0.88) translateY(8px);
+    opacity: 0;
+    box-shadow:
+      0 0 0 0 transparent,
+      0 8px 24px -8px rgba(0, 0, 0, 0.6);
+  }
+  35% {
+    opacity: 1;
+    box-shadow:
+      0 0 0 8px color-mix(in oklab, var(--role-color, var(--role-primary)) 35%, transparent),
+      0 14px 40px -10px rgba(0, 0, 0, 0.7);
+  }
+  60% {
+    transform: scale(1.018) translateY(0);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    box-shadow:
+      0 0 0 0 transparent,
+      0 12px 32px -12px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* ---------- Chat surface ---------- */
+
+.opencanvas-chat-message {
+  animation: opencanvas-fade-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Make sure chat text is selectable end-to-end. The floating chat panel
+   has drag handlers on its title bar and framer-motion wrappers
+   throughout — defensive `user-select: text` here keeps the message
+   bodies copy-friendly regardless of ancestors. */
+.opencanvas-chat-scroll {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Per-message header: role label + copy button. Copy button stays subtle
+   until the row is hovered so it doesn't compete with the message. */
+.opencanvas-chat-msg-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.opencanvas-chat-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #71717a;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 140ms ease, background 140ms ease, color 140ms ease,
+    border-color 140ms ease;
+}
+.opencanvas-chat-message:hover .opencanvas-chat-copy-btn,
+.opencanvas-chat-copy-btn:focus-visible {
+  opacity: 1;
+}
+.opencanvas-chat-copy-btn:hover {
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.1);
+  border-color: rgba(167, 139, 250, 0.3);
+}
+@keyframes opencanvas-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.opencanvas-streaming-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+  animation: opencanvas-pulse 1.4s ease-in-out infinite;
+}
+@keyframes opencanvas-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(0.7); opacity: 0.5; }
+}
+
+/* Team timeline — active phase pulses with role-tint glow. */
+.opencanvas-team-dot-active {
+  box-shadow: 0 0 0 0 currentColor;
+  animation: opencanvas-team-pulse 1.6s ease-in-out infinite;
+}
+@keyframes opencanvas-team-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+  50%      { box-shadow: 0 0 0 6px rgba(167, 139, 250, 0.25); }
+}
+
+/* Handoff card between phases — gradient-tinted to suggest baton pass. */
+.opencanvas-handoff {
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  padding: 10px 12px 12px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.opencanvas-handoff-arrow {
+  animation: opencanvas-handoff-glide 1.8s ease-in-out infinite;
+}
+@keyframes opencanvas-handoff-glide {
+  0%, 100% { transform: translateX(0); opacity: 0.6; }
+  50%      { transform: translateX(3px); opacity: 1; }
+}
+
+.opencanvas-tool-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(139, 92, 246, 0.25);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: opencanvas-spin 0.7s linear infinite;
+  vertical-align: -1px;
+  margin-right: 6px;
+}
+@keyframes opencanvas-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Glass utility — used on chat input, toolbar, panels. Theme-aware:
+   each dark-family theme uses a near-black tint (midnight/sunset/mono
+   overrides below; dark uses the default --color-glass-rgb). */
+.opencanvas-glass {
+  background: rgb(var(--color-glass-rgb) / 0.62);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-thin);
+  -webkit-backdrop-filter: var(--blur-thin);
+  box-shadow: var(--depth-1-shadow);
+}
+:root[data-theme='midnight'] .opencanvas-glass {
+  background: rgba(7, 10, 20, 0.78);
+}
+:root[data-theme='sunset'] .opencanvas-glass {
+  background: rgba(26, 15, 10, 0.78);
+}
+:root[data-theme='mono'] .opencanvas-glass {
+  background: rgba(10, 10, 10, 0.78);
+}
+
+/* Gradient button — primary CTA accent. */
+.opencanvas-btn-accent {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-2) 100%);
+  color: #0a0a0a;
+  font-weight: 600;
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 6px 22px -8px rgba(167, 139, 250, 0.6);
+  transition: transform 120ms ease, box-shadow 160ms ease, filter 120ms ease;
+}
+.opencanvas-btn-accent:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 12px 32px -10px rgba(167, 139, 250, 0.7);
+}
+.opencanvas-btn-accent:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+  transition-duration: 80ms;
+}
+/* Glossy sheen sweep on hover — runs once per pointer-enter. */
+.opencanvas-btn-accent {
+  position: relative;
+  overflow: hidden;
+}
+.opencanvas-btn-accent::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.32) 50%,
+    transparent 70%
+  );
+  transform: translateX(-110%);
+  transition: transform 540ms cubic-bezier(0.22, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+.opencanvas-btn-accent:hover:not(:disabled)::after {
+  transform: translateX(110%);
+}
+.opencanvas-btn-accent:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Subtle "header is alive" gradient bar — appears under the title bar while streaming. */
+.opencanvas-header-pulse {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), var(--color-accent-2), transparent);
+  background-size: 200% 100%;
+  animation: opencanvas-shimmer 1.6s linear infinite;
+  opacity: 0.9;
+}
+@keyframes opencanvas-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ----------------------------------------------------------------------
+ * Polish chrome — canvas grid, mini-map, header buttons, style panel,
+ * floating chat. All driven by data-attrs so state lives in Zustand /
+ * tldraw and CSS just visualises it.
+ * ---------------------------------------------------------------------- */
+
+/* Subtle dotted-grid behind tldraw — pure background, no JS. */
+.opencanvas-canvas-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -12px -12px;
+}
+
+/* Bottom-left minimap container — glass panel with a small header chip
+   and a clickable SVG thumbnail beneath it. */
+.opencanvas-canvas-map {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 5;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 10px;
+  background: rgb(var(--color-glass-rgb) / 0.72);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  box-shadow: var(--depth-2-shadow);
+  transition:
+    box-shadow var(--dur-firm) var(--ease-firm),
+    border-color var(--dur-firm) var(--ease-firm),
+    opacity var(--dur-firm) var(--ease-firm);
+}
+.opencanvas-canvas-map:hover {
+  box-shadow: var(--depth-3-shadow);
+  border-color: var(--color-line-2);
+}
+.opencanvas-canvas-map-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+}
+.opencanvas-canvas-map-header svg {
+  color: var(--color-accent);
+}
+.opencanvas-canvas-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(167, 139, 250, 0.08), transparent 60%),
+    radial-gradient(circle at 75% 80%, rgba(45, 212, 191, 0.06), transparent 60%),
+    rgb(var(--color-glass-rgb) / 0.55);
+  cursor: crosshair;
+  user-select: none;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Theme picker popover — anchored to the header palette button.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-theme-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 51;
+  min-width: 240px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-line-2);
+  box-shadow:
+    0 16px 48px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(167, 139, 250, 0.14) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.opencanvas-theme-menu-header {
+  padding: 8px 10px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+.opencanvas-theme-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-fg-2);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.opencanvas-theme-row:hover {
+  background: rgba(167, 139, 250, 0.10);
+  border-color: rgba(167, 139, 250, 0.28);
+  color: var(--color-fg);
+}
+.opencanvas-theme-row--active {
+  background: var(--grad-brand-soft);
+  border-color: color-mix(in oklab, var(--color-accent) 35%, transparent);
+  color: var(--color-fg);
+}
+.opencanvas-theme-swatches {
+  display: inline-flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  flex-shrink: 0;
+}
+.opencanvas-theme-swatches > span {
+  display: inline-block;
+  width: 14px;
+  height: 22px;
+}
+.opencanvas-theme-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.opencanvas-theme-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-fg);
+}
+.opencanvas-theme-desc {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.opencanvas-theme-check {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* Zoom-percentage chip in HeaderCanvasControls. Click resets to 100%. */
+.opencanvas-header-zoom-readout {
+  min-width: 48px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-fg-2);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease,
+    color 140ms ease, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.opencanvas-header-zoom-readout:hover {
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #fafafa;
+  transform: translateY(-1px);
+}
+.opencanvas-header-zoom-readout:active {
+  transform: translateY(0) scale(0.96);
+  transition-duration: 80ms;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Cmd+K command palette
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-cmdk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+}
+.opencanvas-cmdk-panel {
+  position: fixed;
+  top: 12vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 51;
+  width: min(640px, 92vw);
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: rgb(var(--color-glass-rgb) / 0.82);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-heavy);
+  -webkit-backdrop-filter: var(--blur-heavy);
+  box-shadow: var(--depth-3-shadow);
+  overflow: hidden;
+}
+.opencanvas-cmdk-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-line);
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.06), transparent);
+}
+.opencanvas-cmdk-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-fg);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.opencanvas-cmdk-input::placeholder {
+  color: #71717a;
+}
+.opencanvas-cmdk-kbd {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #71717a;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-line);
+}
+.opencanvas-cmdk-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 6px 8px;
+}
+.opencanvas-cmdk-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-fg-2);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 100ms ease, border-color 100ms ease, color 100ms ease;
+}
+.opencanvas-cmdk-row--active,
+.opencanvas-cmdk-row:hover {
+  background: rgba(167, 139, 250, 0.10);
+  border-color: rgba(167, 139, 250, 0.32);
+  color: var(--color-fg);
+  box-shadow: var(--depth-2-shadow);
+  transform: scale(1.005);
+  transition:
+    background-color var(--dur-firm) var(--ease-firm),
+    box-shadow var(--dur-firm) var(--ease-firm),
+    transform var(--dur-firm) var(--ease-firm);
+}
+.opencanvas-cmdk-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(167, 139, 250, 0.08);
+  color: #c4b5fd;
+  flex-shrink: 0;
+}
+.opencanvas-cmdk-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opencanvas-cmdk-hint {
+  font-size: 11px;
+  color: #71717a;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  flex-shrink: 0;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opencanvas-cmdk-go {
+  flex-shrink: 0;
+}
+.opencanvas-cmdk-empty {
+  padding: 16px 14px;
+  font-size: 13px;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+/* Generic header icon button. Used by HeaderCanvasControls + HeaderDrawTools. */
+.opencanvas-header-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-fg-2);
+  cursor: pointer;
+  box-shadow: var(--depth-1-shadow);
+  transition:
+    background-color var(--dur-firm) var(--ease-firm),
+    box-shadow var(--dur-firm) var(--ease-firm),
+    color var(--dur-firm) var(--ease-firm);
+}
+.opencanvas-header-btn:hover {
+  color: #fafafa;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: var(--depth-2-shadow);
+}
+.opencanvas-header-btn[data-pressed='true'] {
+  background: rgba(167, 139, 250, 0.16);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #fafafa;
+}
+.opencanvas-header-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 6px;
+}
+
+/* Collapsible style panel — slides in from right. */
+.opencanvas-style-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.opencanvas-style-panel-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(var(--color-glass-rgb), 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-fg-2);
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+}
+.opencanvas-style-panel-toggle:hover {
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #fafafa;
+}
+
+/* ----------------------------------------------------------------------
+ * Floating chat — framer-motion <motion.aside> driven by data-mode,
+ * data-fullmode, data-dragging, data-streaming.
+ * ---------------------------------------------------------------------- */
+
+.opencanvas-chat-floating {
+  position: fixed;
+  z-index: 30;
+  width: min(440px, 90vw);
+  height: min(540px, 80vh);
+  display: flex;
+  flex-direction: column;
+  background: rgb(var(--color-glass-rgb) / 0.82);
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  /* `overflow: hidden` so child backgrounds (composer form, status bar,
+     KbHits chip) are clipped to the panel's rounded corners. Previously
+     `visible` because the ChatOptionsMenu dropdown rendered as a child
+     and needed to escape — but that menu now portals to document.body
+     (commit 67e1f17), so the shell can clip again. Without this clip,
+     the composer's `bg-[var(--color-bg)]/95` rendered as a hard
+     rectangle past the panel's rounded bottom, looking like a broken
+     border. */
+  overflow: hidden;
+  backdrop-filter: var(--blur-heavy);
+  -webkit-backdrop-filter: var(--blur-heavy);
+  box-shadow: var(--depth-3-shadow);
+  transition: width 200ms ease, height 200ms ease, border-color 240ms ease;
+}
+.opencanvas-chat-floating[data-fullmode='full'] {
+  width: min(720px, 92vw);
+  height: min(80vh, 800px);
+}
+/* Minimized = title bar + composer (no message list). Lets users keep
+   typing without the full scroll surface taking up screen real estate.
+   Compound selector wins the specificity race against [data-fullmode='full'].
+   Height fits the title bar (~36px) + composer (~64px) + status row.
+   `overflow: hidden` here too — the ChatOptionsMenu popover that used
+   to need `visible` now portals to body (67e1f17), so the shell can
+   clip its content to the rounded corners cleanly. */
+.opencanvas-chat-floating[data-mode='minimized'],
+.opencanvas-chat-floating[data-mode='minimized'][data-fullmode='full'],
+.opencanvas-chat-floating[data-mode='minimized'][data-fullmode='normal'] {
+  height: auto;
+  overflow: hidden;
+}
+/* Streaming: brighter outer glow only. Don't override border-color
+   (the border is `solid transparent` so the conic gradient shows
+   through) and don't add an inset shadow that would cover the conic's
+   inner edge. The faster spin is set further down beside the
+   conic-gradient declaration. */
+.opencanvas-chat-floating[data-streaming='true'] {
+  box-shadow:
+    var(--depth-3-shadow),
+    0 0 24px -2px var(--role-color-soft, var(--role-primary-soft));
+}
+.opencanvas-chat-floating[data-dragging='true'] {
+  cursor: grabbing;
+  transition: none;
+}
+
+/* Title bar — minimal, draggable. The whole bar is the drag handle
+   (grip column dropped). 40px tall, generous padding, hairline
+   bottom border. */
+.opencanvas-chat-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border-bottom: 1px solid var(--color-line);
+  cursor: grab;
+  flex-shrink: 0;
+}
+.opencanvas-chat-titlebar:active {
+  cursor: grabbing;
+}
+/* Grip column is hidden by default — the whole bar is draggable, the
+   grip glyph was visual noise. Kept as a class so the JSX can still
+   render it (we just don't show the icon). */
+.opencanvas-chat-titlebar-grip {
+  display: none;
+}
+.opencanvas-chat-titlebar-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--color-fg);
+}
+.opencanvas-chat-titlebar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.opencanvas-chat-titlebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.opencanvas-chat-titlebar-btn:hover {
+  color: var(--color-fg);
+  background: rgba(255, 255, 255, 0.05);
+}
+.opencanvas-chat-titlebar-btn[data-danger='true']:hover {
+  color: var(--color-fail);
+  background: rgba(248, 113, 113, 0.10);
+}
+
+.opencanvas-chat-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Minimized mode: keep the body around so the composer (form) and the
+   status overlay (KB hits chip) stay reachable. Hide only the message
+   scroll-area + the empty banner inside it. The composer + status row
+   sit AFTER the scroll-area in DOM order, so display:none on the
+   scroller alone gives us "title bar + composer" without losing
+   anything else. */
+.opencanvas-chat-floating[data-mode='minimized'] .opencanvas-chat-scroll {
+  display: none;
+}
+
+/* Launcher bubble — visible when chatWindow.mode === 'collapsed'. */
+.opencanvas-chat-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(var(--color-glass-rgb), 0.86);
+  border: 1px solid rgba(167, 139, 250, 0.34);
+  color: var(--color-fg);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px -12px rgba(167, 139, 250, 0.4);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.opencanvas-chat-launcher:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 50px -10px rgba(167, 139, 250, 0.55);
+}
+
+/* Composer streaming/options accents */
+.opencanvas-composer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.26);
+  color: #ddd6fe;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.opencanvas-composer-status[data-state='idle'] {
+  display: none;
+}
+
+/* Composite + interactive widget bodies (added in Phase 5) */
+.opencanvas-composite {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.opencanvas-composite-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.opencanvas-composite-section-heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.opencanvas-composite-fallback {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--color-fg-2);
+  white-space: pre-wrap;
+  margin: 0;
+}
+.opencanvas-composite-ticket {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.opencanvas-tag-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* tasks shape rows */
+.opencanvas-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.opencanvas-tasks-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  color: var(--color-fg);
+}
+.opencanvas-tasks-row[data-done='true'] .opencanvas-tasks-text {
+  text-decoration: line-through;
+  color: var(--color-muted);
+}
+.opencanvas-tasks-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent);
+}
+.opencanvas-tasks-text {
+  flex: 1;
+}
+.opencanvas-tasks-assignee, .opencanvas-tasks-due {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+/* kanban board */
+.opencanvas-kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.opencanvas-kanban-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.opencanvas-kanban-col[data-colour='blue']    { border-color: rgba(96, 165, 250, 0.32); }
+.opencanvas-kanban-col[data-colour='amber']   { border-color: rgba(251, 191, 36, 0.32); }
+.opencanvas-kanban-col[data-colour='green']   { border-color: rgba(52, 211, 153, 0.32); }
+.opencanvas-kanban-col[data-colour='rose']    { border-color: rgba(251, 113, 133, 0.32); }
+.opencanvas-kanban-col[data-colour='violet']  { border-color: rgba(167, 139, 250, 0.32); }
+.opencanvas-kanban-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.opencanvas-kanban-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.opencanvas-kanban-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.opencanvas-kanban-card-title { font-weight: 500; color: var(--color-fg); }
+.opencanvas-kanban-card-body { color: var(--color-fg-2); font-size: 12px; line-height: 1.45; }
+.opencanvas-kanban-card-assignee { font-size: 11px; color: var(--color-muted); }
+
+/* sticky note */
+.opencanvas-sticky {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-family: 'Caveat', 'Patrick Hand', 'Marker Felt', cursive;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #1c1917;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 6px 18px -4px rgba(0, 0, 0, 0.4);
+}
+/* Pastel sticky-note palette — one Tailwind shade lighter than highlighter
+   colours. Reads as "soft paper in a dim room" against the dark canvas
+   instead of the previous "lime/grass" saturation. */
+.opencanvas-sticky[data-colour='yellow'] { background: linear-gradient(180deg, #fef3c7, #fde68a); }
+.opencanvas-sticky[data-colour='pink']   { background: linear-gradient(180deg, #fce7f3, #fbcfe8); }
+.opencanvas-sticky[data-colour='blue']   { background: linear-gradient(180deg, #dbeafe, #bfdbfe); }
+.opencanvas-sticky[data-colour='green']  { background: linear-gradient(180deg, #dcfce7, #bbf7d0); }
+.opencanvas-sticky[data-colour='violet'] { background: linear-gradient(180deg, #ede9fe, #ddd6fe); }
+.opencanvas-sticky[data-colour='orange'] { background: linear-gradient(180deg, #ffedd5, #fed7aa); }
+.opencanvas-sticky-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.opencanvas-sticky:hover .opencanvas-sticky-actions {
+  opacity: 1;
+}
+.opencanvas-sticky-body {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.opencanvas-sticky-author {
+  font-size: 14px;
+  color: rgba(28, 25, 23, 0.66);
+}
+
+/* Multi-attribution sources footer */
+.opencanvas-card-footer--multi {
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.opencanvas-card-footer-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.opencanvas-card-footer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--color-fg-2);
+  font-size: 11px;
+  text-decoration: none;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms ease;
+}
+.opencanvas-card-footer-pill:hover {
+  background: rgba(167, 139, 250, 0.14);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #fafafa;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -6px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-card-footer-pill:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 80ms;
+}
+
+/* ----------------------------------------------------------------------
+ * KB hits panel — surfaces the parallel /v1/search results above the
+ * chat composer. Glass background, role-tinted accent, dense rows.
+ * ---------------------------------------------------------------------- */
+.opencanvas-kb-hits {
+  position: relative;
+  margin: 6px 12px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(167, 139, 250, 0.05);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 12px;
+  color: var(--color-fg-2);
+}
+.opencanvas-kb-hits-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.12);
+  color: #ddd6fe;
+}
+.opencanvas-kb-hits-label {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.opencanvas-kb-hits-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.opencanvas-kb-hits-dismiss:hover {
+  color: var(--color-fg);
+  background: rgba(255, 255, 255, 0.06);
+}
+.opencanvas-kb-hits-empty {
+  padding: 4px 2px;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+.opencanvas-kb-hits-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.opencanvas-kb-hits-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.opencanvas-kb-hits-row:hover {
+  border-color: rgba(167, 139, 250, 0.32);
+  background: rgba(167, 139, 250, 0.08);
+}
+.opencanvas-kb-hits-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.opencanvas-kb-hits-row-kind {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.opencanvas-kb-hits-row-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.opencanvas-kb-hits-row-snippet {
+  font-size: 12px;
+  color: var(--color-fg-2);
+  line-height: 1.45;
+  /* Clamp to two lines so a long body doesn't blow the panel up. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.opencanvas-kb-hits-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.opencanvas-kb-hits-row-actions button,
+.opencanvas-kb-hits-row-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-fg-2);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.opencanvas-kb-hits-row-actions button:hover,
+.opencanvas-kb-hits-row-actions a:hover {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #fafafa;
+}
+.opencanvas-kb-hits-row-source {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
+}
+
+/* ----------------------------------------------------------------------
+ * Visual polish — gradients, glows, hover lifts. CSS-only; everything
+ * animates transform/opacity/filter so it stays GPU-bound.
+ * ---------------------------------------------------------------------- */
+
+/* Brand wordmark gets the tri-stop gradient. */
+header h1 {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.012em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Brand mark — animated soft halo. */
+header [aria-hidden].size-5.rounded-md {
+  background: var(--grad-brand) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10) inset,
+    0 6px 22px -6px rgba(167, 139, 250, 0.7);
+  animation: opencanvas-mark-breathe 4.8s ease-in-out infinite;
+}
+@keyframes opencanvas-mark-breathe {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50%      { filter: brightness(1.18) saturate(1.25); }
+}
+
+/* Header buttons — gradient hover that slides in (pure pseudo-element,
+   no extra elements in the DOM). */
+.opencanvas-header-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+.opencanvas-header-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--grad-brand-soft);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 160ms ease;
+}
+.opencanvas-header-btn:hover {
+  color: #fafafa;
+  border-color: rgba(167, 139, 250, 0.45);
+  transform: translateY(-1px);
+}
+.opencanvas-header-btn:hover::before {
+  opacity: 1;
+}
+.opencanvas-header-btn[data-pressed='true'] {
+  background: var(--grad-brand-soft);
+  border-color: rgba(167, 139, 250, 0.55);
+  color: #fafafa;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.25);
+}
+
+/* Floating chat — animated conic-gradient hairline border via
+ * background-clip + padding-box. The conic angle animates via
+ * `--opencanvas-chat-angle` (declared further down with @property),
+ * so the visible 1px border drifts continuously through violet →
+ * pink → cyan and back. Subtle when idle, brighter while streaming. */
+/* Calm glass surface — no animated border. The chat is a workspace,
+   not a Christmas tree. A subtle hairline border with a soft violet
+   glow handles "this is a focused panel" without the conic strobe. */
+.opencanvas-chat-floating {
+  background: rgb(var(--color-glass-rgb) / 0.82);
+  border: 1px solid var(--color-line);
+  backdrop-filter: var(--blur-heavy);
+  -webkit-backdrop-filter: var(--blur-heavy);
+  box-shadow: var(--depth-3-shadow);
+  transition:
+    width 200ms ease,
+    height 200ms ease,
+    box-shadow 240ms ease,
+    transform 200ms ease,
+    border-color 240ms ease;
+}
+/* Streaming: depth-3 shadow + role-soft glow. */
+.opencanvas-chat-floating[data-streaming='true'] {
+  box-shadow:
+    var(--depth-3-shadow),
+    0 0 24px -2px var(--role-color-soft, var(--role-primary-soft));
+}
+
+/* Chat title bar — clean hairline divider, no streaming sweep. */
+.opencanvas-chat-titlebar {
+  background: transparent;
+  position: relative;
+}
+/* (Streaming title-bar sweep removed — the calm panel uses the
+ *  header-pulse bar at the very top + the inline live-step in the
+ *  composer as its activity cues.) */
+
+/* Composer input — clean hairline border with a single violet glow
+ * on focus. The previous animated conic looked nice in isolation
+ * but bled into the input fill at certain alphas, made the bg
+ * appear tinted, and clashed with the overall calm-glass surface. */
+.opencanvas-chat-body input[type='text'] {
+  transition: box-shadow 200ms ease;
+}
+.opencanvas-chat-body input[type='text']:focus {
+  /* No background tint, no inset ring — the animated conic border IS
+     the focus indicator. Outer glow only. */
+  background: var(--color-bg-2) !important;
+  box-shadow: 0 0 24px -6px rgba(167, 139, 250, 0.45) !important;
+}
+
+/* Send button — vibrant gradient pill with hover lift. The Chat.tsx
+   button doesn't have a single class to target, so we hit the form's
+   submit-type button directly. */
+.opencanvas-chat-body form button[type='submit'] {
+  background: var(--grad-brand) !important;
+  border-color: transparent !important;
+  color: #0a0a0d !important;
+  font-weight: 600;
+  transition: transform 140ms ease, box-shadow 200ms ease, filter 160ms ease;
+  box-shadow: 0 6px 18px -6px rgba(167, 139, 250, 0.55);
+}
+.opencanvas-chat-body form button[type='submit']:not(:disabled):hover {
+  transform: translateY(-1px) scale(1.02);
+  filter: saturate(1.18) brightness(1.06);
+  box-shadow: 0 12px 28px -6px rgba(240, 171, 252, 0.55);
+}
+.opencanvas-chat-body form button[type='submit']:disabled {
+  filter: grayscale(0.4) brightness(0.7);
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Cards — soft role-tinted glow when hovered, transform-only animation. */
+.opencanvas-card {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 200ms ease;
+  will-change: transform;
+}
+.opencanvas-card:hover {
+  transform: translateY(-1px);
+}
+.opencanvas-card[data-role='primary']:hover   { box-shadow: 0 14px 34px -10px rgba(167, 139, 250, 0.42); }
+.opencanvas-card[data-role='detail']:hover    { box-shadow: 0 14px 34px -10px rgba(96, 165, 250, 0.42); }
+.opencanvas-card[data-role='related']:hover   { box-shadow: 0 14px 34px -10px rgba(45, 212, 191, 0.42); }
+.opencanvas-card[data-role='reference']:hover { box-shadow: 0 14px 34px -10px rgba(251, 191, 36, 0.42); }
+.opencanvas-card[data-role='timeline']:hover  { box-shadow: 0 14px 34px -10px rgba(251, 113, 133, 0.42); }
+.opencanvas-card[data-role='node']:hover      { box-shadow: 0 14px 34px -10px rgba(52, 211, 153, 0.42); }
+
+/* "Freshly placed" pulse — slightly bigger entry + role-glow. */
+.opencanvas-card[data-fresh='true'] {
+  animation: opencanvas-card-pop 600ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+@keyframes opencanvas-card-pop {
+  0%   { transform: scale(0.96); opacity: 0; }
+  60%  { transform: scale(1.015); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* KB hits panel — gradient backdrop instead of flat violet wash. */
+.opencanvas-kb-hits {
+  background:
+    linear-gradient(135deg, rgba(167, 139, 250, 0.06) 0%, rgba(217, 70, 239, 0.06) 50%, rgba(236, 72, 153, 0.06) 100%);
+  border-color: transparent;
+  position: relative;
+}
+.opencanvas-kb-hits::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-brand);
+  -webkit-mask:
+    linear-gradient(#000, #000) content-box,
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.4;
+  pointer-events: none;
+}
+.opencanvas-kb-hits-row {
+  transition: transform 140ms ease, border-color 140ms ease, background 160ms ease;
+}
+.opencanvas-kb-hits-row:hover {
+  transform: translateX(2px);
+  border-color: rgba(167, 139, 250, 0.45);
+  background:
+    linear-gradient(90deg, rgba(167, 139, 250, 0.10) 0%, rgba(240, 171, 252, 0.06) 100%);
+}
+
+/* (Canvas-map polish moved into the real minimap selector earlier.) */
+
+/* Launcher bubble — animated gradient + breathing. */
+.opencanvas-chat-launcher {
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.86), rgba(var(--color-glass-rgb), 0.86)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  animation: opencanvas-mark-breathe 5.6s ease-in-out infinite;
+}
+.opencanvas-chat-launcher::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  background: var(--grad-brand);
+  filter: blur(18px);
+  opacity: 0.25;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* HealthBadge / KbBadge — soft glow on hover (uses parent button styles). */
+header button:hover {
+  filter: brightness(1.08);
+}
+
+/* Composer status pill — gradient backdrop. */
+.opencanvas-composer-status {
+  background: var(--grad-brand-soft);
+  border-color: rgba(167, 139, 250, 0.35);
+  color: #ede9fe;
+  box-shadow: 0 0 18px -6px rgba(167, 139, 250, 0.4);
+}
+
+/* Subtle dotted-grid responds to pointer — lifts opacity near the cursor.
+   Uses background-position only (no JS), GPU-accelerated. */
+.opencanvas-canvas-grid {
+  transition: opacity 240ms ease;
+  opacity: 0.7;
+}
+.opencanvas-canvas-grid:hover {
+  opacity: 1;
+}
+
+/* Sticky-note hover — cute lift + slight rotation for personality. */
+.opencanvas-sticky {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease;
+}
+.opencanvas-sticky:hover {
+  transform: translateY(-2px) rotate(-0.4deg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 14px 30px -8px rgba(0, 0, 0, 0.45);
+}
+
+/* Tag pills get a faint gradient when accent. */
+.opencanvas-tag--accent {
+  background: var(--grad-brand-soft) !important;
+  border-color: rgba(167, 139, 250, 0.45) !important;
+  color: #ede9fe !important;
+}
+
+/* Drawer panels — gradient hairline. */
+.opencanvas-glass {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Toast fixes — gradient border. */
+[data-sonner-toaster] [data-sonner-toast] {
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.88), rgba(var(--color-glass-rgb), 0.88)) padding-box,
+    var(--grad-brand-soft) border-box !important;
+}
+
+/* Streaming pulse bar — already exists, replace the gradient with the brand. */
+.opencanvas-header-pulse {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-accent) 35%,
+    var(--color-accent-2) 50%,
+    var(--color-accent-3) 65%,
+    transparent 100%
+  ) !important;
+}
+
+/* Reduce motion: respect the OS pref so users on motion-sensitivity
+   don't get the breathing/sweeping animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ----------------------------------------------------------------------
+ * Live status pill + busy-state input border
+ * Driven by data-busy on the input + the LiveStatus component.
+ * ---------------------------------------------------------------------- */
+
+.opencanvas-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ede9fe;
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.85), rgba(var(--color-glass-rgb), 0.85)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  box-shadow: 0 0 24px -8px rgba(167, 139, 250, 0.55);
+  align-self: flex-start;
+  /* Inner highlight + breathing for "active" feel. */
+  position: relative;
+  overflow: hidden;
+}
+.opencanvas-live-status::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.16) 30%,
+    rgba(217, 70, 239, 0.16) 50%,
+    rgba(236, 72, 153, 0.16) 70%,
+    transparent 100%
+  );
+  background-size: 240% 100%;
+  animation: opencanvas-titlebar-sweep 2.4s linear infinite;
+  pointer-events: none;
+}
+.opencanvas-live-status-emoji {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6));
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
+}
+@keyframes opencanvas-emoji-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+.opencanvas-live-status-label {
+  position: relative;
+}
+.opencanvas-live-status-dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 2px;
+}
+.opencanvas-live-status-dots span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.6;
+  animation: opencanvas-dot-bounce 1.2s ease-in-out infinite;
+}
+.opencanvas-live-status-dots span:nth-child(2) { animation-delay: 0.15s; }
+.opencanvas-live-status-dots span:nth-child(3) { animation-delay: 0.30s; }
+@keyframes opencanvas-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%           { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Composer input — animated gradient border while busy. We keep the
+   resting border subtle and switch to a sweeping gradient hairline once
+   data-busy="true". Pure background-position animation, no layout. */
+.opencanvas-chat-input[data-busy='true'] {
+  background:
+    linear-gradient(var(--color-bg-2), var(--color-bg-2)) padding-box,
+    linear-gradient(
+      90deg,
+      var(--color-accent),
+      var(--color-accent-2),
+      var(--color-accent-3),
+      var(--color-accent-2),
+      var(--color-accent)
+    ) border-box !important;
+  background-size: 200% 100%, 300% 100% !important;
+  border: 1px solid transparent !important;
+  animation: opencanvas-input-busy 2.4s linear infinite;
+  box-shadow:
+    0 0 0 3px rgba(167, 139, 250, 0.10),
+    0 0 28px -6px rgba(240, 171, 252, 0.45) !important;
+}
+@keyframes opencanvas-input-busy {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, -300% 0; }
+}
+
+/* Make the placeholder shimmer while busy too — pure background trick. */
+.opencanvas-chat-input[data-busy='true']::placeholder {
+  background: var(--grad-brand);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: opencanvas-placeholder-shimmer 3s linear infinite;
+}
+@keyframes opencanvas-placeholder-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -100% 0; }
+}
+
+/* ----------------------------------------------------------------------
+ * Inline status stack — KbHits + LiveStatus live BETWEEN the messages
+ * list and the composer, taking their own flex space. When neither has
+ * anything to render the container collapses to 0 (children return null),
+ * so it costs no space when idle. Bounded max-height keeps a long list
+ * of KB hits from pushing the messages list off-screen.
+ * ---------------------------------------------------------------------- */
+.opencanvas-chat-overlay {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  max-height: 40vh;
+  overflow: hidden;
+}
+.opencanvas-chat-overlay .opencanvas-kb-hits {
+  margin: 0 12px;
+}
+.opencanvas-chat-overlay .opencanvas-live-status {
+  margin: 0 12px;
+  align-self: flex-start;
+}
+
+/* Reasoning ("Show thinking") block. */
+.opencanvas-thinking {
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.55), rgba(var(--color-glass-rgb), 0.55)) padding-box,
+    var(--grad-brand-soft) border-box;
+  overflow: hidden;
+  font-size: 13px;
+}
+.opencanvas-thinking-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ddd6fe;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: left;
+  transition: background 140ms ease;
+}
+.opencanvas-thinking-toggle:hover {
+  background: rgba(167, 139, 250, 0.08);
+}
+.opencanvas-thinking-toggle-chevron {
+  transition: transform 200ms ease;
+  display: inline-flex;
+}
+.opencanvas-thinking-toggle[aria-expanded='true'] .opencanvas-thinking-toggle-chevron {
+  transform: rotate(90deg);
+}
+.opencanvas-thinking-toggle-streaming {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #c4b5fd;
+}
+.opencanvas-thinking-body {
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(167, 139, 250, 0.16);
+  color: var(--color-fg-2);
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+/* ----------------------------------------------------------------------
+ * Inline live-step — rendered INSIDE the streaming assistant message
+ * body, so the user sees progress in the conversation flow rather than
+ * as a separate floating pill.
+ * ---------------------------------------------------------------------- */
+.opencanvas-inline-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ddd6fe;
+  background: rgba(167, 139, 250, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  align-self: flex-start;
+  width: fit-content;
+}
+.opencanvas-inline-step-emoji {
+  font-size: 13px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.55));
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
+}
+.opencanvas-inline-step-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+/* Minimap toggle (collapse/expand). */
+.opencanvas-canvas-map-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.opencanvas-canvas-map-toggle:hover {
+  color: #fafafa;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* Collapsed minimap — header chip only, narrower, no SVG. */
+.opencanvas-canvas-map[data-collapsed='true'] {
+  width: auto;
+  padding: 4px 6px;
+}
+.opencanvas-canvas-map[data-collapsed='true'] .opencanvas-canvas-map-header {
+  padding: 0;
+}
+
+/* ----------------------------------------------------------------------
+ * Composer status row — lives ABOVE the form, INSIDE the same border-t
+ * region as the input so live updates + KB hits visually belong with
+ * the place the user is typing into.
+ * ---------------------------------------------------------------------- */
+.opencanvas-composer-status-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 14px 0 14px;
+  /* Slight top fade so the strip reads as part of the composer surface
+     even on a darker background. */
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.04) 0%, transparent 100%);
+}
+
+/* Live step pill — sits left, animated emoji, bouncing dots. */
+.opencanvas-composer-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ede9fe;
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.7), rgba(var(--color-glass-rgb), 0.7)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  box-shadow: 0 0 16px -6px rgba(167, 139, 250, 0.55);
+  position: relative;
+  overflow: hidden;
+}
+.opencanvas-composer-step::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.16) 30%,
+    rgba(217, 70, 239, 0.16) 50%,
+    rgba(236, 72, 153, 0.16) 70%,
+    transparent 100%
+  );
+  background-size: 240% 100%;
+  animation: opencanvas-titlebar-sweep 2.4s linear infinite;
+  pointer-events: none;
+}
+.opencanvas-composer-step-emoji {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.65));
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
+  position: relative;
+}
+.opencanvas-composer-step-label {
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+/* KB hit count chip — clickable, opens the popover above. */
+.opencanvas-composer-hits-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.10);
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+.opencanvas-composer-hits-chip:hover {
+  background: rgba(167, 139, 250, 0.18);
+  border-color: rgba(167, 139, 250, 0.55);
+  color: #fafafa;
+  transform: translateY(-1px);
+}
+.opencanvas-composer-hits-chip[aria-expanded='true'] {
+  background: rgba(167, 139, 250, 0.22);
+  border-color: rgba(167, 139, 250, 0.6);
+  color: #fafafa;
+}
+
+/* Hits popover — anchored to the composer status row, expands UPWARD so
+   it doesn't shove the input down. Capped at 40vh so a flood of results
+   can't push the messages off-screen. */
+.opencanvas-composer-hits-popover {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% + 6px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.92), rgba(var(--color-glass-rgb), 0.92)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 50px -16px rgba(0, 0, 0, 0.65);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.opencanvas-composer-hits-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.16);
+  color: #ddd6fe;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.opencanvas-composer-hits-popover-dismiss {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+.opencanvas-composer-hits-popover-dismiss:hover {
+  color: var(--color-fg);
+  background: rgba(255, 255, 255, 0.06);
+}
+.opencanvas-composer-hits-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.opencanvas-composer-hits-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: transform 140ms ease, border-color 140ms ease, background 160ms ease;
+}
+.opencanvas-composer-hits-row:hover {
+  transform: translateX(2px);
+  border-color: rgba(167, 139, 250, 0.45);
+  background:
+    linear-gradient(90deg, rgba(167, 139, 250, 0.10) 0%, rgba(240, 171, 252, 0.06) 100%);
+}
+.opencanvas-composer-hits-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.opencanvas-composer-hits-row-kind {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.opencanvas-composer-hits-row-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.opencanvas-composer-hits-row-snippet {
+  font-size: 12px;
+  color: var(--color-fg-2);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.opencanvas-composer-hits-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.opencanvas-composer-hits-row-actions button,
+.opencanvas-composer-hits-row-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-fg-2);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.opencanvas-composer-hits-row-actions button:hover,
+.opencanvas-composer-hits-row-actions a:hover {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #fafafa;
+}
+.opencanvas-composer-hits-row-source {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
+}
+
+/* ----------------------------------------------------------------------
+ * Live step rendered INSIDE the chat input — sits where the placeholder
+ * would, animated emoji + label + bouncing dots. Pointer-events: none
+ * so the user can still focus + type through it; vanishes the moment
+ * `input.value` becomes non-empty.
+ * ---------------------------------------------------------------------- */
+.opencanvas-chat-input-wrap {
+  display: flex;
+  align-items: stretch;
+}
+.opencanvas-chat-input-wrap .opencanvas-chat-input {
+  flex: 1;
+}
+.opencanvas-input-step {
+  /* Stretch to the input's full content box and use flex centering so
+     the mixed-size children (16px emoji + 14px label + dots) all share
+     the input's vertical baseline. No manual translateY math, no
+     padding drift between this overlay and the placeholder it replaces.
+     padding-inline mirrors the input's px-4 (= 16px) so the first
+     character of the label sits exactly where the user's cursor would. */
+  position: absolute;
+  inset: 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 500;
+  color: #ddd6fe;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.opencanvas-input-step-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  /* Pull the emoji's optical centre back to the inline-flex baseline.
+     System emoji glyphs draw a couple of px below the bounding-box
+     centre; this nudge balances them with the 14px label text. */
+  margin-top: -1px;
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.7));
+  animation: opencanvas-emoji-bob 1.6s ease-in-out infinite;
+}
+.opencanvas-input-step-label {
+  /* Match the input's typography exactly. line-height: 1.2 gives the
+     gradient-clipped text room without breaking flex centering (the
+     parent's line-height: 1 still drives the box height). */
+  font-size: 14px;
+  line-height: 1.2;
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% 100%;
+  animation: opencanvas-placeholder-shimmer 3s linear infinite;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.opencanvas-input-step .opencanvas-live-status-dots {
+  flex-shrink: 0;
+  color: #a78bfa;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Hide the tldraw "Made with tldraw" watermark. Removing the watermark
+   in production requires a tldraw license — see https://tldraw.dev for
+   commercial licensing. This rule keeps it out of the dev surface. */
+.tl-watermark_SEE-LICENSE {
+  display: none !important;
+}
+
+/* Danger variant of the header icon button — used by Clear canvas. */
+.opencanvas-header-btn--danger:hover {
+  color: #fecaca !important;
+  border-color: rgba(248, 113, 113, 0.45) !important;
+  background: rgba(248, 113, 113, 0.10) !important;
+}
+.opencanvas-header-btn--danger:hover::before {
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.18) 0%,
+    rgba(244, 114, 182, 0.14) 100%
+  ) !important;
+}
+
+/* ----------------------------------------------------------------------
+ * Markdown rendering — used by:
+ *   - chat assistant messages (.opencanvas-markdown wrapper around
+ *     ReactMarkdown output)
+ *   - markdown shape body
+ *   - composite section body / ticket description
+ * One central style so all surfaces look consistent.
+ * ---------------------------------------------------------------------- */
+.opencanvas-markdown {
+  /* Whole-number font-size matters — fractional sizes (13.5px) never
+     pixel-align, so the rasterizer always falls back to fuzzy
+     subpixel AA. 14px is one of the cleanest body sizes available. */
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-fg);   /* was fg-2; bumped for stronger text contrast */
+  word-break: break-word;
+}
+.opencanvas-markdown > * + * { margin-top: 8px; }
+.opencanvas-markdown > *:first-child { margin-top: 0; }
+.opencanvas-markdown > *:last-child  { margin-bottom: 0; }
+
+.opencanvas-markdown h1,
+.opencanvas-markdown h2,
+.opencanvas-markdown h3,
+.opencanvas-markdown h4 {
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--color-fg);
+  margin: 14px 0 4px;
+  line-height: 1.3;
+}
+.opencanvas-markdown h1 { font-size: 17px; }
+.opencanvas-markdown h2 { font-size: 15px; }
+.opencanvas-markdown h3 { font-size: 14px; }
+.opencanvas-markdown h4 { font-size: 13px; color: var(--color-fg-2); }
+
+.opencanvas-markdown p { margin: 0; }
+
+.opencanvas-markdown strong { color: var(--color-fg); font-weight: 600; }
+.opencanvas-markdown em     { color: var(--color-fg); font-style: italic; }
+
+.opencanvas-markdown a {
+  color: #c4b5fd;
+  text-decoration: underline;
+  text-decoration-color: rgba(167, 139, 250, 0.4);
+  text-underline-offset: 2px;
+  transition: color 120ms ease, text-decoration-color 120ms ease;
+}
+.opencanvas-markdown a:hover {
+  color: #ddd6fe;
+  text-decoration-color: rgba(167, 139, 250, 0.8);
+}
+
+.opencanvas-markdown ul,
+.opencanvas-markdown ol {
+  padding-left: 22px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.opencanvas-markdown ul { list-style: disc; }
+.opencanvas-markdown ol { list-style: decimal; }
+.opencanvas-markdown li::marker { color: var(--color-muted); }
+
+.opencanvas-markdown blockquote {
+  margin: 6px 0;
+  padding: 6px 12px;
+  border-left: 3px solid rgba(167, 139, 250, 0.55);
+  background: rgba(167, 139, 250, 0.06);
+  border-radius: 6px;
+  color: var(--color-fg-2);
+}
+
+.opencanvas-markdown code {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: #ede9fe;
+}
+.opencanvas-markdown pre {
+  margin: 6px 0;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.opencanvas-markdown pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e4e4e7;
+}
+
+.opencanvas-markdown hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 12px 0;
+}
+
+.opencanvas-markdown table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  margin: 6px 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.opencanvas-markdown th,
+.opencanvas-markdown td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.opencanvas-markdown th {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+.opencanvas-markdown tr:last-child td { border-bottom: none; }
+
+/* ----------------------------------------------------------------------
+ * Idle dynamic glow — when the chat is NOT streaming, gently pulse a
+ * faint multi-stop halo around the shell border. Slower + lower-amplitude
+ * than the streaming animation; reads as "alive but at rest."
+ * ---------------------------------------------------------------------- */
+@keyframes opencanvas-chat-idle-breathe {
+  0%, 100% {
+    box-shadow:
+      0 20px 60px -20px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(167, 139, 250, 0.04) inset,
+      0 0 18px -4px rgba(167, 139, 250, 0.10);
+  }
+  50% {
+    box-shadow:
+      0 22px 64px -18px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(240, 171, 252, 0.10) inset,
+      0 0 32px -2px rgba(240, 171, 252, 0.18);
+  }
+}
+.opencanvas-chat-floating[data-streaming='false'][data-mode='open'] {
+  animation: opencanvas-chat-idle-breathe 6.4s ease-in-out infinite;
+}
+
+/* ----------------------------------------------------------------------
+ * Empty-state banner — slimmer, animated, contextual content.
+ * ---------------------------------------------------------------------- */
+.opencanvas-empty-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 18px 8px;
+  text-align: center;
+}
+.opencanvas-empty-banner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgba(var(--color-glass-rgb), 0.6), rgba(var(--color-glass-rgb), 0.6)) padding-box,
+    var(--grad-brand) border-box;
+  border: 1px solid transparent;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ddd6fe;
+  font-weight: 500;
+  box-shadow: 0 0 16px -6px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-empty-banner-pill svg {
+  filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.6));
+  animation: opencanvas-banner-icon-spin 12s linear infinite;
+}
+@keyframes opencanvas-banner-icon-spin {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  85% { transform: rotate(-12deg); }
+  92% { transform: rotate(12deg); }
+}
+.opencanvas-empty-banner-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 220% 100%;
+  animation: opencanvas-banner-shimmer 6s linear infinite;
+}
+@keyframes opencanvas-banner-shimmer {
+  from { background-position: 0% 0; }
+  to   { background-position: 220% 0; }
+}
+.opencanvas-empty-banner-stats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.opencanvas-empty-banner-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--color-fg-2);
+  font-size: 11px;
+}
+.opencanvas-empty-banner-stat strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+.opencanvas-empty-banner-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 2px;
+}
+.opencanvas-empty-banner-suggestion {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--color-fg-2);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+.opencanvas-empty-banner-suggestion:hover {
+  background: rgba(167, 139, 250, 0.10);
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #fafafa;
+  transform: translateY(-1px);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Animated conic-gradient border for the chat panel.
+ *
+ * Strategy: place a `::before` pseudo-element behind the panel, sized
+ * 1px larger on every side, filled with a rotating conic gradient. The
+ * panel's own (transparent) border sits over the centre, leaving a thin
+ * coloured ring around the rounded rect that drifts continuously.
+ *
+ * `@property --opencanvas-chat-angle` lets the conic gradient's angle
+ * animate smoothly (without it, browsers can only animate the WHOLE
+ * background, not a single gradient parameter).
+ *
+ * Subtle by default; brighter + 2× faster while streaming.
+ * ──────────────────────────────────────────────────────────────────*/
+@property --opencanvas-chat-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes opencanvas-chat-border-spin {
+  to { --opencanvas-chat-angle: 360deg; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Animated conic border on the chat composer input.
+ *
+ * Same recipe as the chat panel: the conic gradient sits in the
+ * border-box layer of `background:`, paired with a flat dark fill in
+ * the padding-box layer. The 1.5px transparent border lets the conic
+ * show through. Result: ONLY the border is colored — the inside of
+ * the text area is always a flat dark fill, even on focus.
+ *
+ * Focus signal: animation speeds up + outer drop-shadow brightens.
+ * No inner tint, no ring, no fight with caret/text.
+ * ──────────────────────────────────────────────────────────────────*/
+@property --opencanvas-input-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+/* Clean composer — single hairline border, soft violet glow on focus.
+   No animated conic; the previous rotating gradient required the
+   input to render its border via background-clip which fought the
+   focus ring + made the inside read as tinted. */
+.opencanvas-chat-input {
+  background: var(--color-bg-2) !important;
+  border: 1px solid var(--color-line-2) !important;
+  transition: border-color 160ms ease, box-shadow 200ms ease;
+}
+.opencanvas-chat-input:focus {
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.16),
+    0 0 24px -8px rgba(167, 139, 250, 0.4) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Larger composer input — taller hit-target + slightly larger text.
+ * Tailwind `py-2.5 text-[14px]` were the originals; this overrides to
+ * give it more vertical breathing room and a touch more weight.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-chat-input {
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  font-size: 15px !important;
+  line-height: 1.45 !important;
+  min-height: 46px;
+  /* Auto-grow on Chromium 123+ / Safari 17.4+. Browsers without
+     field-sizing honor `rows={1}` and stay one line — no jank. */
+  field-sizing: content;
+  max-height: 220px;
+  overflow-y: auto;
+  /* The textarea inherits a fontFamily from the user-agent monospace
+     default; pull it back to the same Inter as the rest of the chat. */
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Animated brand mark inside the chat title bar.
+ *
+ * Two stacked layers: a soft conic-gradient ring that slowly rotates,
+ * and a brighter inner core that breathes. Combined with the
+ * framer-motion scale animation on the wrapper, the mark feels alive
+ * without ever drawing focus away from content.
+ * ──────────────────────────────────────────────────────────────────*/
+/* Static brand dot — calm violet pearl. The previous spinning ring +
+ * breathing core felt busy in the title bar; the new dot just holds
+ * its color, then quietly brightens + glows when the chat is
+ * streaming. Single visible element, no animation when idle. */
+.opencanvas-chat-brand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+.opencanvas-chat-brand-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fafafa 0%,
+    #ddd6fe 55%,
+    #a78bfa 100%
+  );
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.45);
+  transition: box-shadow 220ms ease, transform 220ms ease;
+}
+.opencanvas-chat-brand[data-active='true'] .opencanvas-chat-brand-core {
+  box-shadow:
+    0 0 12px rgba(167, 139, 250, 0.7),
+    0 0 24px rgba(167, 139, 250, 0.35);
+  animation: opencanvas-chat-brand-pulse 1.4s ease-in-out infinite;
+}
+@keyframes opencanvas-chat-brand-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.18); opacity: 0.85; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Generic widget — universal-fallback shape composed of typed blocks.
+ * Each block has its own scope; the wrapper just stacks them with
+ * consistent spacing and a shared subtitle bar.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-generic-subtitle {
+  font-size: 11px;
+  color: #71717a;
+  font-style: italic;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+}
+.opencanvas-generic-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.opencanvas-generic-block {
+  font-size: 13px;
+  color: #e4e4e7;
+}
+.opencanvas-generic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.opencanvas-generic-table th {
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a1a1aa;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.opencanvas-generic-table td {
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #e4e4e7;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.opencanvas-generic-kv {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(80px, auto) 1fr;
+  row-gap: 6px;
+  column-gap: 14px;
+}
+.opencanvas-generic-kv-row {
+  display: contents;
+}
+.opencanvas-generic-kv dt {
+  color: #a1a1aa;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  align-self: baseline;
+}
+.opencanvas-generic-kv dd {
+  margin: 0;
+  color: #fafafa;
+  word-break: break-word;
+}
+.opencanvas-generic-embed-foot {
+  font-size: 11px;
+  color: #71717a;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opencanvas-generic-json {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #d4d4d8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 280px;
+  overflow: auto;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Streaming-state visuals for the generic widget.
+ *
+ *  - card border pulses violet while shape.meta.streaming is true
+ *  - markdown block ends with a blinking caret
+ *  - table block renders one shimmer-row beneath the real rows
+ *  - newly-appended kv fields fade-in (driven by data-streaming attr)
+ *  - the header tag swaps to a "streaming · 187 chars" live counter
+ *  - if streaming ended with ok=false, an inline error badge surfaces
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-card[data-streaming-active="true"],
+.opencanvas-card:has(.opencanvas-generic-blocks[data-streaming="true"]) {
+  animation: opencanvas-generic-stream-pulse 1.6s ease-in-out infinite;
+}
+@keyframes opencanvas-generic-stream-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px var(--color-line) inset,
+      0 12px 32px -12px rgba(0, 0, 0, 0.8),
+      0 0 0 0 rgba(167, 139, 250, 0.0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(167, 139, 250, 0.6) inset,
+      0 12px 32px -12px rgba(0, 0, 0, 0.8),
+      0 0 24px -4px rgba(167, 139, 250, 0.45);
+  }
+}
+
+.opencanvas-generic-streaming-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #f0abfc);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.7);
+  margin-right: 5px;
+  animation: opencanvas-generic-pulse 1.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+@keyframes opencanvas-generic-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(0.6); opacity: 0.5; }
+}
+
+/* Streaming caret — pinned inline to the end of the final paragraph
+   in a streaming markdown block so it reads as a typing cursor, not
+   an orphan glyph below the text. The selector targets whatever the
+   last block element happens to be (p, h1-h6, li, blockquote, …). */
+.opencanvas-markdown[data-streaming="true"] > :last-child::after {
+  content: '▍';
+  display: inline-block;
+  margin-left: 2px;
+  color: #c4b5fd;
+  font-weight: 700;
+  font-size: 0.92em;
+  vertical-align: -0.05em;
+  animation: opencanvas-generic-caret-blink 1.05s steps(2, jump-none) infinite;
+}
+@keyframes opencanvas-generic-caret-blink {
+  50% { opacity: 0; }
+}
+
+.opencanvas-generic-table-skeleton td {
+  padding: 6px 10px;
+}
+.opencanvas-generic-skeleton-bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(167, 139, 250, 0.18) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 240% 100%;
+  animation: opencanvas-generic-skeleton-shimmer 1.4s linear infinite;
+}
+@keyframes opencanvas-generic-skeleton-shimmer {
+  from { background-position: 240% 0; }
+  to   { background-position: -140% 0; }
+}
+
+/* Newly-appended kv rows fade in 200ms while parent dl is streaming. */
+.opencanvas-generic-kv[data-streaming="true"] .opencanvas-generic-kv-row {
+  animation: opencanvas-generic-kv-fade-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes opencanvas-generic-kv-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.opencanvas-generic-error {
+  margin: 0 0 8px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(248, 113, 113, 0.10);
+  border: 1px solid rgba(248, 113, 113, 0.32);
+  color: #fca5a5;
+  font-size: 11px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Canvas history scrubber — right-edge drawer with a chronological
+ * list of stashed snapshots.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-history-drawer {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  width: min(340px, 90vw);
+  z-index: 40;
+  background: var(--color-bg-2);
+  border-left: 1px solid var(--color-line-2);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -16px 0 40px -12px rgba(0, 0, 0, 0.55);
+}
+.opencanvas-history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-line);
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.06), transparent);
+}
+.opencanvas-history-title {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-2);
+}
+.opencanvas-history-count {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.14);
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+.opencanvas-history-clear {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #71717a;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 3px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.opencanvas-history-clear:not(:disabled):hover {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.10);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+.opencanvas-history-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.opencanvas-history-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.opencanvas-history-empty {
+  padding: 22px 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #a1a1aa;
+}
+.opencanvas-history-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-fg-2);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease,
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.opencanvas-history-row:hover {
+  background: rgba(167, 139, 250, 0.08);
+  border-color: rgba(167, 139, 250, 0.28);
+  color: var(--color-fg);
+  transform: translateX(-2px);
+}
+.opencanvas-history-row-time {
+  flex: 1;
+  font-weight: 500;
+}
+.opencanvas-history-row-abs {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #71717a;
+}
+.opencanvas-history-row-tag {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(167, 139, 250, 0.16);
+  color: #c4b5fd;
+}
+.opencanvas-history-row-go {
+  color: #71717a;
+}
+.opencanvas-history-row:hover .opencanvas-history-row-go {
+  color: #c4b5fd;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Web-embed iframe escape hatch — sites that block iframing via
+ * X-Frame-Options or CSP frame-ancestors render blank inside the
+ * shape. A floating "Open ↗" pill at the bottom-right is always
+ * visible so users can recover.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-web-embed-escape {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(var(--color-glass-rgb), 0.78);
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  color: var(--color-fg);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+  pointer-events: none;
+}
+.opencanvas-card:hover .opencanvas-web-embed-escape {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.opencanvas-web-embed-escape:hover {
+  background: rgba(167, 139, 250, 0.18);
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Plugin widget — sandboxed iframe + registry-not-found state.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-plugin-body {
+  padding: 6px !important;
+  display: flex;
+  flex-direction: column;
+}
+.opencanvas-plugin-empty {
+  padding: 18px 16px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  color: var(--color-fg-2);
+  font-size: 12px;
+}
+.opencanvas-plugin-empty-title {
+  font-weight: 600;
+  color: var(--color-fg);
+  font-size: 13px;
+}
+.opencanvas-plugin-empty-body {
+  color: #a1a1aa;
+  line-height: 1.5;
+}
+.opencanvas-plugin-empty-body code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #ddd6fe;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Time widget — clock / timer / stopwatch / pomodoro.
+ *
+ * Shared layout: large display digits, optional progress bar, control
+ * row at the bottom. Pomodoro phase tints the progress bar + pulses
+ * during 'work' to differentiate it from passive break time.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-time-body {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+}
+.opencanvas-time-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.opencanvas-time-numerals {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 32px;
+  letter-spacing: -0.01em;
+  color: #fafafa;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  /* Tight role-tinted glow — was 18px, blurred edges enough that text
+     read as "soft / low-res." 6px keeps a hint of the glow signature
+     without smearing the digit edges. */
+  text-shadow: 0 0 6px rgba(167, 139, 250, 0.28);
+}
+.opencanvas-time-numerals.opencanvas-time-done {
+  color: #fbbf24;
+  text-shadow: 0 0 22px rgba(251, 191, 36, 0.45);
+  animation: opencanvas-time-done-flash 1.6s ease-in-out infinite;
+}
+@keyframes opencanvas-time-done-flash {
+  0%, 100% { opacity: 1;   }
+  50%      { opacity: 0.65;}
+}
+.opencanvas-time-meta {
+  font-size: 11px;
+  color: #a1a1aa;
+}
+.opencanvas-time-tz {
+  color: #71717a;
+}
+
+.opencanvas-time-progress {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.opencanvas-time-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a78bfa 0%, #f0abfc 100%);
+  transition: width 1.05s linear;
+}
+.opencanvas-time-progress[data-phase="work"] .opencanvas-time-progress-fill {
+  background: linear-gradient(90deg, #f87171 0%, #fbbf24 100%);
+}
+.opencanvas-time-progress[data-phase="break"] .opencanvas-time-progress-fill {
+  background: linear-gradient(90deg, #34d399 0%, #67e8f9 100%);
+}
+.opencanvas-time-progress[data-phase="longBreak"] .opencanvas-time-progress-fill {
+  background: linear-gradient(90deg, #67e8f9 0%, #a78bfa 100%);
+}
+
+.opencanvas-time-pomo-phase {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.opencanvas-time-pomo-phase[data-phase="work"] {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+.opencanvas-time-pomo-phase[data-phase="break"] {
+  background: rgba(52, 211, 153, 0.14);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+.opencanvas-time-pomo-phase[data-phase="longBreak"] {
+  background: rgba(103, 232, 249, 0.14);
+  color: #67e8f9;
+  border: 1px solid rgba(103, 232, 249, 0.35);
+}
+.opencanvas-time-pomo-sessions {
+  font-size: 11px;
+  color: #71717a;
+}
+.opencanvas-time-pomo-sessions strong {
+  color: #fafafa;
+  font-weight: 600;
+}
+
+.opencanvas-time-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.opencanvas-time-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-line-2);
+  color: var(--color-fg-2);
+  cursor: pointer;
+  box-shadow: var(--depth-1-shadow);
+  transition:
+    background-color var(--dur-firm) var(--ease-firm),
+    border-color var(--dur-firm) var(--ease-firm),
+    color var(--dur-firm) var(--ease-firm),
+    box-shadow var(--dur-firm) var(--ease-firm);
+}
+.opencanvas-time-btn:hover {
+  background: rgba(167, 139, 250, 0.14);
+  border-color: rgba(167, 139, 250, 0.55);
+  color: var(--color-fg);
+  box-shadow: var(--depth-2-shadow);
+}
+.opencanvas-time-btn:active {
+  transform: scale(0.95);
+  transition-duration: 80ms;
+}
+.opencanvas-time-btn--primary {
+  background: linear-gradient(135deg, #a78bfa 0%, #f0abfc 100%);
+  border-color: rgba(167, 139, 250, 0.6);
+  color: #0a0a0a;
+  box-shadow:
+    var(--depth-1-shadow),
+    0 0 12px -2px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-time-btn--primary:hover {
+  background: linear-gradient(135deg, #b196fc 0%, #f5b6ff 100%);
+  color: #0a0a0a;
+  filter: brightness(1.05);
+  box-shadow:
+    var(--depth-2-shadow),
+    0 0 18px -2px rgba(167, 139, 250, 0.55);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Source-link affordances inside widgets (rows, fields, events).
+ * `.opencanvas-row-link` is the inline-text variant used inside
+ * key-value-card and timeline. `.opencanvas-table-row--linked` lights
+ * up the whole table row on hover so it reads as clickable.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-row-link {
+  color: #a5b4fc;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(165, 180, 252, 0.35);
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.opencanvas-row-link:hover {
+  color: #c7d2fe;
+  border-bottom-color: rgba(199, 210, 254, 0.7);
+}
+.opencanvas-table-row--linked {
+  transition: background 120ms ease;
+}
+.opencanvas-table-row--linked:hover {
+  background: rgba(165, 180, 252, 0.06);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Chat → widget anchor chip. Rendered inline beneath an assistant
+ * message whenever the LLM placed a widget on the canvas. Clicking
+ * re-focuses that shape via `applyToolDirective({ type: 'focus' })`.
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-widget-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 6px 0 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.15),
+    rgba(56, 189, 248, 0.15)
+  );
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  color: #e4e4e7;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 160ms ease;
+}
+.opencanvas-widget-anchor:hover {
+  transform: translateY(-1px);
+  border-color: rgba(167, 139, 250, 0.7);
+  box-shadow: 0 4px 14px -6px rgba(167, 139, 250, 0.45);
+}
+.opencanvas-widget-anchor > span:nth-child(2) {
+  color: #a78bfa;
+  text-transform: lowercase;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.opencanvas-widget-anchor > span:nth-child(3) {
+  color: #fafafa;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * KB hits inside the show-thinking panel. Each <li> is one hit with
+ * a head row (kind + title), an optional snippet, and an actions row
+ * (Place button, optional Open link, source pill).
+ * ──────────────────────────────────────────────────────────────────*/
+.opencanvas-thinking-reasoning {
+  margin: 0 0 8px 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-fg-2);
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.opencanvas-thinking-divider {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 4px 0;
+  color: #a78bfa;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.opencanvas-thinking-query {
+  color: #71717a;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: inherit;
+}
+.opencanvas-thinking-hit-count {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  background: rgba(167, 139, 250, 0.15);
+  color: #c4b5fd;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: 0.04em;
+}
+.opencanvas-thinking-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.opencanvas-thinking-hit {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: normal;
+}
+.opencanvas-thinking-hit:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(167, 139, 250, 0.25);
+}
+.opencanvas-thinking-hit-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.opencanvas-thinking-hit-kind {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a78bfa;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  flex-shrink: 0;
+}
+.opencanvas-thinking-hit-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #fafafa;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opencanvas-thinking-hit-snippet {
+  font-size: 11px;
+  color: #a1a1aa;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+}
+.opencanvas-thinking-hit-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+.opencanvas-thinking-hit-actions > button,
+.opencanvas-thinking-hit-actions > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e4e4e7;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.opencanvas-thinking-hit-actions > button:hover,
+.opencanvas-thinking-hit-actions > a:hover {
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.4);
+}
+.opencanvas-thinking-hit-source {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: #71717a;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

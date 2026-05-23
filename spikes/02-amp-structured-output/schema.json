@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["results"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "shape", "provenance"],
+        "properties": {
+          "id":   { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": ["text-document", "code-file", "code-symbol", "ticket",
+                     "wiki-page", "log-stream", "k8s-resource", "web-page"]
+          },
+          "shape": { "type": "object" },
+          "provenance": {
+            "type": "object",
+            "required": ["uri", "fetchedAt"],
+            "properties": {
+              "uri": { "type": "string" },
+              "fetchedAt": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "narrative": { "type": "string" }
+  },
+  "additionalProperties": false
+}

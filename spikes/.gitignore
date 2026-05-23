@@ -1,0 +1,10 @@
+node_modules
+*.onnx
+models/
+.env
+.env.local
+*.log
+# Spikes are one-off experiments — don't pin transitive deps. A stale
+# lockfile here is the only source of Dependabot noise.
+package-lock.json
+pnpm-lock.yaml

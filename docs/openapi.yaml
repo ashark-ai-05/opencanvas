@@ -1,0 +1,570 @@
+openapi: 3.1.0
+info:
+  title: OpenCanvas API
+  version: 0.1.0
+  summary: REST surface for driving the local OpenCanvas instance.
+  description: |
+    OpenCanvas runs locally on `http://127.0.0.1:3457`. Any process on the
+    same machine can render widgets, stream content, register custom
+    widget kinds, and inspect canvas state through these endpoints.
+
+    ## Authentication
+
+    A 256-bit random token is generated on first run and persisted to
+    `~/.opencanvas/auth-token` (mode `0600`). It must be sent in the
+    `X-OpenCanvas-Token` header on every state-mutating route
+    (`POST` / `PUT` / `PATCH` / `DELETE`). `GET /v1/health` is the
+    only unauthenticated endpoint.
+
+    Read the token once:
+
+    ```bash
+    export OC_TOKEN=$(cat ~/.opencanvas/auth-token)
+    curl -H "x-opencanvas-token: $OC_TOKEN" http://127.0.0.1:3457/v1/canvas/snapshot
+    ```
+
+    To disable auth for local scripting, run the backend with
+    `OPENCANVAS_REQUIRE_AUTH=0`. **Don't** ship a build with that flag
+    set — it re-opens the cross-process tampering window.
+
+    ## CORS
+
+    The backend allows only the Vite dev origin and Electron's `file://`
+    origin. Cross-tab CSRF from arbitrary websites is closed at the
+    browser level.
+
+    ## Widget kinds
+
+    The agent + your scripts can render any of the 15 built-in widget
+    kinds (markdown, table, kanban, chart, code-block, sticky-note,
+    time, web-embed, file-tree, timeline, tasks, key-value-card,
+    composite, generic, plugin) plus any kind registered at runtime
+    via `POST /v1/canvas/widget-kinds`.
+  license:
+    name: MIT
+    identifier: MIT
+  contact:
+    name: OpenCanvas
+    url: https://github.com/ashark-ai-05/opencanvas/issues
+
+servers:
+  - url: http://127.0.0.1:3457
+    description: Local backend (default port)
+
+security:
+  - bearerToken: []
+
+components:
+  securitySchemes:
+    bearerToken:
+      type: apiKey
+      in: header
+      name: X-OpenCanvas-Token
+      description: |
+        The 256-bit token at `~/.opencanvas/auth-token`. Required on
+        state-mutating routes; ignored on `GET /v1/health`.
+
+  schemas:
+    WidgetKind:
+      type: string
+      enum:
+        - markdown
+        - code-block
+        - table
+        - timeline
+        - file-tree
+        - kanban
+        - tasks
+        - sticky-note
+        - composite
+        - chart
+        - calendar
+        - time
+        - web-embed
+        - key-value-card
+        - generic
+        - plugin
+
+    Role:
+      type: string
+      enum: [primary, supporting, detail, related, metadata, node, timeline]
+      description: |
+        Tints the widget's chrome + drives the auto-tidy layout slot.
+
+    PlaceWidget:
+      type: object
+      required: [kind, role, payload]
+      properties:
+        kind:
+          $ref: '#/components/schemas/WidgetKind'
+        role:
+          $ref: '#/components/schemas/Role'
+        payload:
+          type: object
+          description: |
+            Kind-specific props validated against the kind's Zod schema.
+            See the live `/openapi.yaml` for examples of each kind, or
+            inspect `app/src/canvas/shapes/<kind>.tsx` for the
+            authoritative schema.
+          additionalProperties: true
+        conversationId:
+          type: string
+          description: Target conversation; defaults to the currently active.
+
+    PlaceResponse:
+      type: object
+      required: [ok, id, directive]
+      properties:
+        ok: { type: boolean }
+        id: { type: string, description: Shape id (without 'shape:' prefix) }
+        directive:
+          type: object
+          description: The dispatcher directive that was applied + queued on SSE.
+
+    UpdateWidget:
+      type: object
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+          description: Partial payload to shallow-merge into the widget's props.
+        appendSections:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Used by composite/generic widgets to append blocks.
+
+    LinkRequest:
+      type: object
+      required: [fromId, toId]
+      properties:
+        fromId: { type: string }
+        toId: { type: string }
+        label: { type: string }
+
+    Snapshot:
+      type: object
+      properties:
+        activeTemplateId: { type: string }
+        widgets:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              kind: { $ref: '#/components/schemas/WidgetKind' }
+              role: { $ref: '#/components/schemas/Role' }
+              payload: { type: object, additionalProperties: true }
+              x: { type: number }
+              y: { type: number }
+              w: { type: number }
+              h: { type: number }
+
+    StreamOp:
+      oneOf:
+        - type: object
+          required: [kind, blockIndex, text]
+          properties:
+            kind: { type: string, enum: [append-text] }
+            blockIndex: { type: integer }
+            text: { type: string }
+        - type: object
+          required: [kind, rowIndex, row]
+          properties:
+            kind: { type: string, enum: [append-row] }
+            rowIndex: { type: integer }
+            row: { type: array, items: { type: string } }
+        - type: object
+          required: [kind, key, value]
+          properties:
+            kind: { type: string, enum: [append-field] }
+            key: { type: string }
+            value: { type: string }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        hint: { type: string }
+
+paths:
+
+  /v1/health:
+    get:
+      tags: [System]
+      summary: Liveness probe + provider snapshot
+      security: []
+      responses:
+        '200':
+          description: Backend is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  profile: { type: string, example: claude-sdk }
+                  llm: { type: string, example: claude-agent-sdk }
+                  embedder: { type: string, example: 'onnx-bundled:BAAI/bge-small-en-v1.5' }
+
+  /v1/canvas/widgets:
+    post:
+      tags: [Canvas]
+      summary: Place a typed widget on the canvas
+      description: |
+        The single most-used endpoint. The browser keeps a long-lived
+        SSE open to `/v1/canvas/events`; this POST fans out to every
+        connected tab via the conversation event bus.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlaceWidget' }
+            examples:
+              chart:
+                summary: A Vega-Lite line chart
+                value:
+                  kind: chart
+                  role: primary
+                  payload:
+                    title: Daily active widgets
+                    spec:
+                      mark: { type: line, point: true }
+                      encoding:
+                        x: { field: day, type: ordinal }
+                        y: { field: count, type: quantitative }
+                      data:
+                        values:
+                          - { day: Mon, count: 12 }
+                          - { day: Tue, count: 18 }
+              kanban:
+                summary: A Kanban board
+                value:
+                  kind: kanban
+                  role: primary
+                  payload:
+                    title: Launch readiness
+                    columns:
+                      - name: Doing
+                        colour: amber
+                        cards: [{ title: Record demo, tag: marketing }]
+                      - name: Done
+                        colour: green
+                        cards: [{ title: Token auth, tag: security }]
+              webEmbed:
+                summary: A sandboxed web embed
+                value:
+                  kind: web-embed
+                  role: primary
+                  payload: { url: 'https://news.ycombinator.com' }
+      responses:
+        '200': { description: Widget placed., content: { application/json: { schema: { $ref: '#/components/schemas/PlaceResponse' } } } }
+        '400': { description: Bad request., content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Missing or wrong token. }
+
+  /v1/canvas/widgets/{id}:
+    patch:
+      tags: [Canvas]
+      summary: Update a placed widget
+      description: Shallow-merge into the widget's payload, or append sections.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateWidget' }
+      responses:
+        '200': { description: Widget updated. }
+        '404': { description: Widget not found. }
+    delete:
+      tags: [Canvas]
+      summary: Remove a widget
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Widget removed. }
+        '404': { description: Widget not found. }
+
+  /v1/canvas/widgets/{id}/focus:
+    post:
+      tags: [Canvas]
+      summary: Zoom the camera to a widget
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Focus directive queued. }
+
+  /v1/canvas/clear:
+    post:
+      tags: [Canvas]
+      summary: Remove all non-pinned shapes
+      description: |
+        Wipes everything on the canvas except shapes whose
+        `meta.pinned === true`. Hand-drawn strokes are also wiped.
+      responses:
+        '200': { description: Canvas cleared. }
+
+  /v1/canvas/links:
+    post:
+      tags: [Canvas]
+      summary: Draw a link between two widgets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LinkRequest' }
+      responses:
+        '200':
+          description: Link created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { ok: { type: boolean }, linkId: { type: string } }
+
+  /v1/canvas/template:
+    post:
+      tags: [Canvas]
+      summary: Switch the active canvas template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: string, description: Template id }
+      responses:
+        '200': { description: Template switched. }
+
+  /v1/canvas/snapshot:
+    get:
+      tags: [Canvas]
+      summary: Read the current canvas
+      responses:
+        '200':
+          description: Snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Snapshot' }
+
+  /v1/canvas/events:
+    get:
+      tags: [Canvas]
+      summary: Stream directives via Server-Sent Events
+      description: |
+        Long-lived SSE stream. The browser subscribes; every POST that
+        produces a directive fans out to all connected subscribers for
+        the same conversation.
+      parameters:
+        - in: query
+          name: conversationId
+          schema: { type: string }
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Newline-delimited JSON ToolDirective events.
+
+  /v1/canvas/streams:
+    post:
+      tags: [Streams]
+      summary: Open a streaming widget
+      description: |
+        For long, incrementally-built widgets — text, tables, key-value
+        cards. Returns a stream id you append to via
+        `POST /v1/canvas/streams/{id}/ops`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, role, scaffold]
+              properties:
+                kind: { $ref: '#/components/schemas/WidgetKind' }
+                role: { $ref: '#/components/schemas/Role' }
+                scaffold: { type: object, additionalProperties: true }
+      responses:
+        '200':
+          description: Stream opened.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { id: { type: string } }
+
+  /v1/canvas/streams/{id}/ops:
+    post:
+      tags: [Streams]
+      summary: Append stream operations
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ops]
+              properties:
+                ops:
+                  type: array
+                  items: { $ref: '#/components/schemas/StreamOp' }
+      responses:
+        '200': { description: Ops applied. }
+
+  /v1/canvas/streams/{id}/end:
+    post:
+      tags: [Streams]
+      summary: Close a stream
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ok: { type: boolean }
+                error: { type: string, description: Present when ok=false. }
+      responses:
+        '200': { description: Stream closed. }
+
+  /v1/canvas/widget-kinds:
+    get:
+      tags: [Plugins]
+      summary: List all widget kinds (built-in + runtime)
+      responses:
+        '200':
+          description: Kind list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kinds:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        kind: { type: string }
+                        label: { type: string }
+                        description: { type: string }
+                        builtin: { type: boolean }
+    post:
+      tags: [Plugins]
+      summary: Register a custom widget kind at runtime
+      description: |
+        Ship a kind by providing a name + a renderer (iframe srcdoc).
+        The next agent turn knows about it via tool-description
+        injection and can call `place_widget(kind: '<your-kind>', ...)`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, label, renderer]
+              properties:
+                kind: { type: string, pattern: '^[a-z0-9-]+$' }
+                label: { type: string }
+                description: { type: string }
+                propsSchema:
+                  type: object
+                  description: JSON Schema for the widget's props.
+                renderer:
+                  type: object
+                  required: [type, srcdoc]
+                  properties:
+                    type: { type: string, enum: [iframe] }
+                    srcdoc: { type: string }
+                    defaultSize:
+                      type: object
+                      properties:
+                        w: { type: number }
+                        h: { type: number }
+      responses:
+        '200': { description: Kind registered. }
+        '409': { description: Kind already registered with that name. }
+
+  /v1/canvas/widget-kinds/{kind}:
+    delete:
+      tags: [Plugins]
+      summary: Unregister a runtime widget kind
+      parameters:
+        - in: path
+          name: kind
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Kind unregistered. }
+
+  /v1/canvas/upload:
+    post:
+      tags: [Canvas]
+      summary: Upload a file → agent summarises into widgets
+      description: |
+        PDF / docx / xlsx / markdown / plain text. Backend extracts
+        the text content and dispatches a chat turn asking the agent
+        to summarise it into widgets on the canvas.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: File ingested; agent turn dispatched.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  chars: { type: integer }
+
+  /v1/canvas/active-conversation:
+    post:
+      tags: [Canvas]
+      summary: Set the active conversation id for subsequent calls
+      description: |
+        External callers can omit `conversationId` from per-widget
+        POSTs after setting it here once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conversationId]
+              properties:
+                conversationId: { type: string }
+      responses:
+        '200': { description: Active conversation set. }

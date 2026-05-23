@@ -1,0 +1,33 @@
+/* app/src/styles/typography.css
+ *
+ * Geist + type/tracking scale.
+ *
+ * Geist is loaded via Google Fonts in app/index.html. Inter remains as a
+ * fallback (kept loaded so legacy .font-sans references and any
+ * unmigrated text rendering don't shift visually mid-rollout).
+ *
+ * Sizes are calibrated for OpenCanvas's chrome (10–13px) and body
+ * (14–16px) ranges. Geist's natural metrics are tighter than Inter at
+ * sub-pixel sizes, so chrome sizes are bumped down 0.5–1px without
+ * legibility loss.
+ *
+ * Spec: docs/superpowers/specs/2026-05-09-modernise-ui-design.md
+ */
+
+:root {
+  --font-sans: 'Geist', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --text-2xs:  10.5px;
+  --text-xs:   11.5px;
+  --text-sm:   13px;
+  --text-base: 14.5px;
+  --text-md:   15.5px;
+  --text-lg:   18px;
+  --text-xl:   24px;
+
+  --tracking-tighter: -0.022em;
+  --tracking-tight:   -0.012em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.04em;
+}

@@ -1,0 +1,12 @@
+[
+  { "prompt": "Find all references to the function processPayment in the codebase", "expected_kinds": ["code-symbol", "code-file"] },
+  { "prompt": "Summarize the README of this repository", "expected_kinds": ["text-document"] },
+  { "prompt": "List the open Jira tickets for the checkout service", "expected_kinds": ["ticket"] },
+  { "prompt": "Show me the Confluence page on deployment runbooks", "expected_kinds": ["wiki-page"] },
+  { "prompt": "What logs from the last hour mention 'TimeoutError'?", "expected_kinds": ["log-stream"] },
+  { "prompt": "Tell me about the OrderProcessor class — its methods and where it's used", "expected_kinds": ["code-symbol", "code-file"] },
+  { "prompt": "What's new in the auth service since last Tuesday?", "expected_kinds": ["code-diff", "ticket"] },
+  { "prompt": "Find the kubernetes deployment manifest for the api-gateway", "expected_kinds": ["k8s-resource"] },
+  { "prompt": "Show all incidents filed in the last 7 days that mention 'database'", "expected_kinds": ["ticket"] },
+  { "prompt": "Trace the function authenticateUser across files and tickets", "expected_kinds": ["code-symbol", "ticket"] }
+]
