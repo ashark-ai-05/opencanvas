@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, Eye, EyeOff, Sparkles } from 'lucide-react';
 import {
@@ -86,7 +87,13 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
     }
   };
 
-  return (
+  // Render through a portal mounted at document.body so the modal
+  // escapes any ancestor with `transform` set (which would break
+  // `position: fixed`'s viewport-relative behaviour and pin the
+  // modal to the wrong containing block — that's why it was floating
+  // off-screen). Flex-center on the outer container is more robust
+  // than `top:50%; transform:translate(-50%,-50%)` for the same reason.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -105,31 +112,43 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               zIndex: 50,
             }}
           />
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 6 }}
-            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="settings-title"
+          {/* Centered container — flexbox handles the centering instead of
+              a transform, so a transformed ancestor can't push it off-screen.
+              The container catches clicks outside the modal to close. */}
+          <div
+            onClick={onClose}
             style={{
               position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 'min(520px, calc(100vw - 32px))',
-              maxHeight: 'calc(100vh - 64px)',
-              overflowY: 'auto',
-              background: 'var(--color-bg-1, #0a0a0a)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 16,
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24,
               zIndex: 51,
-              padding: '20px 22px',
+              pointerEvents: 'none', // backdrop already catches the click
             }}
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 6 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="settings-title"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: 'min(520px, 100%)',
+                maxHeight: 'calc(100vh - 48px)',
+                overflowY: 'auto',
+                background: 'var(--color-bg-1, #0a0a0a)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 16,
+                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
+                padding: '20px 22px',
+                pointerEvents: 'auto', // modal itself is interactive
+              }}
+            >
             {/* Header */}
             <div
               style={{
@@ -450,9 +469,11 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                 </button>
               </div>
             </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
-import { Boxes, CalendarClock, History, Notebook, Plus, Search, ServerCog, Settings, Trash2 } from 'lucide-react';
+import { Boxes, CalendarClock, History, Plus, Search, ServerCog, Settings, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Canvas } from './canvas/Canvas';
 import { ChatTabs } from './components/ChatTabs';
@@ -32,9 +32,6 @@ const SchedulesPanel = lazy(() =>
 );
 const RecallPanel = lazy(() =>
   import('./components/RecallPanel').then((m) => ({ default: m.RecallPanel })),
-);
-const NotebookPanel = lazy(() =>
-  import('./components/NotebookPanel').then((m) => ({ default: m.NotebookPanel })),
 );
 import { KbBadge } from './components/KbBadge';
 import { HeaderCanvasControls } from './components/HeaderCanvasControls';
@@ -77,7 +74,6 @@ export function App() {
   const [pluginsOpen, setPluginsOpen] = useState(false);
   const [schedulesOpen, setSchedulesOpen] = useState(false);
   const [recallOpen, setRecallOpen] = useState(false);
-  const [notebookOpen, setNotebookOpen] = useState(false);
   // Lifted to ui-store so the in-chat BYO nudge can open the modal
   // without prop-drilling a setter all the way down.
   const settingsOpen = useUiStore((s) => s.settingsOpen);
@@ -246,15 +242,6 @@ export function App() {
           </button>
           <button
             type="button"
-            onClick={() => setNotebookOpen(true)}
-            title="Notebook"
-            className="opencanvas-header-btn"
-            aria-label="Notebook"
-          >
-            <Notebook className="size-3.5" />
-          </button>
-          <button
-            type="button"
             onClick={() => setMcpOpen(true)}
             title="MCP servers"
             className="opencanvas-header-btn"
@@ -347,9 +334,6 @@ export function App() {
         )}
         {recallOpen && (
           <RecallPanel open={recallOpen} onClose={() => setRecallOpen(false)} />
-        )}
-        {notebookOpen && (
-          <NotebookPanel open={notebookOpen} onClose={() => setNotebookOpen(false)} />
         )}
       </Suspense>
       <CommandPalette />

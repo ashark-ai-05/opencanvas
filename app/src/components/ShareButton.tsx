@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, Copy, ExternalLink, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -125,45 +126,56 @@ export function ShareButton({ activeId }: { activeId: string }) {
         )}
       </button>
 
-      <AnimatePresence>
-        {open && shareUrl && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={() => setOpen(false)}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0, 0, 0, 0.62)',
-                backdropFilter: 'blur(4px)',
-                zIndex: 50,
-              }}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 6 }}
-              transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="share-title"
-              style={{
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 'min(520px, calc(100vw - 32px))',
-                background: 'var(--color-bg-1, #0a0a0a)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 16,
-                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-                zIndex: 51,
-                padding: '22px 24px',
-              }}
-            >
+      {createPortal(
+        <AnimatePresence>
+          {open && shareUrl && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                onClick={() => setOpen(false)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0, 0, 0, 0.62)',
+                  backdropFilter: 'blur(4px)',
+                  zIndex: 50,
+                }}
+              />
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 24,
+                  zIndex: 51,
+                  pointerEvents: 'none',
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, y: 6 }}
+                  transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="share-title"
+                  style={{
+                    width: 'min(520px, 100%)',
+                    maxHeight: 'calc(100vh - 48px)',
+                    overflowY: 'auto',
+                    background: 'var(--color-bg-1, #0a0a0a)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 16,
+                    boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
+                    padding: '22px 24px',
+                    pointerEvents: 'auto',
+                  }}
+                >
               <div
                 style={{
                   display: 'flex',
@@ -314,10 +326,13 @@ export function ShareButton({ activeId }: { activeId: string }) {
                   <ExternalLink className="size-3.5" />
                 </a>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </>
   );
 }
