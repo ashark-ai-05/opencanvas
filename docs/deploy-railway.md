@@ -78,10 +78,13 @@ curl $DEMO/v1/health
 # Should respond with something like:
 # {"ok":true,"profile":"...","llm":"gemini","embedder":"onnx-bundled:..."}
 
-# Place a widget from your terminal (no token required)
+# Place a widget from your terminal (no token required).
+# `conversationId` is required when no browser tab is open — visitors
+# get one automatically when they load the SPA; from curl, pick any
+# stable id.
 curl -X POST $DEMO/v1/canvas/widgets \
   -H 'content-type: application/json' \
-  -d '{"kind":"sticky-note","role":"primary","payload":{"body":"Hello from the demo"}}'
+  -d '{"conversationId":"smoke","kind":"sticky-note","role":"primary","payload":{"body":"Hello from the demo"}}'
 
 # Hammer the chat endpoint (should 429 after 5 in an hour)
 for i in 1 2 3 4 5 6; do
