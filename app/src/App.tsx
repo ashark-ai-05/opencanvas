@@ -9,6 +9,8 @@ import { getEditor } from './state/editor-ref';
 import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
 import { SettingsModal } from './components/SettingsModal';
+import { ShareButton } from './components/ShareButton';
+import { OnboardingTour } from './components/OnboardingTour';
 import { useUserSettings } from './state/user-settings-store';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -76,7 +78,10 @@ export function App() {
   const [schedulesOpen, setSchedulesOpen] = useState(false);
   const [recallOpen, setRecallOpen] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Lifted to ui-store so the in-chat BYO nudge can open the modal
+  // without prop-drilling a setter all the way down.
+  const settingsOpen = useUiStore((s) => s.settingsOpen);
+  const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
   // Subscribe to `hasOverride` so the gear icon shows an "active" indicator
   // dot when the user has BYO-keyed up. Lets returning visitors see at a
   // glance whether they're on the demo's shared key or their own.
@@ -257,6 +262,7 @@ export function App() {
           >
             <ServerCog className="size-3.5" />
           </button>
+          <ShareButton activeId={activeId} />
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -348,6 +354,7 @@ export function App() {
       </Suspense>
       <CommandPalette />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <OnboardingTour />
       <Toaster
         theme="dark"
         position="top-right"

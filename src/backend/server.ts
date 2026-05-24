@@ -13,6 +13,7 @@ import { canvasRoute } from './routes/canvas.js';
 import { schedulesRoute } from './routes/schedules.js';
 import { notebookRoute } from './routes/notebook.js';
 import { pluginFetchRoute } from './routes/plugin-fetch.js';
+import { shareRoute } from './routes/share.js';
 import { docsRoute } from './routes/docs.js';
 import { authMiddleware, getAuthToken, getAuthTokenPath } from './auth.js';
 import { isDemoMode, demoRateLimit } from './demo.js';
@@ -372,6 +373,25 @@ app.post('/v1/query', async (c) => {
   lazyApp.all('/v1/plugin-fetch', async (c) => {
     const state = await getState();
     const sub = pluginFetchRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  app.route('/', lazyApp);
+}
+
+// /v1/share — viral-loop endpoints. POST creates a public read-only
+// snapshot (canvas + chat) and returns an id; GET /v1/share/:id reads
+// it (and bumps view_count). Anonymous, per-IP rate-limited at the
+// route. See src/backend/routes/share.ts.
+{
+  const lazyApp = new Hono();
+  lazyApp.all('/v1/share', async (c) => {
+    const state = await getState();
+    const sub = shareRoute(state);
+    return sub.fetch(c.req.raw);
+  });
+  lazyApp.all('/v1/share/:id', async (c) => {
+    const state = await getState();
+    const sub = shareRoute(state);
     return sub.fetch(c.req.raw);
   });
   app.route('/', lazyApp);

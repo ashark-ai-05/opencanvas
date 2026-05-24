@@ -27,6 +27,7 @@ import {
 } from './template-persistence.js';
 import { AgentScheduler } from './agent-scheduler.js';
 import { NotebookStore } from './notebook-store.js';
+import { ShareStore } from './share-store.js';
 
 /**
  * Backend state. Constructed once at server start. Holds the
@@ -374,6 +375,21 @@ export class BackendState {
       );
     }
     return this.notebookStorePromise;
+  }
+
+  /**
+   * Share store — backs the `/v1/share` viral-loop endpoints. Lazily
+   * constructed on first access (so a backend that never sees a share
+   * request doesn't open the table). Reuses the shared SQLite handle.
+   */
+  private shareStorePromise: Promise<ShareStore> | null = null;
+  async getShareStore(): Promise<ShareStore> {
+    if (!this.shareStorePromise) {
+      this.shareStorePromise = this.getStore().then(
+        (store) => new ShareStore(store.db),
+      );
+    }
+    return this.shareStorePromise;
   }
 
   /**

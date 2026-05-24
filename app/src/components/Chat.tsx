@@ -23,6 +23,10 @@ import { ComposerStatus } from './ComposerStatus';
 import { EmptyChatBanner } from './EmptyChatBanner';
 import { useChatActions } from '../state/chat-actions-store';
 import { getUserSettingsHeaders } from '../state/user-settings-store';
+import { useAnonUsage } from '../state/anon-usage-store';
+import { useUiStore } from '../state/ui-store';
+import { VoiceInputButton } from './VoiceInputButton';
+import { ByoNudge } from './ByoNudge';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
@@ -414,6 +418,10 @@ export function Chat() {
     new Set(collectAppliedToolCallIds(initialMessages)),
   );
   const errorShownRef = useRef<unknown>(null);
+  // Snapshot of the input value at the moment voice recording starts.
+  // Used so each transcript chunk gets appended to whatever the user
+  // had already typed, not overwritten.
+  const voiceBaseRef = useRef('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   // Persist chat history into the active conversation on every change.
@@ -537,6 +545,11 @@ export function Chat() {
     kbSearch(input);
     sendMessage({ text: input });
     setInput('');
+    // Bump the anon-usage counter so the BYO nudge fires after ~8
+    // anonymous messages. No-op when the user already has BYO
+    // configured (the nudge's `shouldShowNudge(hasOverride)` returns
+    // false in that case).
+    useAnonUsage.getState().bumpMessages();
   };
 
   // Slash-suggestion popover — shows when input starts with "/".
@@ -910,6 +923,10 @@ export function Chat() {
         }}
       />
 
+      <ByoNudge
+        onOpenSettings={() => useUiStore.getState().setSettingsOpen(true)}
+      />
+
       <form
         onSubmit={handleSubmit}
         className="px-3 py-3 flex gap-2 border-t border-white/5 bg-[var(--color-bg)]/95"
@@ -1029,6 +1046,23 @@ export function Chat() {
             </div>
           );
         })()}
+        {/* Voice → text. Browser SpeechRecognition. The button hides
+            itself in browsers without the API. Captures the existing
+            input value at recording-start so transcripts append rather
+            than overwrite. */}
+        <VoiceInputButton
+          disabled={isStreaming}
+          onStart={() => {
+            voiceBaseRef.current = input;
+          }}
+          onTranscript={(t) => {
+            const base = voiceBaseRef.current;
+            setInput(base ? `${base} ${t}` : t);
+          }}
+          onEnd={() => {
+            voiceBaseRef.current = '';
+          }}
+        />
         {isStreaming ? (
           <button
             type="button"

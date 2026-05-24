@@ -52,6 +52,13 @@ export type UiState = {
    */
   chatTabsVisible: boolean;
   setChatTabsVisible: (visible: boolean) => void;
+  /**
+   * Whether the Settings modal is open. Lifted to a global flag so the
+   * BYO-key nudge (rendered inside Chat) can open it without prop-drilling
+   * a setter from App.
+   */
+  settingsOpen: boolean;
+  setSettingsOpen: (open: boolean) => void;
 };
 
 const DEFAULT_CHAT_WINDOW: ChatWindowState = {
@@ -107,4 +114,6 @@ export const useUiStore = create<UiState>((set) => ({
     persistUiFlags({ chatTabsVisible });
     set({ chatTabsVisible });
   },
+  settingsOpen: false,
+  setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
 }));
