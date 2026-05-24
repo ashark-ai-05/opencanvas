@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
-import { tool } from '@anthropic-ai/claude-agent-sdk';
+import { tool as claudeTool } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from 'ai';
 import type { WidgetRegistry } from '../../backend/widget-registry.js';
-import type { WithArgs } from './_shared.js';
+import type { OpenCanvasToolCtx, WithArgs } from './_shared.js';
 
 const ROLE_VALUES = ['primary', 'detail', 'related', 'reference', 'timeline', 'node'] as const;
 
@@ -61,6 +62,90 @@ type RegisterWidgetKindArgs = {
   instance?: { role: (typeof ROLE_VALUES)[number]; payload: Record<string, unknown> };
 };
 
+const TOOL_DESCRIPTION =
+  'Register a new widget kind at runtime so future place_widget calls can use it with just a small payload (instead of resending the full HTML each time). Use for REPEAT patterns ("stock-ticker", "weather-card", "crypto-bubbles") where the user will want multiple instances or future updates. For one-shot novel renders, use the built-in `html` widget instead.\n\nSTRONGLY RECOMMEND passing `instance: {role, payload}` to AUTO-PLACE one instance immediately — this is the common "render this once with these props" flow, and it avoids the very common mistake of registering a kind but forgetting to follow up with place_widget (leaves the user with no widget on screen). Omit `instance` only if you genuinely want to register a template without rendering an instance yet.\n\nThe registered widget renders in a sandboxed iframe (allow-scripts only). srcdoc must read props from `window.opencanvas?.props` on load + listen for "opencanvas:props" events for live updates. Returns the descriptor + (when instance is provided) the placement directive.\n\nCORS WORKAROUND: the iframe sandbox is `allow-scripts` only — its origin is `null`, which APIs that don\'t accept null origin (most private APIs, many financial APIs) will reject. To work around this, fetch through the backend proxy: `fetch(\'/v1/plugin-fetch?url=\' + encodeURIComponent(\'https://api.example.com/foo\'))`. The proxy strips the iframe\'s null origin, performs the upstream request server-side, and returns the response with permissive CORS headers. SSRF-guarded (blocks private/loopback IPs). For POST requests: `fetch(\'/v1/plugin-fetch?url=...&method=POST\', {method:\'POST\', headers:{\'content-type\':\'application/json\'}, body: JSON.stringify({...})})`.';
+
+type RegisterResult =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      descriptor: { kind: string; label: string };
+    }
+  | {
+      ok: true;
+      id: string;
+      kind: 'plugin';
+      pluginKind: string;
+      role: (typeof ROLE_VALUES)[number];
+      directive: Record<string, unknown>;
+    };
+
+/** Shared body — both v1 and v2 builders close over this. */
+function executeRegisterWidgetKind(
+  getRegistry: () => WidgetRegistry,
+  args: RegisterWidgetKindArgs,
+): RegisterResult {
+  const registry = getRegistry();
+  // Reject if kind already exists — avoid clobbering built-ins or other plugins.
+  if (registry.get(args.kind)) {
+    return {
+      ok: false,
+      error: `Kind "${args.kind}" already exists. Pick a different name or use place_widget with the existing kind.`,
+    };
+  }
+  const descriptor = {
+    kind: args.kind,
+    label: args.label,
+    description: args.description,
+    renderer: {
+      type: 'iframe' as const,
+      sandbox: 'allow-scripts',
+      srcdoc: args.srcdoc,
+      defaultSize: args.default_size ?? { w: 420, h: 280 },
+    },
+  };
+  registry.register(descriptor);
+
+  // If `instance` was provided, also emit a place directive at the
+  // TOP LEVEL of the response so the frontend dispatcher actually
+  // renders the widget. parseToolOutput in Chat.tsx only checks
+  // top-level `directive` — earlier nested-`placed.directive` shape
+  // never reached the dispatcher (silent no-op bug, fixed here).
+  // Props are unavoidably echoed because the directive IS the
+  // rendering instruction; agent's input is the dispatch payload.
+  if (args.instance) {
+    const placeId = randomUUID();
+    const inner = args.instance.payload;
+    const directive = {
+      type: 'place' as const,
+      id: placeId,
+      kind: 'plugin' as const,
+      role: args.instance.role,
+      payload: {
+        pluginKind: descriptor.kind,
+        props: inner,
+        ...(typeof inner['title'] === 'string'
+          ? { title: inner['title'] }
+          : {}),
+      },
+    };
+    return {
+      ok: true,
+      id: placeId,
+      kind: 'plugin',
+      pluginKind: descriptor.kind,
+      role: args.instance.role,
+      directive,
+    };
+  }
+
+  return {
+    ok: true,
+    descriptor: { kind: descriptor.kind, label: descriptor.label },
+  };
+}
+
+// ─── v1 (Claude SDK) — kept intact during migration ────────────────────
 type RegisterWidgetKindToolDef = WithArgs<typeof inputShape, RegisterWidgetKindArgs>;
 
 /**
@@ -78,92 +163,44 @@ type RegisterWidgetKindToolDef = WithArgs<typeof inputShape, RegisterWidgetKindA
 export function registerWidgetKindTool(
   getRegistry: () => WidgetRegistry,
 ): RegisterWidgetKindToolDef {
-  const def = tool(
+  const def = claudeTool(
     'register_widget_kind',
-    'Register a new widget kind at runtime so future place_widget calls can use it with just a small payload (instead of resending the full HTML each time). Use for REPEAT patterns ("stock-ticker", "weather-card", "crypto-bubbles") where the user will want multiple instances or future updates. For one-shot novel renders, use the built-in `html` widget instead.\n\nSTRONGLY RECOMMEND passing `instance: {role, payload}` to AUTO-PLACE one instance immediately — this is the common "render this once with these props" flow, and it avoids the very common mistake of registering a kind but forgetting to follow up with place_widget (leaves the user with no widget on screen). Omit `instance` only if you genuinely want to register a template without rendering an instance yet.\n\nThe registered widget renders in a sandboxed iframe (allow-scripts only). srcdoc must read props from `window.opencanvas?.props` on load + listen for "opencanvas:props" events for live updates. Returns the descriptor + (when instance is provided) the placement directive.\n\nCORS WORKAROUND: the iframe sandbox is `allow-scripts` only — its origin is `null`, which APIs that don\'t accept null origin (most private APIs, many financial APIs) will reject. To work around this, fetch through the backend proxy: `fetch(\'/v1/plugin-fetch?url=\' + encodeURIComponent(\'https://api.example.com/foo\'))`. The proxy strips the iframe\'s null origin, performs the upstream request server-side, and returns the response with permissive CORS headers. SSRF-guarded (blocks private/loopback IPs). For POST requests: `fetch(\'/v1/plugin-fetch?url=...&method=POST\', {method:\'POST\', headers:{\'content-type\':\'application/json\'}, body: JSON.stringify({...})})`.',
+    TOOL_DESCRIPTION,
     inputShape,
     async (args) => {
-      const registry = getRegistry();
-      // Reject if kind already exists — avoid clobbering built-ins or other plugins.
-      if (registry.get(args.kind)) {
+      const out = executeRegisterWidgetKind(getRegistry, args);
+      if (!out.ok) {
         return {
           content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify({
-                ok: false,
-                error: `Kind "${args.kind}" already exists. Pick a different name or use place_widget with the existing kind.`,
-              }),
-            },
+            { type: 'text' as const, text: JSON.stringify(out) },
           ],
           isError: true,
         };
       }
-      const descriptor = {
-        kind: args.kind,
-        label: args.label,
-        description: args.description,
-        renderer: {
-          type: 'iframe' as const,
-          sandbox: 'allow-scripts',
-          srcdoc: args.srcdoc,
-          defaultSize: args.default_size ?? { w: 420, h: 280 },
-        },
-      };
-      registry.register(descriptor);
-
-      // If `instance` was provided, also emit a place directive at the
-      // TOP LEVEL of the response so the frontend dispatcher actually
-      // renders the widget. parseToolOutput in Chat.tsx only checks
-      // top-level `directive` — earlier nested-`placed.directive` shape
-      // never reached the dispatcher (silent no-op bug, fixed here).
-      // Props are unavoidably echoed because the directive IS the
-      // rendering instruction; agent's input is the dispatch payload.
-      if (args.instance) {
-        const placeId = randomUUID();
-        const inner = args.instance.payload;
-        const directive = {
-          type: 'place' as const,
-          id: placeId,
-          kind: 'plugin' as const,
-          role: args.instance.role,
-          payload: {
-            pluginKind: descriptor.kind,
-            props: inner,
-            ...(typeof inner['title'] === 'string'
-              ? { title: inner['title'] }
-              : {}),
-          },
-        };
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify({
-                ok: true,
-                id: placeId,
-                kind: 'plugin',
-                pluginKind: descriptor.kind,
-                role: args.instance.role,
-                directive,
-              }),
-            },
-          ],
-        };
-      }
-
       return {
         content: [
-          {
-            type: 'text' as const,
-            text: JSON.stringify({
-              ok: true,
-              descriptor: { kind: descriptor.kind, label: descriptor.label },
-            }),
-          },
+          { type: 'text' as const, text: JSON.stringify(out) },
         ],
       };
     },
   );
   return def as unknown as RegisterWidgetKindToolDef;
 }
+
+// ─── v2 (AI SDK) — the future ──────────────────────────────────────────
+const inputSchema = z.object(inputShape);
+
+export const registerWidgetKindToolV2 = (ctx: OpenCanvasToolCtx) =>
+  tool({
+    description: TOOL_DESCRIPTION,
+    inputSchema,
+    execute: async (args) => {
+      if (!ctx.getWidgetRegistry) {
+        return {
+          ok: false as const,
+          error: 'widget registry not available in this context',
+        };
+      }
+      return executeRegisterWidgetKind(ctx.getWidgetRegistry, args);
+    },
+  });

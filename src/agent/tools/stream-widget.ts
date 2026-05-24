@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
-import { tool } from '@anthropic-ai/claude-agent-sdk';
+import { tool as claudeTool } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from 'ai';
 import { ROLES, type WidgetKind, type Role } from '../types.js';
-import type { WithArgs } from './_shared.js';
+import type { OpenCanvasToolCtx, WithArgs } from './_shared.js';
 import type { WidgetStreamBus } from '../widget-stream-bus.js';
 
 /**
@@ -57,21 +58,7 @@ type Args = {
   granularity?: 'paragraph' | 'sentence';
 };
 
-type StreamWidgetToolDef = WithArgs<typeof inputShape, Args>;
-
-/**
- * Build the tool. Receives the per-turn bus from chat.ts via
- * AgentToolDeps. If the bus is null (test harnesses, providers that
- * don't wire streaming), the tool falls back to a one-shot place
- * directive containing the full text — the user still sees the
- * widget, just without the streaming visual.
- */
-export function streamWidgetTool(
-  bus: WidgetStreamBus | null,
-): StreamWidgetToolDef {
-  const def = tool(
-    'stream_widget',
-    `Place a widget whose content STREAMS in over time, instead of arriving in one shot.
+const TOOL_DESCRIPTION = `Place a widget whose content STREAMS in over time, instead of arriving in one shot.
 
 When to use this instead of place_widget:
   - long markdown prose (the user sees it grow rather than waiting)
@@ -93,89 +80,129 @@ Args:
   - title: card title.
   - subtitle?: optional sub-text below title.
   - text: full markdown content (the tool chunks this).
-  - granularity: 'paragraph' (default, prose) | 'sentence' (code/data).`,
+  - granularity: 'paragraph' (default, prose) | 'sentence' (code/data).`;
+
+type StreamResult =
+  | { ok: true; id: string; directive: Record<string, unknown> }
+  | { ok: true; id: string; streamed: true }
+  | { ok: false; id: string; cancelled: true }
+  | { ok: false; id: string; error: string; isError: true };
+
+/** Shared body — both v1 and v2 builders close over this.
+ *
+ * When `bus` is null/undefined we fall back to a one-shot place directive
+ * with the full text (matches v1 behaviour, so the user still gets a
+ * widget even without streaming wiring).
+ */
+async function executeStreamWidget(
+  bus: WidgetStreamBus | null | undefined,
+  args: Args,
+): Promise<StreamResult> {
+  const id = randomUUID();
+  const widgetKind: WidgetKind = 'generic';
+  const role = args.role;
+  const granularity = args.granularity ?? 'paragraph';
+
+  // Scaffold: a generic widget with one empty markdown block plus
+  // optional subtitle. The block index 0 is the streaming target.
+  const scaffold: Record<string, unknown> = {
+    title: args.title,
+    ...(args.subtitle ? { subtitle: args.subtitle } : {}),
+    blocks: [{ type: 'markdown', content: '' }],
+  };
+
+  // No bus → fall back to one-shot place. The agent doesn't see a
+  // failure; the user gets a fully-formed widget without streaming.
+  if (!bus) {
+    const fallbackPayload: Record<string, unknown> = {
+      ...scaffold,
+      blocks: [{ type: 'markdown', content: args.text }],
+    };
+    const directive = {
+      type: 'place' as const,
+      id,
+      kind: widgetKind,
+      role,
+      payload: fallbackPayload,
+    };
+    return { ok: true, id, directive };
+  }
+
+  bus.start({ id, widgetKind, role, scaffold });
+
+  try {
+    const chunks = chunkMarkdown(args.text, granularity);
+    for (const chunk of chunks) {
+      if (bus.isCancelled(id)) {
+        bus.end(id, false, 'cancelled by user');
+        return { ok: false, id, cancelled: true };
+      }
+      bus.op(id, { kind: 'append-text', blockIndex: 0, text: chunk });
+      // Tiny breath so the client gets a chance to paint between
+      // chunks. 35ms/chunk = ~28 chunks/sec — comfortable for the
+      // eye, well under the rAF flush rate.
+      await sleep(35);
+    }
+    bus.end(id, true);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    bus.end(id, false, message);
+    return { ok: false, id, error: message, isError: true };
+  }
+
+  return { ok: true, id, streamed: true };
+}
+
+// ─── v1 (Claude SDK) — kept intact during migration ────────────────────
+type StreamWidgetToolDef = WithArgs<typeof inputShape, Args>;
+
+/**
+ * Build the tool. Receives the per-turn bus from chat.ts via
+ * AgentToolDeps. If the bus is null (test harnesses, providers that
+ * don't wire streaming), the tool falls back to a one-shot place
+ * directive containing the full text — the user still sees the
+ * widget, just without the streaming visual.
+ */
+export function streamWidgetTool(
+  bus: WidgetStreamBus | null,
+): StreamWidgetToolDef {
+  const def = claudeTool(
+    'stream_widget',
+    TOOL_DESCRIPTION,
     inputShape,
     async (args) => {
-      const id = randomUUID();
-      const widgetKind: WidgetKind = 'generic';
-      const role = args.role;
-      const granularity = args.granularity ?? 'paragraph';
-
-      // Scaffold: a generic widget with one empty markdown block plus
-      // optional subtitle. The block index 0 is the streaming target.
-      const scaffold: Record<string, unknown> = {
-        title: args.title,
-        ...(args.subtitle ? { subtitle: args.subtitle } : {}),
-        blocks: [{ type: 'markdown', content: '' }],
-      };
-
-      // No bus → fall back to one-shot place. The agent doesn't see a
-      // failure; the user gets a fully-formed widget without streaming.
-      if (!bus) {
-        const fallbackPayload: Record<string, unknown> = {
-          ...scaffold,
-          blocks: [{ type: 'markdown', content: args.text }],
-        };
-        const directive = {
-          type: 'place' as const,
-          id,
-          kind: widgetKind,
-          role,
-          payload: fallbackPayload,
-        };
-        return {
-          content: [
-            { type: 'text' as const, text: JSON.stringify({ ok: true, id, directive }) },
-          ],
-        };
-      }
-
-      bus.start({ id, widgetKind, role, scaffold });
-
-      try {
-        const chunks = chunkMarkdown(args.text, granularity);
-        for (const chunk of chunks) {
-          if (bus.isCancelled(id)) {
-            bus.end(id, false, 'cancelled by user');
-            return {
-              content: [
-                {
-                  type: 'text' as const,
-                  text: JSON.stringify({ ok: false, id, cancelled: true }),
-                },
-              ],
-            };
-          }
-          bus.op(id, { kind: 'append-text', blockIndex: 0, text: chunk });
-          // Tiny breath so the client gets a chance to paint between
-          // chunks. 35ms/chunk = ~28 chunks/sec — comfortable for the
-          // eye, well under the rAF flush rate.
-          await sleep(35);
-        }
-        bus.end(id, true);
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        bus.end(id, false, message);
+      const out = await executeStreamWidget(bus, args);
+      // isError flag forwarded as a tool error so the agent can retry.
+      if ('isError' in out && out.isError) {
         return {
           content: [
             {
               type: 'text' as const,
-              text: JSON.stringify({ ok: false, id, error: message }),
+              text: JSON.stringify({ ok: false, id: out.id, error: out.error }),
             },
           ],
           isError: true,
         };
       }
-
       return {
         content: [
-          { type: 'text' as const, text: JSON.stringify({ ok: true, id, streamed: true }) },
+          { type: 'text' as const, text: JSON.stringify(out) },
         ],
       };
     },
   );
   return def as unknown as StreamWidgetToolDef;
 }
+
+// ─── v2 (AI SDK) — the future ──────────────────────────────────────────
+const inputSchema = z.object(inputShape);
+
+export const streamWidgetToolV2 = (ctx: OpenCanvasToolCtx) =>
+  tool({
+    description: TOOL_DESCRIPTION,
+    inputSchema,
+    execute: async (args) => executeStreamWidget(ctx.streamBus ?? null, args),
+  });
 
 /**
  * Split markdown into chunks. Paragraphs (double-newline boundaries)

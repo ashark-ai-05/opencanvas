@@ -1,6 +1,7 @@
+import { tool as claudeTool } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from 'ai';
 import { z } from 'zod';
-import { tool } from '@anthropic-ai/claude-agent-sdk';
-import type { WithArgs } from './_shared.js';
+import type { OpenCanvasToolCtx, WithArgs } from './_shared.js';
 
 /**
  * Web search tool — currently backed by Tavily (https://tavily.com).
@@ -46,42 +47,57 @@ const inputShape = {
     .optional()
     .describe('max results, default 5, max 10'),
 };
+const inputSchema = z.object(inputShape);
 
-type WebSearchToolDef = WithArgs<typeof inputShape, WebSearchArgs>;
-
-export function webSearchTool(provider: WebSearchProvider): WebSearchToolDef {
-  const def = tool(
-    'web_search',
-    `Search the public web for current information. Use when the answer needs to come from outside the indexed knowledge base — recent news, library docs, prices, or anything time-sensitive.
+const TOOL_DESCRIPTION = `Search the public web for current information. Use when the answer needs to come from outside the indexed knowledge base — recent news, library docs, prices, or anything time-sensitive.
 
 Returns: { results: [{ id, kind: "web", title, snippet, url, source, score }] }
 
-After search_kb returns nothing, prefer web_search over apologizing. The id can be passed to place_widget kind=web-embed (payload: { title, url, snippet }).`,
+After search_kb returns nothing, prefer web_search over apologizing. The id can be passed to place_widget kind=web-embed (payload: { title, url, snippet }).`;
+
+type WebSearchOutput<R> =
+  | { results: R[] }
+  | { results: R[]; warning: string };
+
+/** Shared body — both v1 and v2 builders close over this. */
+async function executeWebSearch<P extends { search: (q: string, n: number) => Promise<unknown[]> }>(
+  provider: P,
+  args: WebSearchArgs,
+): Promise<WebSearchOutput<Awaited<ReturnType<P['search']>>[number]>> {
+  const limit = Math.min(args.limit ?? 5, 10);
+  try {
+    const results = (await provider.search(args.query, limit)) as Awaited<
+      ReturnType<P['search']>
+    >;
+    return { results };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { results: [], warning: `web_search failed: ${message}` };
+  }
+}
+
+// ─── v1 (Claude SDK) — kept intact during migration ────────────────────
+type WebSearchToolDef = WithArgs<typeof inputShape, WebSearchArgs>;
+
+export function webSearchTool(provider: WebSearchProvider): WebSearchToolDef {
+  const def = claudeTool(
+    'web_search',
+    TOOL_DESCRIPTION,
     inputShape,
     async (args) => {
-      const limit = Math.min(args.limit ?? 5, 10);
-      try {
-        const results = await provider.search(args.query, limit);
-        return {
-          content: [
-            { type: 'text' as const, text: JSON.stringify({ results }) },
-          ],
-        };
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify({
-                results: [],
-                warning: `web_search failed: ${message}`,
-              }),
-            },
-          ],
-        };
-      }
+      const out = await executeWebSearch(provider, args);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(out) }],
+      };
     },
   );
   return def as unknown as WebSearchToolDef;
 }
+
+// ─── v2 (AI SDK) — the future ──────────────────────────────────────────
+export const webSearchToolV2 = (ctx: OpenCanvasToolCtx) =>
+  tool({
+    description: TOOL_DESCRIPTION,
+    inputSchema,
+    execute: async (args) => executeWebSearch(ctx.webSearch, args),
+  });

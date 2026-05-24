@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
-import { tool } from '@anthropic-ai/claude-agent-sdk';
+import { tool as claudeTool } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from 'ai';
 import { WIDGET_KINDS, ROLES, type WidgetKind } from '../types.js';
 import { validatePayloadForKind } from '../payloads.js';
 import { classifyToGeneric } from '../classifier.js';
-import type { WithArgs } from './_shared.js';
+import type { OpenCanvasToolCtx, WithArgs } from './_shared.js';
 
 const inputShape = {
   /**
@@ -67,10 +68,9 @@ function pluginsSection(plugins: PluginKindHint[] | undefined): string {
   ].join('\n');
 }
 
-export function placeWidgetTool(plugins?: PluginKindHint[]): PlaceWidgetToolDef {
-  const def = tool(
-    'place_widget',
-    `Place a widget on the canvas at the role's slot in the active template.
+/** Build the description string lazily so plugins can be appended per-build. */
+function buildDescription(plugins?: PluginKindHint[]): string {
+  return `Place a widget on the canvas at the role's slot in the active template.
 
 Every payload accepts optional \`source\` (single canonical origin) AND \`sources\` (array of {url, label?} for multi-attribution).
 
@@ -95,104 +95,122 @@ Payload schema per kind (use these field names exactly):
                       pomodoro  — { mode: 'pomodoro', startedAt: <epoch ms>, pomodoro: { workSec: 1500, breakSec: 300, longBreakSec: 900, longBreakEvery: 4 } }
                     Omit startedAt to place a paused widget the user starts manually.
 
-Errors return as tool errors (isError=true) so you can correct + retry. Three failure modes: (a) BUILT-IN KIND with bad payload — the validation message tells you which fields are wrong; fix the payload + retry. (b) UNKNOWN KIND — pick an existing built-in or plugin kind, or call register_widget_kind first to define a new template, then retry. (c) Plugin kinds (e.g. \`html\`, \`chart\`, \`calendar\`) accept any \`payload\` object — no schema validation; the iframe srcdoc handles whatever you pass.${pluginsSection(plugins)}`,
+Errors return as tool errors (isError=true) so you can correct + retry. Three failure modes: (a) BUILT-IN KIND with bad payload — the validation message tells you which fields are wrong; fix the payload + retry. (b) UNKNOWN KIND — pick an existing built-in or plugin kind, or call register_widget_kind first to define a new template, then retry. (c) Plugin kinds (e.g. \`html\`, \`chart\`, \`calendar\`) accept any \`payload\` object — no schema validation; the iframe srcdoc handles whatever you pass.${pluginsSection(plugins)}`;
+}
+
+type PlaceResult =
+  | { ok: true; id: string; directive: Record<string, unknown> }
+  | { ok: false; error: string };
+
+/** Shared body — both v1 and v2 builders close over this. */
+function executePlaceWidget(
+  plugins: PluginKindHint[] | undefined,
+  args: Args,
+): PlaceResult {
+  const id = randomUUID();
+  const knownKind = (WIDGET_KINDS as readonly string[]).includes(args.kind)
+    ? (args.kind as WidgetKind)
+    : null;
+  const pluginKind = !knownKind && plugins?.some((p) => p.kind === args.kind)
+    ? args.kind
+    : null;
+
+  // 1. Built-in kind path — strict payload validation.
+  if (knownKind) {
+    try {
+      const validated = validatePayloadForKind(knownKind, args.payload);
+      const directive = {
+        type: 'place' as const,
+        id,
+        kind: knownKind,
+        role: args.role,
+        payload: validated,
+      };
+      return { ok: true, id, directive };
+    } catch (e) {
+      // Hard error so the agent retries with a corrected payload.
+      // Previously this silently reformatted to `generic`, which the
+      // agent treated as success — leaving stale placeholder widgets
+      // accumulating on the canvas while the agent moved on without
+      // recovering. The user sees junk widgets; agent thinks it
+      // worked. The right behavior is: tell the agent it failed.
+      const message = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        error: `Invalid payload for kind '${knownKind}': ${message}. Fix the payload fields and retry, or use a different kind.`,
+      };
+    }
+  }
+
+  // 2. Plugin kind path — wrap as `kind: 'plugin'` directive that the
+  // browser's PluginShape resolves via the registered iframe-srcdoc
+  // descriptor. Plugins accept arbitrary `payload` objects (no
+  // schema validation here); the srcdoc handles what it gets via
+  // window.opencanvas.props.
+  if (pluginKind) {
+    const inner = (typeof args.payload === 'object' && args.payload !== null
+      ? args.payload
+      : {}) as Record<string, unknown>;
+    const directive = {
+      type: 'place' as const,
+      id,
+      kind: 'plugin' as const,
+      role: args.role,
+      payload: {
+        pluginKind,
+        props: inner,
+        ...(typeof inner['title'] === 'string' ? { title: inner['title'] } : {}),
+      },
+    };
+    return { ok: true, id, directive };
+  }
+
+  // 3. Truly unknown kind — hard error suggesting register_widget_kind
+  // or one of the available built-in/plugin kinds. Same rationale as
+  // (1): silent reformat to `generic` produces junk widgets that the
+  // agent thinks succeeded.
+  const builtins = (WIDGET_KINDS as readonly string[]).join(', ');
+  const pluginNames = plugins?.length
+    ? plugins.map((p) => p.kind).sort().join(', ')
+    : '(none)';
+  return {
+    ok: false,
+    error: `Unknown widget kind '${args.kind}'. For a NOVEL one-shot render, use kind:'html' with payload:{html:'<full HTML>'}. For a REUSABLE template, call register_widget_kind first to define '${args.kind}' then retry place_widget. Or pick an existing built-in [${builtins}] or plugin [${pluginNames}].`,
+  };
+}
+
+// ─── v1 (Claude SDK) — kept intact during migration ────────────────────
+export function placeWidgetTool(plugins?: PluginKindHint[]): PlaceWidgetToolDef {
+  const def = claudeTool(
+    'place_widget',
+    buildDescription(plugins),
     inputShape,
     async (args) => {
-      const id = randomUUID();
-      const knownKind = (WIDGET_KINDS as readonly string[]).includes(args.kind)
-        ? (args.kind as WidgetKind)
-        : null;
-      const pluginKind = !knownKind && plugins?.some((p) => p.kind === args.kind)
-        ? args.kind
-        : null;
-
-      // 1. Built-in kind path — strict payload validation.
-      if (knownKind) {
-        try {
-          const validated = validatePayloadForKind(knownKind, args.payload);
-          const directive = {
-            type: 'place' as const,
-            id,
-            kind: knownKind,
-            role: args.role,
-            payload: validated,
-          };
-          return {
-            content: [
-              { type: 'text' as const, text: JSON.stringify({ ok: true, id, directive }) },
-            ],
-          };
-        } catch (e) {
-          // Hard error so the agent retries with a corrected payload.
-          // Previously this silently reformatted to `generic`, which the
-          // agent treated as success — leaving stale placeholder widgets
-          // accumulating on the canvas while the agent moved on without
-          // recovering. The user sees junk widgets; agent thinks it
-          // worked. The right behavior is: tell the agent it failed.
-          const message = e instanceof Error ? e.message : String(e);
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: JSON.stringify({
-                  ok: false,
-                  error: `Invalid payload for kind '${knownKind}': ${message}. Fix the payload fields and retry, or use a different kind.`,
-                }),
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      // 2. Plugin kind path — wrap as `kind: 'plugin'` directive that the
-      // browser's PluginShape resolves via the registered iframe-srcdoc
-      // descriptor. Plugins accept arbitrary `payload` objects (no
-      // schema validation here); the srcdoc handles what it gets via
-      // window.opencanvas.props.
-      if (pluginKind) {
-        const inner = (typeof args.payload === 'object' && args.payload !== null
-          ? args.payload
-          : {}) as Record<string, unknown>;
-        const directive = {
-          type: 'place' as const,
-          id,
-          kind: 'plugin' as const,
-          role: args.role,
-          payload: {
-            pluginKind,
-            props: inner,
-            ...(typeof inner['title'] === 'string' ? { title: inner['title'] } : {}),
-          },
-        };
+      const out = executePlaceWidget(plugins, args);
+      if (!out.ok) {
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify({ ok: true, id, directive }) },
+            { type: 'text' as const, text: JSON.stringify(out) },
           ],
+          isError: true,
         };
       }
-
-      // 3. Truly unknown kind — hard error suggesting register_widget_kind
-      // or one of the available built-in/plugin kinds. Same rationale as
-      // (1): silent reformat to `generic` produces junk widgets that the
-      // agent thinks succeeded.
-      const builtins = (WIDGET_KINDS as readonly string[]).join(', ');
-      const pluginNames = plugins?.length
-        ? plugins.map((p) => p.kind).sort().join(', ')
-        : '(none)';
       return {
         content: [
-          {
-            type: 'text' as const,
-            text: JSON.stringify({
-              ok: false,
-              error: `Unknown widget kind '${args.kind}'. For a NOVEL one-shot render, use kind:'html' with payload:{html:'<full HTML>'}. For a REUSABLE template, call register_widget_kind first to define '${args.kind}' then retry place_widget. Or pick an existing built-in [${builtins}] or plugin [${pluginNames}].`,
-            }),
-          },
+          { type: 'text' as const, text: JSON.stringify(out) },
         ],
-        isError: true,
       };
     },
   );
   return def as unknown as PlaceWidgetToolDef;
 }
+
+// ─── v2 (AI SDK) — the future ──────────────────────────────────────────
+const inputSchema = z.object(inputShape);
+
+export const placeWidgetToolV2 = (ctx: OpenCanvasToolCtx) =>
+  tool({
+    description: buildDescription(ctx.plugins),
+    inputSchema,
+    execute: async (args) => executePlaceWidget(ctx.plugins, args),
+  });

@@ -1,22 +1,103 @@
 /**
  * Shared types for agent tool implementations.
  *
- * Two cross-cutting concerns:
+ * Two parallel surfaces during the v1 → v2 migration:
  *
- * 1. `TextOnlyCallToolResult` — every opencanvas tool returns single-text
- *    content (never images or embedded resources). Narrowing the SDK's
- *    `CallToolResult` to this shape lets callers do `r.content[0].text`
- *    without union narrowing.
+ *   - **v2 (AI SDK)** — `OpenCanvasToolCtx`, `defineTool()`. The new
+ *     unified path: tools are built once and dispatched by any LLM
+ *     provider that supports function calling via `streamText`.
  *
- * 2. `WithOptionalArgs` — the SDK's `InferShape<T>` maps Zod shapes to
- *    `{ [K]: T[K]['_output'] }`, which preserves `| undefined` in value
- *    positions but does NOT mark keys as TS-optional. So `z.number().optional()`
- *    yields `{ limit: number | undefined }` (key required) instead of
- *    `{ limit?: number }`. We override the inferred handler signature to
- *    use a hand-written args type with proper `?` keys; runtime is unchanged.
+ *   - **v1 (Claude Agent SDK)** — `TextOnlyCallToolResult`, `WithArgs`,
+ *     `AgentToolDeps`. Still in use by `src/providers/claude-agent-sdk.ts`
+ *     until Phase 5 of docs/plans/unified-agent.md. Don't extend it.
+ *
+ * Both surfaces share the same `src/agent/tools/*.ts` files: each tool
+ * exposes a v1 builder (existing) AND a v2 builder (new). The v2 builders
+ * import only Zod + AI SDK; they don't reach into Claude SDK.
  */
 import type { SdkMcpToolDefinition } from '@anthropic-ai/claude-agent-sdk';
 import type { ZodRawShape } from 'zod';
+import type { CanvasSnapshot } from '../canvas-snapshot.js';
+import type { WidgetStreamBus } from '../widget-stream-bus.js';
+import type { NotebookStore } from '../../backend/notebook-store.js';
+import type { WidgetRegistry } from '../../backend/widget-registry.js';
+import type { PluginKindHint } from './place-widget.js';
+
+// ──────────────────────────────────────────────────────────────────────
+// v2 (AI SDK) surface — the future
+// ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Search service shape consumed by `search_kb` and `fetch_result`.
+ */
+export interface SearchServiceLike {
+  search(
+    query: string,
+    limit: number,
+    options?: { project?: string },
+  ): Promise<
+    Array<{
+      id: string;
+      kind: string;
+      title: string;
+      snippet: string;
+      score: number;
+      source: string;
+    }>
+  >;
+  fetchById(id: string): Promise<{
+    id: string;
+    kind: string;
+    title: string;
+    payload: Record<string, unknown>;
+    source: string;
+  } | null>;
+}
+
+/**
+ * Web search shape consumed by `web_search`.
+ */
+export interface WebSearchProviderLike {
+  search(
+    query: string,
+    limit: number,
+  ): Promise<Array<{ title: string; url: string; snippet: string }>>;
+}
+
+/**
+ * Single context object passed to every tool builder under the v2 path.
+ * Replaces the v1 `AgentToolDeps` interface. Built once per chat turn
+ * in `chat.ts`, passed to `buildOpenCanvasTools(ctx)`, then closed over
+ * by each tool's `execute()`.
+ *
+ * Anything not needed by a tool is optional. Tools omit themselves
+ * from the aggregator's output when their required ctx pieces are
+ * missing (e.g. the notebook tools disappear when `getNotebookStore`
+ * is undefined).
+ */
+export interface OpenCanvasToolCtx {
+  /** KB search service — search_kb, fetch_result */
+  search: SearchServiceLike;
+  /** Web search provider — web_search */
+  webSearch: WebSearchProviderLike;
+  /** Live canvas snapshot getter — read_canvas, read_widget, focus_widget, etc. */
+  getSnapshot: () => CanvasSnapshot;
+  /** Per-turn pipe for streamed widget builds (stream_widget tool). */
+  streamBus?: WidgetStreamBus | null;
+  /**
+   * Currently-registered plugin widget kinds. Listed in the place_widget
+   * tool description so the model knows non-built-in kinds it can target.
+   */
+  plugins?: PluginKindHint[];
+  /** Notebook store getter — add_task, complete_task, read_notes, append_to_notes. */
+  getNotebookStore?: () => Promise<NotebookStore>;
+  /** Widget registry getter — register_widget_kind. */
+  getWidgetRegistry?: () => WidgetRegistry;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// v1 (Claude SDK) surface — kept intact during the transition
+// ──────────────────────────────────────────────────────────────────────
 
 export interface TextOnlyCallToolResult {
   content: Array<{ type: 'text'; text: string }>;

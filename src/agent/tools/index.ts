@@ -1,24 +1,26 @@
-import { searchKbTool } from './search-kb.js';
-import { fetchResultTool } from './fetch-result.js';
-import { placeWidgetTool, type PluginKindHint } from './place-widget.js';
-import { streamWidgetTool } from './stream-widget.js';
-import { updateWidgetTool } from './update-widget.js';
-import { readCanvasTool } from './read-canvas.js';
-import { readWidgetTool } from './read-widget.js';
-import { focusWidgetTool } from './focus-widget.js';
-import { linkWidgetsTool } from './link-widgets.js';
-import { clearCanvasTool } from './clear-canvas.js';
-import { switchTemplateTool } from './switch-template.js';
-import { webSearchTool, type WebSearchProvider } from './web-search.js';
-import { addTaskTool } from './add-task.js';
-import { completeTaskTool } from './complete-task.js';
-import { readNotesTool } from './read-notes.js';
-import { appendToNotesTool } from './append-to-notes.js';
-import { registerWidgetKindTool } from './register-widget-kind.js';
+import { searchKbTool, searchKbToolV2 } from './search-kb.js';
+import { fetchResultTool, fetchResultToolV2 } from './fetch-result.js';
+import { placeWidgetTool, placeWidgetToolV2, type PluginKindHint } from './place-widget.js';
+import { streamWidgetTool, streamWidgetToolV2 } from './stream-widget.js';
+import { updateWidgetTool, updateWidgetToolV2 } from './update-widget.js';
+import { readCanvasTool, readCanvasToolV2 } from './read-canvas.js';
+import { readWidgetTool, readWidgetToolV2 } from './read-widget.js';
+import { focusWidgetTool, focusWidgetToolV2 } from './focus-widget.js';
+import { linkWidgetsTool, linkWidgetsToolV2 } from './link-widgets.js';
+import { clearCanvasTool, clearCanvasToolV2 } from './clear-canvas.js';
+import { switchTemplateTool, switchTemplateToolV2 } from './switch-template.js';
+import { webSearchTool, webSearchToolV2, type WebSearchProvider } from './web-search.js';
+import { addTaskTool, addTaskToolV2 } from './add-task.js';
+import { completeTaskTool, completeTaskToolV2 } from './complete-task.js';
+import { readNotesTool, readNotesToolV2 } from './read-notes.js';
+import { appendToNotesTool, appendToNotesToolV2 } from './append-to-notes.js';
+import { registerWidgetKindTool, registerWidgetKindToolV2 } from './register-widget-kind.js';
 import type { CanvasSnapshot } from '../canvas-snapshot.js';
 import type { WidgetStreamBus } from '../widget-stream-bus.js';
 import type { NotebookStore } from '../../backend/notebook-store.js';
 import type { WidgetRegistry } from '../../backend/widget-registry.js';
+import type { OpenCanvasToolCtx } from './_shared.js';
+import type { Tool } from 'ai';
 
 export interface AgentToolDeps {
   search: {
@@ -119,6 +121,44 @@ export function buildAgentTools(deps: AgentToolDeps) {
     tools.push(
       registerWidgetKindTool(getRegistry) as unknown as ReturnType<typeof searchKbTool>,
     );
+  }
+
+  return tools;
+}
+
+// ─── v2 (AI SDK) — the unified path ─────────────────────────────────────
+// See docs/plans/unified-agent.md. Returns a Record<string, Tool> shaped
+// for `streamText({ tools: ... })` — the tool name is the dict key,
+// matching AI SDK convention. Optional tools (notebook/registry) are
+// omitted from the record when their ctx field is missing, so the
+// model never sees them and they don't pollute its tool list.
+export function buildOpenCanvasTools(
+  ctx: OpenCanvasToolCtx,
+): Record<string, Tool> {
+  const tools: Record<string, Tool> = {
+    search_kb:        searchKbToolV2(ctx),
+    fetch_result:     fetchResultToolV2(ctx),
+    web_search:       webSearchToolV2(ctx),
+    place_widget:     placeWidgetToolV2(ctx),
+    stream_widget:    streamWidgetToolV2(ctx),
+    update_widget:    updateWidgetToolV2(ctx),
+    read_canvas:      readCanvasToolV2(ctx),
+    read_widget:      readWidgetToolV2(ctx),
+    focus_widget:     focusWidgetToolV2(ctx),
+    link_widgets:     linkWidgetsToolV2(ctx),
+    clear_canvas:     clearCanvasToolV2(ctx),
+    switch_template:  switchTemplateToolV2(ctx),
+  };
+
+  if (ctx.getNotebookStore) {
+    tools['add_task']        = addTaskToolV2(ctx);
+    tools['complete_task']   = completeTaskToolV2(ctx);
+    tools['read_notes']      = readNotesToolV2(ctx);
+    tools['append_to_notes'] = appendToNotesToolV2(ctx);
+  }
+
+  if (ctx.getWidgetRegistry) {
+    tools['register_widget_kind'] = registerWidgetKindToolV2(ctx);
   }
 
   return tools;

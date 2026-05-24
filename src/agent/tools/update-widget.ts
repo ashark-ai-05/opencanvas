@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { tool } from '@anthropic-ai/claude-agent-sdk';
-import type { WithArgs } from './_shared.js';
+import { tool as claudeTool } from '@anthropic-ai/claude-agent-sdk';
+import { tool } from 'ai';
+import type { OpenCanvasToolCtx, WithArgs } from './_shared.js';
 import type { CanvasSnapshot } from '../canvas-snapshot.js';
 import {
   validatePayloadForKind,
@@ -56,122 +57,116 @@ type UpdateArgs = {
   appendSections?: z.infer<typeof SectionSchema>[];
 };
 
+const TOOL_DESCRIPTION = `Update an existing widget on the canvas in place. Use this for follow-up turns ("show recent comments on that ticket", "is it actually done?", "swap the body for the latest summary") instead of placing a duplicate widget.
+
+Pick exactly one of:
+  - payload: replace the whole payload. Validated against the widget's stored kind.
+  - appendSections: composite-only. Push new { heading?, kind, payload } sections onto the existing card.`;
+
+type UpdateResult =
+  | { ok: true; directive: Record<string, unknown> }
+  | { ok: false; error: string };
+
+/** Shared body — both v1 and v2 builders close over this. */
+function executeUpdateWidget(
+  getSnapshot: () => CanvasSnapshot,
+  args: UpdateArgs,
+): UpdateResult {
+  const snapshot = getSnapshot();
+  const target = snapshot.widgets.find((w) => w.id === args.id);
+  if (!target) {
+    return {
+      ok: false,
+      error: `Unknown widget id: ${args.id}. Call read_canvas to see what's currently on the canvas.`,
+    };
+  }
+
+  if (!args.payload && !args.appendSections) {
+    return { ok: false, error: 'Either `payload` or `appendSections` is required.' };
+  }
+  if (args.payload && args.appendSections) {
+    return {
+      ok: false,
+      error: '`payload` and `appendSections` are mutually exclusive — pick one.',
+    };
+  }
+
+  try {
+    if (args.appendSections) {
+      if (target.kind !== 'composite') {
+        return {
+          ok: false,
+          error: `appendSections is composite-only. Widget ${args.id} is kind=${target.kind}.`,
+        };
+      }
+      // Validate each new section's payload against its own kind. Reuse
+      // CompositePayload's superRefine indirectly by parsing a synthetic
+      // composite that has only the new sections.
+      const synthetic = {
+        title: 'append-validation',
+        sections: args.appendSections,
+      };
+      CompositePayload.parse(synthetic);
+
+      const directive = {
+        type: 'update' as const,
+        id: args.id,
+        appendSections: args.appendSections,
+      };
+      return { ok: true, directive };
+    }
+
+    // payload-replacement mode
+    const validated = validatePayloadForKind(target.kind, args.payload!);
+    const directive = {
+      type: 'update' as const,
+      id: args.id,
+      payload: validated,
+    };
+    return { ok: true, directive };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      error: `Invalid update for widget ${args.id} (kind=${target.kind}): ${message}`,
+    };
+  }
+}
+
+// ─── v1 (Claude SDK) — kept intact during migration ────────────────────
 type UpdateWidgetToolDef = WithArgs<typeof inputShape, UpdateArgs>;
 
 export function updateWidgetTool(
   getSnapshot: () => CanvasSnapshot,
 ): UpdateWidgetToolDef {
-  const def = tool(
+  const def = claudeTool(
     'update_widget',
-    `Update an existing widget on the canvas in place. Use this for follow-up turns ("show recent comments on that ticket", "is it actually done?", "swap the body for the latest summary") instead of placing a duplicate widget.
-
-Pick exactly one of:
-  - payload: replace the whole payload. Validated against the widget's stored kind.
-  - appendSections: composite-only. Push new { heading?, kind, payload } sections onto the existing card.`,
+    TOOL_DESCRIPTION,
     inputShape,
     async (args) => {
-      const snapshot = getSnapshot();
-      const target = snapshot.widgets.find((w) => w.id === args.id);
-      if (!target) {
+      const out = executeUpdateWidget(getSnapshot, args);
+      if (!out.ok) {
         return {
-          content: [
-            {
-              type: 'text' as const,
-              text: `Unknown widget id: ${args.id}. Call read_canvas to see what's currently on the canvas.`,
-            },
-          ],
+          content: [{ type: 'text' as const, text: out.error }],
           isError: true,
         };
       }
-
-      if (!args.payload && !args.appendSections) {
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: 'Either `payload` or `appendSections` is required.',
-            },
-          ],
-          isError: true,
-        };
-      }
-      if (args.payload && args.appendSections) {
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: '`payload` and `appendSections` are mutually exclusive — pick one.',
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      try {
-        if (args.appendSections) {
-          if (target.kind !== 'composite') {
-            return {
-              content: [
-                {
-                  type: 'text' as const,
-                  text: `appendSections is composite-only. Widget ${args.id} is kind=${target.kind}.`,
-                },
-              ],
-              isError: true,
-            };
-          }
-          // Validate each new section's payload against its own kind. Reuse
-          // CompositePayload's superRefine indirectly by parsing a synthetic
-          // composite that has only the new sections.
-          const synthetic = {
-            title: 'append-validation',
-            sections: args.appendSections,
-          };
-          CompositePayload.parse(synthetic);
-
-          const directive = {
-            type: 'update' as const,
-            id: args.id,
-            appendSections: args.appendSections,
-          };
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: JSON.stringify({ ok: true, directive }),
-              },
-            ],
-          };
-        }
-
-        // payload-replacement mode
-        const validated = validatePayloadForKind(target.kind, args.payload!);
-        const directive = {
-          type: 'update' as const,
-          id: args.id,
-          payload: validated,
-        };
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify({ ok: true, directive }),
-            },
-          ],
-        };
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: `Invalid update for widget ${args.id} (kind=${target.kind}): ${message}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+      return {
+        content: [
+          { type: 'text' as const, text: JSON.stringify(out) },
+        ],
+      };
     },
   );
   return def as unknown as UpdateWidgetToolDef;
 }
+
+// ─── v2 (AI SDK) — the future ──────────────────────────────────────────
+const inputSchema = z.object(inputShape);
+
+export const updateWidgetToolV2 = (ctx: OpenCanvasToolCtx) =>
+  tool({
+    description: TOOL_DESCRIPTION,
+    inputSchema,
+    execute: async (args) => executeUpdateWidget(ctx.getSnapshot, args),
+  });
