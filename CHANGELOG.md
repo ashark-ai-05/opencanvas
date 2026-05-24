@@ -16,9 +16,15 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **MCP source integration on the unified path** — configured MCP
   servers (filesystem, github, etc.) work with any model, not just
   Claude. Uses `@modelcontextprotocol/sdk` under the hood.
-- **Extended thinking surfaces in the chat** — Gemini 2.5/3.x and
-  Claude Sonnet/Opus 4+ emit `reasoning` parts that the `ShowThinking`
-  panel renders. Auto-enabled per provider via `model-resolver`.
+- **Extended thinking config wired per provider** —
+  `model-resolver` auto-enables `providerOptions.anthropic.thinking`
+  for Claude Sonnet/Opus 4+ and `providerOptions.google.thinkingConfig`
+  (with `includeThoughts: true`) for Gemini 2.5/3.x and the `*-latest`
+  aliases. The `ShowThinking` chat panel renders the resulting
+  reasoning chunks. Known limitation: @ai-sdk/google v3 returns
+  `thoughtSignature` but not the thought text in streaming mode, so
+  Gemini thinking is invisible to users for now — Anthropic works.
+  Workaround tracked for a follow-up.
 - **Clickable demo prompts on the empty canvas** — the "empty canvas"
   hint now suggests three concrete prompts that fire the chat directly.
 - **`/v1/health` reports model id** — header chip now shows
