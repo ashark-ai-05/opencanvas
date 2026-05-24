@@ -4,6 +4,15 @@ import { providerEventsToUIMS, UIMS_HEADERS } from '../uims-stream.js';
 import { parseCanvasSnapshot } from '../../agent/canvas-snapshot.js';
 import { WidgetStreamBus } from '../../agent/widget-stream-bus.js';
 import { buildPreferencesHint } from '../../agent/preferences-hint.js';
+import { buildSystemPrompt } from '../../agent/system-prompt.js';
+import { buildOpenCanvasTools } from '../../agent/tools/index.js';
+import { resolveAiSdkModel } from '../../agent/model-resolver.js';
+import {
+  streamText,
+  convertToModelMessages,
+  stepCountIs,
+  type UIMessage,
+} from 'ai';
 import type { BackendState } from '../state.js';
 import type { HistoryMessage, ProviderEvent } from '../../core/provider.js';
 
@@ -88,6 +97,95 @@ function splitMessages(messages: UIChatMessage[]): {
   };
 }
 
+/**
+ * v2 chat handler — drives the LLM via Vercel AI SDK's `streamText`
+ * with OpenCanvas tools registered through `buildOpenCanvasTools`.
+ *
+ * Path: works with every provider that supports function calling
+ * (Gemini, Anthropic, OpenAI, Groq, Ollama, OpenRouter). Replaces
+ * the per-provider adapter loop in v1.
+ *
+ * Known Phase-2 limitations (tracked in docs/plans/unified-agent.md):
+ *   - `stream_widget` falls back to a single-shot place directive
+ *     (the v2 builders honour the bus-null fallback). Integrating
+ *     WidgetStreamBus events into the UIMS stream is Phase 2.5.
+ *   - External MCP sources aren't wired yet (Phase 3).
+ *   - `session-started` events from native sessions aren't emitted;
+ *     v2 always sends the full history each turn (acceptable — that's
+ *     how every non-Claude provider already worked).
+ */
+async function handleV2(
+  c: import('hono').Context,
+  state: BackendState,
+  args: {
+    messages: UIChatMessage[];
+    canvasSnapshot: ReturnType<typeof parseCanvasSnapshot>;
+    systemPromptTrailer: string | undefined;
+  },
+): Promise<Response> {
+  const { messages, canvasSnapshot, systemPromptTrailer } = args;
+
+  // Pull plugin descriptors for place_widget's enriched description.
+  const registry = state.getWidgetRegistry();
+  const plugins = registry.list().map((d) => ({
+    kind: d.kind,
+    ...(d.label ? { label: d.label } : {}),
+    ...(d.description ? { description: d.description } : {}),
+  }));
+
+  // Build the per-turn tool context. Notebook store getter is wired
+  // conditionally — `buildOpenCanvasTools` simply omits the notebook
+  // tools when getNotebookStore is undefined.
+  const tools = buildOpenCanvasTools({
+    search: state.getSearchService(),
+    webSearch: state.getWebSearchProvider(),
+    getSnapshot: () => canvasSnapshot,
+    // Phase 2: bus integration deferred — stream_widget falls back to
+    // a single-shot place directive when streamBus is null.
+    streamBus: null,
+    plugins,
+    getNotebookStore: () => state.getNotebookStore(),
+    getWidgetRegistry: () => registry,
+  });
+
+  // Compose the system prompt — DEFAULT_SYSTEM_PROMPT + optional
+  // selection block + the upstream trailer (preferences hint, etc.).
+  const system = buildSystemPrompt({
+    canvasSnapshot,
+    ...(systemPromptTrailer ? { trailer: systemPromptTrailer } : {}),
+  });
+
+  // Resolve the AI SDK provider model from the active profile.
+  let model;
+  try {
+    model = await resolveAiSdkModel(state.profile);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return c.json({ error: `model resolution failed: ${message}` }, 500);
+  }
+
+  // Convert the React app's UIMessage[] into AI SDK ModelMessage[].
+  // The client uses `@ai-sdk/react@^3` so the shape matches what
+  // convertToModelMessages expects.
+  const modelMessages = await convertToModelMessages(messages as unknown as UIMessage[]);
+
+  // Agentic loop: cap at 8 steps. Each step = model emits tool calls,
+  // we execute them, then call the model again with the results.
+  // 8 is generous for most demo turns (most are 1-2 steps).
+  const result = streamText({
+    model,
+    system,
+    messages: modelMessages,
+    tools,
+    stopWhen: stepCountIs(8),
+    abortSignal: c.req.raw.signal,
+  });
+
+  // Returns a Response with UIMS headers + body. Hono passes it through
+  // unchanged. The browser's `useChat` consumes the protocol directly.
+  return result.toUIMessageStreamResponse();
+}
+
 export function chatRoute(state: BackendState): Hono {
   const r = new Hono();
 
@@ -131,6 +229,17 @@ export function chatRoute(state: BackendState): Hono {
     const priorSessionId = conversationId
       ? state.getSessionId(conversationId)
       : undefined;
+
+    // ─── v2 (AI SDK unified path) ────────────────────────────────────
+    // Gated on OPENCANVAS_AGENT=v2 so v1 stays the default until v2
+    // is proven on real traffic. See docs/plans/unified-agent.md.
+    if (process.env['OPENCANVAS_AGENT'] === 'v2') {
+      return handleV2(c, state, {
+        messages: body.messages,
+        canvasSnapshot,
+        systemPromptTrailer: systemPrompt, // preferences hint + any system msgs
+      });
+    }
 
     // Apply UIMS headers BEFORE entering streamSSE so DefaultChatTransport
     // recognises the protocol on first byte.
