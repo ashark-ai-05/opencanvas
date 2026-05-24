@@ -181,36 +181,81 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
 .title{font-size:12px;font-weight:600;letter-spacing:-0.012em;color:#fafafa;text-align:center;flex-shrink:0}
 #diagram{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto}
 #diagram svg{max-width:100%;max-height:100%;height:auto;width:auto}
+/* Mermaid diagrams sometimes ship with light-mode defaults baked into
+   foreignObject text styles. Force readable colors against the dark
+   widget surface. */
+#diagram svg foreignObject div,#diagram svg foreignObject span,#diagram svg .label,#diagram svg .nodeLabel,#diagram svg .edgeLabel{color:#fafafa !important;background:transparent !important}
+#diagram svg .actor{fill:#1f1d2e !important;stroke:#a78bfa !important}
+#diagram svg text.actor>tspan{fill:#fafafa !important}
 .empty{color:#a1a1aa;font-size:12px;padding:24px;text-align:center;line-height:1.5}
 .empty .ck{background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;color:#ddd6fe;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
-.error{color:#fca5a5;font-size:11px;padding:18px;font-family:'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;overflow:auto}
+.error{color:#fca5a5;font-size:11px;padding:18px;font-family:'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;overflow:auto;line-height:1.45}
+.status{color:#a1a1aa;font-size:11px;padding:14px;text-align:center;font-family:'JetBrains Mono',ui-monospace,monospace}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" onerror="window.__mermaidCdnFailed=true"></script>
 </head><body><div id="root"></div>
 <script>
 (function(){
   var root=document.getElementById("root");
   var initialized=false;
+  var retries=0;
+  var MAX_RETRIES=40; // ~5s @ 120ms
+
+  // Surface any uncaught error from inside the iframe rather than
+  // letting it die silently (which is what produced the white box).
+  window.addEventListener("error",function(e){
+    showError("[uncaught] "+(e&&e.message?e.message:String(e)));
+  });
+  window.addEventListener("unhandledrejection",function(e){
+    showError("[unhandled] "+(e&&e.reason&&e.reason.message?e.reason.message:String(e&&e.reason)));
+  });
+
   function ensureMermaid(){
-    if(initialized||typeof mermaid==="undefined")return false;
+    if(initialized)return true;
+    if(typeof mermaid==="undefined")return false;
     mermaid.initialize({
       startOnLoad:false,
       theme:"dark",
+      darkMode:true,
       themeVariables:{
         background:"transparent",
-        primaryColor:"#a78bfa",
+        primaryColor:"#1f1d2e",
         primaryTextColor:"#fafafa",
         primaryBorderColor:"#a78bfa",
         lineColor:"#a1a1aa",
-        secondaryColor:"#60a5fa",
-        tertiaryColor:"#34d399",
+        secondaryColor:"#312e4f",
+        tertiaryColor:"#1f1d2e",
+        textColor:"#fafafa",
+        mainBkg:"#1f1d2e",
+        secondBkg:"#312e4f",
+        tertiaryTextColor:"#fafafa",
+        nodeBorder:"#a78bfa",
+        clusterBkg:"#1f1d2e",
+        clusterBorder:"#52525b",
+        edgeLabelBackground:"#1f1d2e",
         fontFamily:"Inter, system-ui, sans-serif",
-        fontSize:"13px"
+        fontSize:"13px",
+        // sequence-specific
+        actorBkg:"#1f1d2e",
+        actorBorder:"#a78bfa",
+        actorTextColor:"#fafafa",
+        actorLineColor:"#52525b",
+        signalColor:"#a1a1aa",
+        signalTextColor:"#fafafa",
+        labelBoxBkgColor:"#312e4f",
+        labelBoxBorderColor:"#a78bfa",
+        labelTextColor:"#fafafa",
+        noteBkgColor:"#312e4f",
+        noteBorderColor:"#52525b",
+        noteTextColor:"#fafafa",
+        loopTextColor:"#a1a1aa",
+        activationBorderColor:"#a78bfa",
+        activationBkgColor:"#312e4f"
       },
       securityLevel:"loose",
-      flowchart:{useMaxWidth:true,htmlLabels:true},
+      flowchart:{useMaxWidth:true,htmlLabels:true,curve:"basis"},
       gantt:{useMaxWidth:true},
-      sequence:{useMaxWidth:true}
+      sequence:{useMaxWidth:true,mirrorActors:false,wrap:true}
     });
     initialized=true;
     return true;
@@ -225,6 +270,11 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
     d.appendChild(t1);d.appendChild(ck);d.appendChild(t2);
     root.appendChild(d);
   }
+  function showStatus(text){
+    clear(root);
+    var s=document.createElement("div");s.className="status";s.textContent=text;
+    root.appendChild(s);
+  }
   function showError(msg){
     clear(root);
     var p=document.createElement("pre");p.className="error";
@@ -232,17 +282,30 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
     root.appendChild(p);
   }
   function svgFromString(s){
-    // Use DOMParser instead of writing markup directly into the DOM.
+    // text/html mode handles inline SVG including foreignObject + HTML
+    // labels correctly (image/svg+xml is strict XML and rejects them,
+    // which is what produced the silent-blank render for sequence
+    // diagrams). We avoid innerHTML by using DOMParser.
     var parser=new DOMParser();
-    var doc=parser.parseFromString(s,"image/svg+xml");
-    var node=doc.documentElement;
-    return document.importNode(node,true);
+    var doc=parser.parseFromString(s,"text/html");
+    var svg=doc.body.querySelector("svg");
+    if(!svg)throw new Error("DOMParser returned no <svg>");
+    return document.importNode(svg,true);
   }
   function render(props){
     var p=props||{};
     var code=typeof p.code==="string"?p.code.trim():"";
     if(!code){showEmpty();return;}
     if(!ensureMermaid()){
+      if(window.__mermaidCdnFailed){
+        showError("Could not load mermaid from cdn.jsdelivr.net. The sandbox may be blocking outbound requests.");
+        return;
+      }
+      if(++retries>MAX_RETRIES){
+        showError("Mermaid did not load within 5s (CDN slow or blocked).");
+        return;
+      }
+      showStatus("loading mermaid\\u2026");
       setTimeout(function(){render(p);},120);
       return;
     }
@@ -263,8 +326,11 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
   }
   function readProps(){return window.opencanvas&&window.opencanvas.props||null;}
   render(readProps());
-  window.addEventListener("opencanvas:props",function(e){
-    render(e&&e.detail&&e.detail.props?e.detail.props:null);
+  // The plugin shim dispatches on \`document\`, with \`detail\` set to the
+  // props object directly (not nested under .props). Match the chart
+  // and calendar plugins' pattern.
+  document.addEventListener("opencanvas:props",function(e){
+    render(e&&e.detail?e.detail:null);
   });
 })();
 </script></body></html>`;
