@@ -7,7 +7,13 @@ describe('HealthBadge', () => {
   beforeEach(() => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
       new Response(
-        JSON.stringify({ ok: true, profile: 'test', llm: 'claude-agent-sdk', embedder: 'onnx-bundled' }),
+        JSON.stringify({
+          ok: true,
+          profile: 'test',
+          llm: 'gemini',
+          model: 'gemini-flash-lite-latest',
+          embedder: 'onnx-bundled',
+        }),
         { status: 200, headers: { 'content-type': 'application/json' } }
       )
     );
@@ -22,10 +28,25 @@ describe('HealthBadge', () => {
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
-  it('renders ok state with profile after fetch resolves', async () => {
+  it('renders ok state with the active LLM + model in the chip', async () => {
+    // Refactor (commit b4b8c74): the visible chip shows `<llm> · <model>`
+    // instead of the profile name. Profile + embedder move to the hover
+    // tooltip for diagnostics.
     render(<HealthBadge />);
     await waitFor(() => {
-      expect(screen.getByText(/test/)).toBeInTheDocument();
+      expect(screen.getByText('gemini')).toBeInTheDocument();
+      expect(screen.getByText('gemini-flash-lite-latest')).toBeInTheDocument();
+    });
+  });
+
+  it('exposes the profile name + embedder via the tooltip title', async () => {
+    render(<HealthBadge />);
+    await waitFor(() => {
+      const llmText = screen.getByText('gemini');
+      const chip = llmText.closest('[title]');
+      expect(chip).not.toBeNull();
+      expect(chip!.getAttribute('title')).toContain('profile: test');
+      expect(chip!.getAttribute('title')).toContain('embed:   onnx-bundled');
     });
   });
 
