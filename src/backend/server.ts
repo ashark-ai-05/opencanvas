@@ -85,10 +85,16 @@ export function getState(): Promise<BackendState> {
 // Health
 app.get('/v1/health', async (c) => {
   const state = await getState();
+  // `profile` is the config-file label (e.g. 'claude-sdk') — kept for
+  // diagnostics. The UI displays `llm` + `model` instead, because the
+  // profile NAME can be misleading: a profile named 'claude-sdk' can
+  // have its llm env-overridden to gemini (which is the demo's case).
+  const llmConfig = state.profile.llm as { provider: string; model?: string };
   return c.json({
     ok: true,
     profile: state.profileName,
     llm: state.getLLMProvider().id,
+    model: llmConfig.model ?? null,
     embedder: state.getEmbedder().id,
   });
 });

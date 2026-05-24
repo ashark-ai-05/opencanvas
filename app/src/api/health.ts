@@ -1,7 +1,11 @@
 export type HealthResponse = {
   ok: boolean;
+  /** Config-file profile label (e.g. 'claude-sdk'). Diagnostic only — the UI shows `llm`/`model`. */
   profile: string;
+  /** Active LLM provider id (e.g. 'gemini', 'anthropic', 'openai'). */
   llm: string;
+  /** Active model id (e.g. 'gemini-flash-lite-latest'). Null when the provider has no model concept. */
+  model: string | null;
   embedder: string;
 };
 

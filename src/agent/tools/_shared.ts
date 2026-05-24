@@ -56,12 +56,21 @@ export interface SearchServiceLike {
 
 /**
  * Web search shape consumed by `web_search`.
+ * Matches the concrete `WebSearchProvider` interface in web-search.ts —
+ * declared here so _shared.ts doesn't reach into a sibling tool file
+ * (avoids a circular import).
  */
+export interface WebSearchResultLike {
+  id: string;
+  kind: 'web';
+  title: string;
+  snippet: string;
+  url: string;
+  source: string;
+  score?: number;
+}
 export interface WebSearchProviderLike {
-  search(
-    query: string,
-    limit: number,
-  ): Promise<Array<{ title: string; url: string; snippet: string }>>;
+  search(query: string, limit: number): Promise<WebSearchResultLike[]>;
 }
 
 /**
