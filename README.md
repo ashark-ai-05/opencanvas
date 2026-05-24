@@ -4,21 +4,43 @@
 
 # OpenCanvas
 
-### An infinite canvas your LLM draws on.
+### Stop reading AI replies. Watch them assemble on an infinite canvas.
 
-Ask anything. The agent renders **typed widgets** on a tldraw canvas — markdown, charts, kanbans, code, tables, web embeds, sandboxed plugins. Every conversation indexes back into a local SQLite KB so the canvas gets smarter with use.
+Your LLM doesn't print markdown — it **places typed widgets** on a tldraw canvas: charts, diagrams, code, kanbans, tables, custom HTML, anything. The agent **learns your patterns** and registers reusable widget templates over time. Works with any model that supports function calling — BYO key.
 
-**BYO model · MCP-native · Local-first · MIT**
+**BYO model · MCP-native · Self-improving · Local-first · MIT**
 
-[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-596%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![security](https://img.shields.io/badge/audit-clean-22c55e)](./SECURITY.md)
+[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-597%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![security](https://img.shields.io/badge/audit-clean-22c55e)](./SECURITY.md)
 
 ![demo](docs/demo.gif)
 
-🌐 **[ashark-ai-05.github.io/opencanvas](https://ashark-ai-05.github.io/opencanvas/)** &nbsp;·&nbsp; 📺 [1-minute walkthrough](docs/demo.mp4) &nbsp;·&nbsp; 📡 [Live API reference](https://ashark-ai-05.github.io/opencanvas/api.html)
+<p>
+  <a href="https://opencanvas-production.up.railway.app"><b>▶︎ Try the demo</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/ashark-ai-05/opencanvas">⭐ Star on GitHub</a>
+  &nbsp;·&nbsp;
+  <a href="https://ashark-ai-05.github.io/opencanvas/api.html">📡 API reference</a>
+  &nbsp;·&nbsp;
+  <a href="./docs/plans/unified-agent.md">🏗 Architecture</a>
+</p>
 
 **[Install](#install) · [Why](#why-its-different) · [Pick a model](#pick-any-llm) · [REST API](#drive-it-from-any-process) · [Security](./SECURITY.md)**
 
 </div>
+
+---
+
+## What makes it different
+
+| | OpenCanvas | Claude Artifacts | Cursor Composer | v0 (Vercel) | ChatGPT Canvas |
+|---|---|---|---|---|---|
+| **Canvas-spatial UI** | ✅ tldraw infinite canvas | ❌ single artifact pane | ❌ single editor pane | ❌ single preview pane | ⚠️ document only |
+| **Multiple typed widgets per turn** | ✅ markdown · chart · kanban · code · mermaid · custom HTML · … | ⚠️ one at a time | ❌ | ⚠️ one UI at a time | ❌ |
+| **BYO model** | ✅ any provider (Anthropic / OpenAI / Google / Groq / Ollama / OpenRouter) | ❌ Claude only | ⚠️ OpenAI + Anthropic + a few | ❌ Vercel-hosted | ❌ OpenAI only |
+| **MCP-native** | ✅ first-class | ✅ via Claude.ai | ⚠️ recent | ❌ | ❌ |
+| **Self-improving widgets** | ✅ agent extracts templates from its own renders | ❌ | ❌ | ❌ | ❌ |
+| **Self-hosted / open source** | ✅ MIT | ❌ | ❌ | ❌ | ❌ |
+| **Local-first option** | ✅ runs entirely on your machine | ❌ | ⚠️ partial | ❌ | ❌ |
 
 ---
 

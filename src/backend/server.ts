@@ -53,7 +53,16 @@ app.use(
       return ALLOWED_ORIGINS.has(origin) ? origin : null;
     },
     allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'X-OpenCanvas-Token'],
+    allowHeaders: [
+      'Content-Type',
+      'X-OpenCanvas-Token',
+      // BYO-key headers sent by the settings menu (per-request override
+      // of profile.llm provider / model / API key). Never persisted on
+      // the server — used only within the resolve call for that request.
+      'X-OpenCanvas-Provider',
+      'X-OpenCanvas-Model',
+      'X-OpenCanvas-Api-Key',
+    ],
   }),
 );
 

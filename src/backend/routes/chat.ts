@@ -166,12 +166,40 @@ async function handleV2(
     ...(systemPromptTrailer ? { trailer: systemPromptTrailer } : {}),
   });
 
+  // BYO-key path: the frontend's settings menu sends three optional
+  // headers per request — provider, model, api key. When present we
+  // build an OVERLAY profile (just `llm`) for this single request,
+  // never mutating state. The api key is threaded through to the
+  // model resolver as an override.
+  //
+  // Why we trust the headers: they ride on a same-origin request from
+  // a CORS-allowlisted origin (or demo-mode 'any'). The key never
+  // touches disk or any other request's context — it's scoped to the
+  // resolve call below.
+  const byoProvider = c.req.header('X-OpenCanvas-Provider');
+  const byoModel = c.req.header('X-OpenCanvas-Model');
+  const byoApiKey = c.req.header('X-OpenCanvas-Api-Key');
+  const effectiveProfile =
+    byoProvider && byoProvider.trim().length > 0
+      ? {
+          ...state.profile,
+          llm: {
+            ...state.profile.llm,
+            provider: byoProvider as typeof state.profile.llm.provider,
+            ...(byoModel && byoModel.trim().length > 0 ? { model: byoModel.trim() } : {}),
+          } as typeof state.profile.llm,
+        }
+      : state.profile;
+
   // Resolve the AI SDK provider model + provider-specific options
   // (thinking config for Gemini 2.5/Claude 4 etc.) from the active profile.
   let model;
   let providerOptions;
   try {
-    const resolved = await resolveAiSdkModelWithOptions(state.profile);
+    const resolved = await resolveAiSdkModelWithOptions(
+      effectiveProfile,
+      byoApiKey ? { apiKey: byoApiKey } : {},
+    );
     model = resolved.model;
     providerOptions = resolved.providerOptions;
   } catch (e) {

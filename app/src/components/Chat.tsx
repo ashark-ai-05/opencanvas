@@ -22,6 +22,7 @@ import { ShowThinking } from './ShowThinking';
 import { ComposerStatus } from './ComposerStatus';
 import { EmptyChatBanner } from './EmptyChatBanner';
 import { useChatActions } from '../state/chat-actions-store';
+import { getUserSettingsHeaders } from '../state/user-settings-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
@@ -367,10 +368,15 @@ export function Chat() {
       prepareSendMessagesRequest: ({ messages: msgs, requestMetadata, body, headers, credentials }) => {
         const meta = requestMetadata as { route?: string } | undefined;
         const api = meta?.route === 'team' ? '/v1/team' : '/v1/chat';
+        // BYO-key path: pull the current X-OpenCanvas-* settings headers
+        // from the user-settings store. Empty object when the visitor is
+        // using the demo's shared key. Read fresh per request so a
+        // settings change applies on the next send without a remount.
+        const settingsHeaders = getUserSettingsHeaders();
         return {
           api,
           body: { ...body, messages: msgs },
-          headers,
+          headers: { ...headers, ...settingsHeaders },
           credentials,
         };
       },

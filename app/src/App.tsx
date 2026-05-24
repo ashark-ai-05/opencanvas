@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
-import { Boxes, CalendarClock, History, Notebook, Plus, Search, ServerCog, Trash2 } from 'lucide-react';
+import { Boxes, CalendarClock, History, Notebook, Plus, Search, ServerCog, Settings, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Canvas } from './canvas/Canvas';
 import { ChatTabs } from './components/ChatTabs';
@@ -8,6 +8,8 @@ import { FloatingChat, FloatingChatLauncher } from './components/FloatingChat';
 import { getEditor } from './state/editor-ref';
 import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
+import { SettingsModal } from './components/SettingsModal';
+import { useUserSettings } from './state/user-settings-store';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
 import { OnboardingModal } from './components/OnboardingModal';
 // Drawer panels are large + rarely-opened on the first session — lazy-load
@@ -74,6 +76,11 @@ export function App() {
   const [schedulesOpen, setSchedulesOpen] = useState(false);
   const [recallOpen, setRecallOpen] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Subscribe to `hasOverride` so the gear icon shows an "active" indicator
+  // dot when the user has BYO-keyed up. Lets returning visitors see at a
+  // glance whether they're on the demo's shared key or their own.
+  const hasUserOverride = useUserSettings((s) => s.hasOverride());
 
   // Subscribe to /v1/canvas/events so any external app can drive
   // widgets on this canvas via the REST surface. The hook also
@@ -250,6 +257,35 @@ export function App() {
           >
             <ServerCog className="size-3.5" />
           </button>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            title={
+              hasUserOverride
+                ? 'Settings — using your own API key'
+                : 'Settings — BYO model + API key'
+            }
+            className="opencanvas-header-btn"
+            aria-label="Settings"
+            style={{ position: 'relative' }}
+          >
+            <Settings className="size-3.5" />
+            {hasUserOverride && (
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  width: 6,
+                  height: 6,
+                  borderRadius: 99,
+                  background: '#a78bfa',
+                  boxShadow: '0 0 0 1.5px var(--color-bg-1, #0a0a0a)',
+                }}
+              />
+            )}
+          </button>
           <ThemeToggle />
           <button
             type="button"
@@ -311,6 +347,7 @@ export function App() {
         )}
       </Suspense>
       <CommandPalette />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <Toaster
         theme="dark"
         position="top-right"

@@ -65,10 +65,23 @@ export async function resolveAiSdkModel(profile: Profile): Promise<LanguageModel
   return model;
 }
 
+/**
+ * Per-request overrides — used by the BYO-key path in chat.ts handleV2
+ * when the user passes their own API key via the `X-OpenCanvas-Api-Key`
+ * header. The override is scoped to this single resolve call; nothing
+ * is mutated globally (no process.env stomping).
+ */
+export interface ResolveOverrides {
+  /** Explicit API key for this request. Wins over the env var. */
+  apiKey?: string;
+}
+
 export async function resolveAiSdkModelWithOptions(
   profile: Profile,
+  overrides: ResolveOverrides = {},
 ): Promise<ResolvedModel> {
   const llm = profile.llm;
+  const overrideKey = overrides.apiKey?.trim();
 
   switch (llm.provider) {
     case 'anthropic-direct':
@@ -78,11 +91,12 @@ export async function resolveAiSdkModelWithOptions(
       // thing being removed, not the model itself. Default model for
       // claude-agent-sdk literal is undefined so we pick a sensible
       // current Claude model when missing.
-      const { anthropic } = await import('@ai-sdk/anthropic');
       const modelId = (llm as { model?: string }).model ?? 'claude-sonnet-4-6';
       const supportsThinking = /claude-(sonnet|opus)-4/.test(modelId);
+      const { anthropic, createAnthropic } = await import('@ai-sdk/anthropic');
+      const provider = overrideKey ? createAnthropic({ apiKey: overrideKey }) : anthropic;
       return {
-        model: anthropic(modelId),
+        model: provider(modelId),
         ...(supportsThinking
           ? {
               providerOptions: {
@@ -96,23 +110,21 @@ export async function resolveAiSdkModelWithOptions(
     }
 
     case 'openai': {
-      const { openai } = await import('@ai-sdk/openai');
-      return { model: openai(llm.model) };
+      const { openai, createOpenAI } = await import('@ai-sdk/openai');
+      const provider = overrideKey ? createOpenAI({ apiKey: overrideKey }) : openai;
+      return { model: provider(llm.model) };
     }
 
     case 'gemini': {
-      // We use the @ai-sdk/google adapter, which talks to Gemini's native
-      // API surface (NOT the OpenAI-compat shim at /v1beta/openai).
-      // The native surface has cleaner tool-call streaming.
-      //
-      // The SDK reads `GOOGLE_GENERATIVE_AI_API_KEY` by default, but
-      // OpenCanvas accepts the more common `GOOGLE_API_KEY` (what AI
-      // Studio's UI suggests) and `GEMINI_API_KEY`. Resolve here and
-      // pass explicitly so any of the three env vars works.
-      const apiKey =
+      // @ai-sdk/google reads GOOGLE_GENERATIVE_AI_API_KEY by default;
+      // OpenCanvas also accepts GOOGLE_API_KEY and GEMINI_API_KEY (env
+      // var alternatives common in the wild). Per-request override
+      // (BYO-key header from the settings menu) wins over all of these.
+      const envKey =
         process.env['GOOGLE_GENERATIVE_AI_API_KEY'] ??
         process.env['GOOGLE_API_KEY'] ??
         process.env['GEMINI_API_KEY'];
+      const apiKey = overrideKey ?? envKey;
       const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
       const provider = createGoogleGenerativeAI(apiKey ? { apiKey } : {});
       // Enable thinking on Gemini 2.5+/3.x and the "-latest" aliases.
@@ -138,13 +150,15 @@ export async function resolveAiSdkModelWithOptions(
     }
 
     case 'groq': {
-      const { groq } = await import('@ai-sdk/groq');
-      return { model: groq(llm.model) };
+      const { groq, createGroq } = await import('@ai-sdk/groq');
+      const provider = overrideKey ? createGroq({ apiKey: overrideKey }) : groq;
+      return { model: provider(llm.model) };
     }
 
     case 'openrouter': {
-      const { openrouter } = await import('@openrouter/ai-sdk-provider');
-      return { model: openrouter(llm.model) };
+      const { openrouter, createOpenRouter } = await import('@openrouter/ai-sdk-provider');
+      const provider = overrideKey ? createOpenRouter({ apiKey: overrideKey }) : openrouter;
+      return { model: provider(llm.model) };
     }
 
     case 'ollama': {
