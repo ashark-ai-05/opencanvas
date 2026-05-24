@@ -4,7 +4,7 @@ import { providerEventsToUIMS, UIMS_HEADERS } from '../uims-stream.js';
 import { parseCanvasSnapshot } from '../../agent/canvas-snapshot.js';
 import { buildSystemPrompt } from '../../agent/system-prompt.js';
 import { buildOpenCanvasTools } from '../../agent/tools/index.js';
-import { resolveAiSdkModel } from '../../agent/model-resolver.js';
+import { resolveAiSdkModelWithOptions } from '../../agent/model-resolver.js';
 import { loadExternalMcpTools } from '../../agent/mcp-integration.js';
 import { streamText, stepCountIs } from 'ai';
 import type { CanvasSnapshot } from '../../agent/canvas-snapshot.js';
@@ -393,9 +393,12 @@ async function runTeamV2(
     let previousHandoff: { from: string; to: string; message: string } | null = null;
 
     // Resolve the model + MCP sources once per team run. Reuse across phases.
-    let model: Awaited<ReturnType<typeof resolveAiSdkModel>>;
+    let model;
+    let providerOptions;
     try {
-      model = await resolveAiSdkModel(state.profile);
+      const resolved = await resolveAiSdkModelWithOptions(state.profile);
+      model = resolved.model;
+      providerOptions = resolved.providerOptions;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       await s.write(`data: ${JSON.stringify({ type: 'error', errorText: `model resolution failed: ${msg}` })}\n\n`);
@@ -455,6 +458,7 @@ async function runTeamV2(
           tools,
           stopWhen: stepCountIs(8),
           abortSignal: abortController.signal,
+          ...(providerOptions ? { providerOptions } : {}),
         });
 
         // Tap the UI message stream: forward chunks to the client, capture

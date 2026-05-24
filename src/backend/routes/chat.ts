@@ -6,7 +6,7 @@ import { WidgetStreamBus } from '../../agent/widget-stream-bus.js';
 import { buildPreferencesHint } from '../../agent/preferences-hint.js';
 import { buildSystemPrompt } from '../../agent/system-prompt.js';
 import { buildOpenCanvasTools } from '../../agent/tools/index.js';
-import { resolveAiSdkModel } from '../../agent/model-resolver.js';
+import { resolveAiSdkModelWithOptions } from '../../agent/model-resolver.js';
 import { loadExternalMcpTools } from '../../agent/mcp-integration.js';
 import {
   streamText,
@@ -165,10 +165,14 @@ async function handleV2(
     ...(systemPromptTrailer ? { trailer: systemPromptTrailer } : {}),
   });
 
-  // Resolve the AI SDK provider model from the active profile.
+  // Resolve the AI SDK provider model + provider-specific options
+  // (thinking config for Gemini 2.5/Claude 4 etc.) from the active profile.
   let model;
+  let providerOptions;
   try {
-    model = await resolveAiSdkModel(state.profile);
+    const resolved = await resolveAiSdkModelWithOptions(state.profile);
+    model = resolved.model;
+    providerOptions = resolved.providerOptions;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return c.json({ error: `model resolution failed: ${message}` }, 500);
@@ -189,6 +193,7 @@ async function handleV2(
     tools,
     stopWhen: stepCountIs(8),
     abortSignal: c.req.raw.signal,
+    ...(providerOptions ? { providerOptions } : {}),
     onFinish: () => {
       // Drop the per-turn MCP clients. No await — let the close run
       // in the background so we don't block the stream's natural end.

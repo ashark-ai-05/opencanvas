@@ -53,16 +53,23 @@ Headless without Electron: `pnpm dev` → http://127.0.0.1:3458
 
 ## Pick any LLM
 
-Six provider adapters ship out of the box. Set the env var or edit `~/.opencanvas/config.json`:
+Every provider gets the **same agent** — same tools, same widget surface,
+same UX. The model is a config switch:
 
 | Provider | Auth | Notes |
 |---|---|---|
-| **Claude (Agent SDK)** | OAuth via Claude Code, or `ANTHROPIC_API_KEY` | In-process MCP — fastest agent loop |
-| **Anthropic direct** | `ANTHROPIC_API_KEY` | Plain API; any Claude model |
-| **OpenAI** | `OPENAI_API_KEY` | GPT-4o, GPT-4.1, etc. |
+| **Anthropic** | `ANTHROPIC_API_KEY` | Claude Sonnet/Opus 4+; extended thinking auto-on |
+| **OpenAI** | `OPENAI_API_KEY` | GPT-4o, GPT-4.1, o-series |
+| **Google Gemini** | `GOOGLE_API_KEY` | Gemini 2.5/3.x Flash & Pro; thinking surfaces in the chat |
+| **Groq** | `GROQ_API_KEY` | Llama / Mixtral / Kimi at Groq speeds |
 | **OpenRouter** | `OPENROUTER_API_KEY` | One key, hundreds of models |
-| **Ollama** | _none — local_ | Any model you've pulled (`llama3`, `qwen2.5-coder`, …) |
-| **Sourcegraph Amp** | `AMP_API_KEY` | Hosted agent loop |
+| **Ollama** | _none — local_ | Any model you've pulled (`llama3.2`, `qwen2.5-coder`, …) |
+| **Sourcegraph Amp** | `AMP_API_KEY` | Hosted agent loop (legacy path) |
+
+Tool calling is driven by the [Vercel AI SDK](https://ai-sdk.dev/), so any
+provider with function-calling support works the same way. See
+[`docs/plans/unified-agent.md`](./docs/plans/unified-agent.md) for the
+architecture.
 
 Embedders are pluggable too: bundled ONNX (runs offline), OpenAI, Voyage, or Ollama.
 

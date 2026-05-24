@@ -7,6 +7,23 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Unified agent path via Vercel AI SDK** — same widget-placing agent
+  for every provider (Gemini, Anthropic, OpenAI, Groq, Ollama,
+  OpenRouter). Previously only the Claude Agent SDK adapter had
+  tool-calling; the others were text-only wrappers. Gated behind
+  `OPENCANVAS_AGENT=v2` for one release while v1 soaks; will become
+  the default. See [`docs/plans/unified-agent.md`](./docs/plans/unified-agent.md).
+- **MCP source integration on the unified path** — configured MCP
+  servers (filesystem, github, etc.) work with any model, not just
+  Claude. Uses `@modelcontextprotocol/sdk` under the hood.
+- **Extended thinking surfaces in the chat** — Gemini 2.5/3.x and
+  Claude Sonnet/Opus 4+ emit `reasoning` parts that the `ShowThinking`
+  panel renders. Auto-enabled per provider via `model-resolver`.
+- **Clickable demo prompts on the empty canvas** — the "empty canvas"
+  hint now suggests three concrete prompts that fire the chat directly.
+- **`/v1/health` reports model id** — header chip now shows
+  `gemini · gemini-flash-lite-latest` instead of the misleading profile
+  name.
 - **Drag empty canvas to pan** — Figma-style. Dragging a widget still
   moves the widget; dragging empty space pans the camera. Shift+drag
   preserves marquee box-select.

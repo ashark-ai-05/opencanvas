@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Search, LayoutGrid, Globe } from 'lucide-react';
+import { Sparkles, Timer, LayoutGrid, BookOpen } from 'lucide-react';
 import { useEditor, useValue } from 'tldraw';
+import { useChatActions } from '../state/chat-actions-store';
 
 /**
  * Shown when the canvas has zero shapes — any shape (widget OR a
@@ -11,6 +12,7 @@ import { useEditor, useValue } from 'tldraw';
  */
 export function EmptyCanvasHint() {
   const editor = useEditor();
+  const sendChat = useChatActions((s) => s.sendChat);
   const shapeCount = useValue(
     'canvas shape count',
     () => editor.getCurrentPageShapes().length,
@@ -97,8 +99,8 @@ export function EmptyCanvasHint() {
                 lineHeight: 1.55,
               }}
             >
-              The agent searches your KB, the web, and any configured MCP source —
-              then assembles widgets here.
+              Ask anything — the agent renders widgets on this canvas as it
+              answers. Try one of these to see how it works:
             </p>
             <div
               style={{
@@ -109,9 +111,24 @@ export function EmptyCanvasHint() {
                 fontSize: 12,
               }}
             >
-              <Suggestion icon={<Search className="size-3" />} label="Plan 5 architecture" />
-              <Suggestion icon={<LayoutGrid className="size-3" />} label="Compare tldraw 3 features" />
-              <Suggestion icon={<Globe className="size-3" />} label="What is the Gang of Four?" />
+              <Suggestion
+                icon={<Timer className="size-3" />}
+                label="Build a Pomodoro timer"
+                prompt="Build a Pomodoro timer widget with a 25 minute focus block and a 5 minute break."
+                onClick={sendChat}
+              />
+              <Suggestion
+                icon={<LayoutGrid className="size-3" />}
+                label="Compare React vs Vue"
+                prompt="Compare React and Vue in a table — covering rendering model, state management, ecosystem, and learning curve."
+                onClick={sendChat}
+              />
+              <Suggestion
+                icon={<BookOpen className="size-3" />}
+                label="Explain CAP theorem"
+                prompt="Explain the CAP theorem with concrete examples of CP, AP, and CA systems."
+                onClick={sendChat}
+              />
             </div>
           </div>
         </motion.div>
@@ -120,9 +137,26 @@ export function EmptyCanvasHint() {
   );
 }
 
-function Suggestion({ icon, label }: { icon: React.ReactNode; label: string }) {
+function Suggestion({
+  icon,
+  label,
+  prompt,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  prompt: string;
+  onClick: ((prompt: string) => void) | null;
+}) {
+  const handleClick = () => {
+    if (onClick) onClick(prompt);
+  };
   return (
-    <span
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={!onClick}
+      title={prompt}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -132,10 +166,22 @@ function Suggestion({ icon, label }: { icon: React.ReactNode; label: string }) {
         background: 'rgba(255, 255, 255, 0.04)',
         border: '1px solid rgba(255, 255, 255, 0.06)',
         color: '#d4d4d8',
+        cursor: onClick ? 'pointer' : 'default',
+        fontFamily: 'inherit',
+        fontSize: 'inherit',
+        transition: 'background 120ms ease, border-color 120ms ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
       }}
     >
       <span style={{ color: '#a78bfa' }}>{icon}</span>
       {label}
-    </span>
+    </button>
   );
 }

@@ -32,9 +32,9 @@ export function EmptyChatBanner({
         'Compare two ideas I have notes on',
       ]
     : [
-        'How does this app work?',
-        'Compare REST vs gRPC',
-        'Plan a project kickoff',
+        'Build a Pomodoro timer widget',
+        'Compare React vs Vue in a table',
+        'Explain the CAP theorem with examples',
       ];
 
   return (

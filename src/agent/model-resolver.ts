@@ -16,7 +16,58 @@
 import type { LanguageModel } from 'ai';
 import type { Profile } from '../config/schema.js';
 
+/**
+ * Provider-options shape — `Record<provider-name, Record<option, JSON value>>`.
+ * Mirrors AI SDK's `SharedV3ProviderOptions` (which is unexported from `ai`
+ * in v6). Passed through to `streamText({ providerOptions })`.
+ *
+ * We type the inner values as `any` so callers can build provider-specific
+ * shapes without fighting JSONObject's recursive type; the SDK runtime
+ * still enforces JSON serializability at the wire boundary.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ProviderOptionsRecord = Record<string, Record<string, any>>;
+
+export interface ResolvedModel {
+  model: LanguageModel;
+  /**
+   * Provider-specific options. Today this carries thinking/reasoning config
+   * for models that support it (Anthropic's extended thinking, Google's
+   * Gemini 2.5+ thinkingConfig). Surfaces reasoning deltas to the client
+   * so the `ShowThinking` chat panel has something to display.
+   */
+  providerOptions?: ProviderOptionsRecord;
+}
+
+/**
+ * Heuristic: which model ids support emitting thoughts/reasoning?
+ *
+ * - Gemini 2.5+ Flash and Pro families
+ * - Gemini 3+
+ * - Anthropic Claude Sonnet/Opus 4+ (when extended thinking is enabled)
+ */
+function geminiSupportsThinking(model: string): boolean {
+  // 2.5+ flash/pro support thinking; 2.0 and earlier don't.
+  // -lite variants in 2.5 also support it.
+  if (/^gemini-2\.5/.test(model)) return true;
+  if (/^gemini-3/.test(model)) return true;
+  if (/^gemini-(flash|pro)-(latest|lite-latest)/.test(model)) {
+    // The "-latest" aliases route to the newest version, which supports it.
+    // EXCEPT: gemini-flash-lite-latest is currently aliased to a 2.5-lite
+    // variant that DOES support thinking — confirmed against API responses.
+    return true;
+  }
+  return false;
+}
+
 export async function resolveAiSdkModel(profile: Profile): Promise<LanguageModel> {
+  const { model } = await resolveAiSdkModelWithOptions(profile);
+  return model;
+}
+
+export async function resolveAiSdkModelWithOptions(
+  profile: Profile,
+): Promise<ResolvedModel> {
   const llm = profile.llm;
 
   switch (llm.provider) {
@@ -28,13 +79,25 @@ export async function resolveAiSdkModel(profile: Profile): Promise<LanguageModel
       // claude-agent-sdk literal is undefined so we pick a sensible
       // current Claude model when missing.
       const { anthropic } = await import('@ai-sdk/anthropic');
-      const model = (llm as { model?: string }).model ?? 'claude-sonnet-4-6';
-      return anthropic(model);
+      const modelId = (llm as { model?: string }).model ?? 'claude-sonnet-4-6';
+      const supportsThinking = /claude-(sonnet|opus)-4/.test(modelId);
+      return {
+        model: anthropic(modelId),
+        ...(supportsThinking
+          ? {
+              providerOptions: {
+                anthropic: {
+                  thinking: { type: 'enabled', budgetTokens: 2048 },
+                },
+              } as ProviderOptionsRecord,
+            }
+          : {}),
+      };
     }
 
     case 'openai': {
       const { openai } = await import('@ai-sdk/openai');
-      return openai(llm.model);
+      return { model: openai(llm.model) };
     }
 
     case 'gemini': {
@@ -52,23 +115,42 @@ export async function resolveAiSdkModel(profile: Profile): Promise<LanguageModel
         process.env['GEMINI_API_KEY'];
       const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
       const provider = createGoogleGenerativeAI(apiKey ? { apiKey } : {});
-      return provider(llm.model);
+      // Enable thinking on Gemini 2.5+/3.x and the "-latest" aliases.
+      // includeThoughts: true surfaces the model's reasoning as
+      // `reasoning` parts in the UIMS stream, which our ShowThinking
+      // panel renders. budget=2048 keeps token spend bounded.
+      const supportsThinking = geminiSupportsThinking(llm.model);
+      return {
+        model: provider(llm.model),
+        ...(supportsThinking
+          ? {
+              providerOptions: {
+                google: {
+                  thinkingConfig: {
+                    includeThoughts: true,
+                    thinkingBudget: 2048,
+                  },
+                },
+              } as ProviderOptionsRecord,
+            }
+          : {}),
+      };
     }
 
     case 'groq': {
       const { groq } = await import('@ai-sdk/groq');
-      return groq(llm.model);
+      return { model: groq(llm.model) };
     }
 
     case 'openrouter': {
       const { openrouter } = await import('@openrouter/ai-sdk-provider');
-      return openrouter(llm.model);
+      return { model: openrouter(llm.model) };
     }
 
     case 'ollama': {
       const { createOllama } = await import('ollama-ai-provider-v2');
       const provider = createOllama({ baseURL: llm.baseUrl });
-      return provider(llm.model);
+      return { model: provider(llm.model) };
     }
 
     case 'amp': {
