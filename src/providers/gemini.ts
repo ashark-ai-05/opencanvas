@@ -8,8 +8,11 @@
  * the work — we just point it at the new base URL + key env var.
  *
  * Auth: GOOGLE_API_KEY (recommended) or GEMINI_API_KEY (also accepted).
- * Default model: gemini-2.0-flash. The free tier ships ~15 RPM /
- * 1500 RPD on Flash models — plenty for a public demo.
+ * Default model: gemini-flash-lite-latest. The dated 2.x checkpoints
+ * (gemini-2.0-flash, gemini-2.0-flash-lite) had their free-tier quota
+ * dropped to 0 in mid-2026 and now return HTTP 429 with `limit: 0` —
+ * the `-latest` alias and the 2.5/3.x families still serve free traffic.
+ * Override via OPENCANVAS_LLM_MODEL when you need a pinned version.
  *
  * Used by the public Railway demo (replaces the earlier Groq choice
  * because Groq blocks signups from a list of regions; Gemini's

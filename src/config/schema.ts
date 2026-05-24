@@ -85,7 +85,13 @@ export const ProfileSchema = z.object({
     }),
     z.object({
       provider: z.literal('gemini'),
-      model: z.string().default('gemini-2.0-flash'),
+      // Default to the "-latest" alias. Dated 2.x checkpoints
+      // (gemini-2.0-flash, gemini-2.0-flash-lite) had their free-tier
+      // quota dropped to 0 in mid-2026 — they return HTTP 429 with
+      // `limit: 0` on free tier. The alias routes to a model that
+      // still serves free traffic. Pin a specific version (e.g.
+      // 'gemini-2.5-flash') when you need reproducibility.
+      model: z.string().default('gemini-flash-lite-latest'),
       baseUrl: z
         .string()
         .url()

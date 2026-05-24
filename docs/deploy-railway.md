@@ -31,9 +31,14 @@ limiting.
    pick an existing GCP project).
 3. Copy the key. You'll paste it into Railway in a moment.
 
-The Gemini Flash family (`gemini-2.0-flash`, `gemini-1.5-flash`) is
-free at low-to-moderate traffic. Higher-tier `gemini-2.5-pro` is also
-available but costs after the trial.
+Use the **`gemini-flash-lite-latest`** alias — it's free at low-to-
+moderate traffic and auto-tracks the cheapest current Flash model.
+The 1.5 family is fully retired (returns 404), and the dated 2.x
+checkpoints (`gemini-2.0-flash`, `gemini-2.0-flash-lite`) had their
+free-tier quota dropped to 0 in mid-2026 (they return HTTP 429 with
+`limit: 0`). The `gemini-2.5-flash` model and the `-latest` aliases
+are the working free-tier options. Higher-tier `gemini-2.5-pro` is
+also available but costs after the trial.
 
 ## 2. Create the Railway service
 
@@ -52,7 +57,7 @@ In Railway's dashboard → your service → **Variables**, add:
 | `GOOGLE_API_KEY` | (your key from step 1) | LLM provider auth |
 | `OPENCANVAS_DEMO` | `1` | enables the demo gates (also in `railway.toml`) |
 | `OPENCANVAS_LLM_PROVIDER` | `gemini` | overrides the default Claude profile |
-| `OPENCANVAS_LLM_MODEL` | `gemini-2.0-flash` | model id |
+| `OPENCANVAS_LLM_MODEL` | `gemini-flash-lite-latest` | model alias — see Step 1 |
 | `HOST` | `0.0.0.0` | bind container to all interfaces |
 | `NODE_ENV` | `production` | drop dev-only behaviours |
 
@@ -146,9 +151,16 @@ Both must be present.
 the localhost-only allowlist.
 
 **Chat times out / 429 from Gemini**
-→ Free tier RPM cap is per-key. Switch the model to a smaller one
-(`gemini-1.5-flash-8b`) by updating `OPENCANVAS_LLM_MODEL`, or
-narrow the per-IP cap in `src/backend/demo.ts`.
+→ If the error body mentions `limit: 0` for a dated 2.x checkpoint,
+switch to `OPENCANVAS_LLM_MODEL=gemini-flash-lite-latest` or
+`gemini-2.5-flash` — Google moved the free quota off the dated 2.x
+versions in mid-2026. Otherwise the RPM cap is per-key — narrow the
+per-IP cap in `src/backend/demo.ts` or swap to a cheaper model.
+
+**Chat returns `404 status code (no body)`**
+→ Model id is invalid or retired. The 1.5 family is fully gone. Run
+`curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_API_KEY"`
+to list models your key can actually call.
 
 **`{"error":{"message":"Access denied..."}}`**
 → Geo-restriction from the provider. Gemini is available globally;

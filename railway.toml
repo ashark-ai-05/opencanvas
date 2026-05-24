@@ -29,6 +29,13 @@ NODE_ENV               = "production"
 # Provider profile:
 #   - GOOGLE_API_KEY (set in Railway dashboard) → required, from aistudio.google.com
 #   - OPENCANVAS_LLM_PROVIDER=gemini            → switches the default profile
-#   - OPENCANVAS_LLM_MODEL=gemini-2.0-flash     → free tier, ~15 RPM, 1500 RPD
+#   - OPENCANVAS_LLM_MODEL=gemini-flash-lite-latest → free-tier-friendly alias
+#
+# Why the "-latest" alias and not gemini-2.0-flash?
+# As of mid-2026 Google moved the free-tier quota off the dated 2.x
+# checkpoints (2.0-flash, 2.0-flash-lite) — they return HTTP 429 with
+# `limit: 0` on free tier. The `gemini-flash-lite-latest` alias and the
+# 2.5/3.x families still serve free traffic. Override via env to pick a
+# different model.
 OPENCANVAS_LLM_PROVIDER = "gemini"
-OPENCANVAS_LLM_MODEL    = "gemini-2.0-flash"
+OPENCANVAS_LLM_MODEL    = "gemini-flash-lite-latest"
