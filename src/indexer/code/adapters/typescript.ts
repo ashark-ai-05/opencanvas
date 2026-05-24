@@ -1,3 +1,4 @@
+import { Query } from 'web-tree-sitter';
 import { getParser, type LanguageId } from '../parser.js';
 import type {
   ExtractedSymbol,
@@ -48,10 +49,18 @@ export class TypeScriptAdapter implements LanguageAdapter {
   async extract(source: string): Promise<ExtractedSymbol[]> {
     const parser = await getParser(this.languageId);
     const tree = parser.parse(source);
+    if (!tree) {
+      // web-tree-sitter 0.26+ returns Tree | null (was Tree). Real-world
+      // null only happens when the parser is mis-configured or memory is
+      // exhausted; treat as "no symbols" rather than crashing the indexer.
+      return [];
+    }
 
-    const lang = parser.getLanguage();
-    // Language.query() is the typed API in web-tree-sitter 0.24.x
-    const query = lang.query(QUERY_SOURCE);
+    // web-tree-sitter 0.26+: `Language#query()` became `new Query(language, source)`,
+    // and `parser.getLanguage()` became the `parser.language` field. Both
+    // are mechanical renames — same behavior, new spelling.
+    const lang = parser.language!;
+    const query = new Query(lang, QUERY_SOURCE);
 
     const captures = query.captures(tree.rootNode);
 

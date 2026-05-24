@@ -176,16 +176,42 @@ async function handleV2(
   // a CORS-allowlisted origin (or demo-mode 'any'). The key never
   // touches disk or any other request's context — it's scoped to the
   // resolve call below.
+  //
+  // Validate the provider literal up-front against the known set,
+  // both so an invalid header returns a friendly 400 (not a 500 with
+  // a stack-traceish error from the resolver), and so we don't pass
+  // arbitrary unsanitized strings into the resolver's switch.
+  const VALID_PROVIDERS = [
+    'anthropic-direct',
+    'claude-agent-sdk',
+    'openai',
+    'gemini',
+    'groq',
+    'openrouter',
+    'ollama',
+    'amp',
+  ] as const;
   const byoProvider = c.req.header('X-OpenCanvas-Provider');
   const byoModel = c.req.header('X-OpenCanvas-Model');
   const byoApiKey = c.req.header('X-OpenCanvas-Api-Key');
+  if (byoProvider && byoProvider.trim().length > 0) {
+    if (!(VALID_PROVIDERS as readonly string[]).includes(byoProvider.trim())) {
+      return c.json(
+        {
+          error: 'invalid_provider',
+          hint: `Unknown provider '${byoProvider.trim()}'. Valid: ${VALID_PROVIDERS.join(', ')}.`,
+        },
+        400,
+      );
+    }
+  }
   const effectiveProfile =
     byoProvider && byoProvider.trim().length > 0
       ? {
           ...state.profile,
           llm: {
             ...state.profile.llm,
-            provider: byoProvider as typeof state.profile.llm.provider,
+            provider: byoProvider.trim() as typeof state.profile.llm.provider,
             ...(byoModel && byoModel.trim().length > 0 ? { model: byoModel.trim() } : {}),
           } as typeof state.profile.llm,
         }
@@ -204,7 +230,16 @@ async function handleV2(
     providerOptions = resolved.providerOptions;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return c.json({ error: `model resolution failed: ${message}` }, 500);
+    // Friendly client error — keeps internal file paths out of the
+    // response body. Full detail still logs server-side.
+    console.error('[chat v2] model resolution failed:', message);
+    return c.json(
+      {
+        error: 'model_resolution_failed',
+        hint: 'The configured LLM could not be initialized. Check the provider + API key settings.',
+      },
+      500,
+    );
   }
 
   // Convert the React app's UIMessage[] into AI SDK ModelMessage[].

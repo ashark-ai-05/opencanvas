@@ -401,7 +401,10 @@ async function runTeamV2(
       providerOptions = resolved.providerOptions;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      await s.write(`data: ${JSON.stringify({ type: 'error', errorText: `model resolution failed: ${msg}` })}\n\n`);
+      // Server-side log retains the detail; client gets a friendly
+      // message without internal file paths.
+      console.error('[team v2] model resolution failed:', msg);
+      await s.write(`data: ${JSON.stringify({ type: 'error', errorText: 'Could not initialize the configured LLM for the team route. Check provider + API key.' })}\n\n`);
       await s.write(`data: ${JSON.stringify({ type: 'finish', finishReason: 'error' })}\n\n`);
       await s.write('data: [DONE]\n\n');
       return;

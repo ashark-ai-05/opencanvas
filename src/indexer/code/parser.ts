@@ -2,12 +2,15 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 
-// web-tree-sitter uses `export = Parser` (CommonJS-style module),
-// so we use the namespace import form.
-import Parser from 'web-tree-sitter';
+// web-tree-sitter 0.26+ moved from a default-export namespace to named
+// class exports — `Parser` and `Language` are now standalone classes.
+// Old code (pre-0.26): `import Parser from 'web-tree-sitter'; new Parser();
+//                       Parser.Language.load(); Parser.init();`
+// New code (this file): named imports + same call patterns.
+import { Parser, Language } from 'web-tree-sitter';
 
 let initPromise: Promise<void> | null = null;
-const grammarCache = new Map<string, Parser.Language>();
+const grammarCache = new Map<string, Language>();
 
 async function ensureInit(): Promise<void> {
   if (!initPromise) {
@@ -52,7 +55,7 @@ export async function getParser(language: LanguageId): Promise<Parser> {
   if (!grammar) {
     const { pkg, file } = GRAMMAR_FILES[language];
     const wasmPath = resolveGrammarWasm(pkg, file);
-    grammar = await Parser.Language.load(wasmPath);
+    grammar = await Language.load(wasmPath);
     grammarCache.set(language, grammar);
   }
   const parser = new Parser();
