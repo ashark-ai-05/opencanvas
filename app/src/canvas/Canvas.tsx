@@ -25,6 +25,7 @@ import { computeCanvasSnapshot } from './snapshot';
 import { setLatestSnapshot } from '../state/snapshot-ref';
 import { setEditor } from '../state/editor-ref';
 import { useTemplateStore } from '../state/template-store';
+import { seedWelcomeWidgetsIfFirstVisit } from '../state/welcome-widgets';
 import { useCanvasStats } from '../state/canvas-stats-store';
 import { useConversationsStore } from '../state/conversations-store';
 import { useThemeStore, tldrawColorSchemeFor } from '../state/theme-store';
@@ -125,6 +126,20 @@ export function Canvas() {
         }
       };
       seedKinds();
+
+      // First-visit welcome: drop 3 sample widgets if this browser has
+      // never seen OpenCanvas before AND the canvas is empty. Removes
+      // the empty-canvas-paralysis problem for cold visitors. Returns
+      // immediately on repeat visits.
+      // Defer to a microtask so tldraw's mount-time bookkeeping (camera
+      // bounds, viewport size) settles before we measure the canvas.
+      queueMicrotask(() => {
+        const tplId = useTemplateStore.getState().activeTemplateId;
+        seedWelcomeWidgetsIfFirstVisit(editor, tplId);
+        // Re-seed `knownShapeKinds` so the welcome widgets aren't
+        // counted as fresh placements by the diff loop below.
+        seedKinds();
+      });
 
       editor.store.listen(() => {
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
