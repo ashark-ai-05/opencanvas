@@ -42,6 +42,28 @@ export function registerBuiltinWidgets(registry: WidgetRegistry): void {
   });
 
   registry.register({
+    kind: 'mermaid',
+    label: 'Mermaid diagram',
+    description:
+      "Render a Mermaid diagram (flowchart, sequence, class, state, gantt, " +
+      "pie, ER, journey, gitgraph, etc.). Pass {code, title?} — `code` is " +
+      "the Mermaid source WITHOUT the surrounding ```mermaid fence. Use " +
+      "this for any diagram, flow, or graph the user asks for; do NOT " +
+      "hand-roll HTML/CSS via the `html` plugin for diagrams.\n" +
+      "Examples:\n" +
+      "  - flowchart:  code: 'graph TD; A[Start] --> B{Decide}; B -->|yes| C[Do X]; B -->|no| D[Do Y]'\n" +
+      "  - sequence:   code: 'sequenceDiagram; Alice->>Bob: Hello; Bob-->>Alice: Hi'\n" +
+      "  - gantt:      code: 'gantt; title Project; dateFormat YYYY-MM-DD; section Design; Spec :a1, 2026-01-01, 7d'\n" +
+      "  - pie:        code: 'pie title Languages; \"Go\" : 45; \"TS\" : 35; \"Rust\" : 20'",
+    renderer: {
+      type: 'iframe',
+      sandbox: 'allow-scripts',
+      defaultSize: { w: 520, h: 360 },
+      srcdoc: MERMAID_SRCDOC,
+    },
+  });
+
+  registry.register({
     kind: 'calendar',
     label: 'Calendar',
     description:
@@ -129,6 +151,123 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
 })();
 </script>
 </body></html>`;
+
+/**
+ * Mermaid diagram renderer template.
+ *
+ * Loads mermaid.js from a CDN inside the sandboxed iframe (sandbox =
+ * allow-scripts, no allow-same-origin — same as chart). Reads
+ * `code` (the raw Mermaid source) from window.opencanvas.props on
+ * first paint; subsequent prop updates arrive via the
+ * 'opencanvas:props' DOM event. Dark theme baked into mermaid.initialize
+ * so diagrams look right against OpenCanvas card surfaces.
+ *
+ * Props shape: { code: string, title?: string }
+ *   - code: the Mermaid source WITHOUT the surrounding triple-backtick fence
+ *   - title: optional caption rendered above the diagram
+ *
+ * Security: the inserted SVG comes from mermaid.js (a trusted library)
+ * and is rendered inside a double-sandboxed iframe (outer = the plugin
+ * surface with allow-scripts only; mermaid runs in there). Even so we
+ * use DOMParser + importNode rather than innerHTML so the hot path
+ * doesn't touch a string-to-DOM API that could be misused later.
+ */
+const MERMAID_SRCDOC = `<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;font-family:'Inter',system-ui,sans-serif}
+#root{padding:14px;height:100%;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.title{font-size:12px;font-weight:600;letter-spacing:-0.012em;color:#fafafa;text-align:center;flex-shrink:0}
+#diagram{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto}
+#diagram svg{max-width:100%;max-height:100%;height:auto;width:auto}
+.empty{color:#a1a1aa;font-size:12px;padding:24px;text-align:center;line-height:1.5}
+.empty .ck{background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;color:#ddd6fe;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
+.error{color:#fca5a5;font-size:11px;padding:18px;font-family:'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;overflow:auto}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head><body><div id="root"></div>
+<script>
+(function(){
+  var root=document.getElementById("root");
+  var initialized=false;
+  function ensureMermaid(){
+    if(initialized||typeof mermaid==="undefined")return false;
+    mermaid.initialize({
+      startOnLoad:false,
+      theme:"dark",
+      themeVariables:{
+        background:"transparent",
+        primaryColor:"#a78bfa",
+        primaryTextColor:"#fafafa",
+        primaryBorderColor:"#a78bfa",
+        lineColor:"#a1a1aa",
+        secondaryColor:"#60a5fa",
+        tertiaryColor:"#34d399",
+        fontFamily:"Inter, system-ui, sans-serif",
+        fontSize:"13px"
+      },
+      securityLevel:"loose",
+      flowchart:{useMaxWidth:true,htmlLabels:true},
+      gantt:{useMaxWidth:true},
+      sequence:{useMaxWidth:true}
+    });
+    initialized=true;
+    return true;
+  }
+  function clear(node){while(node.firstChild)node.removeChild(node.firstChild);}
+  function showEmpty(){
+    clear(root);
+    var d=document.createElement("div");d.className="empty";
+    var t1=document.createTextNode("No diagram yet \\u2014 pass ");
+    var ck=document.createElement("span");ck.className="ck";ck.textContent="{code}";
+    var t2=document.createTextNode(" in the payload (Mermaid source).");
+    d.appendChild(t1);d.appendChild(ck);d.appendChild(t2);
+    root.appendChild(d);
+  }
+  function showError(msg){
+    clear(root);
+    var p=document.createElement("pre");p.className="error";
+    p.textContent="Mermaid error: "+String(msg);
+    root.appendChild(p);
+  }
+  function svgFromString(s){
+    // Use DOMParser instead of writing markup directly into the DOM.
+    var parser=new DOMParser();
+    var doc=parser.parseFromString(s,"image/svg+xml");
+    var node=doc.documentElement;
+    return document.importNode(node,true);
+  }
+  function render(props){
+    var p=props||{};
+    var code=typeof p.code==="string"?p.code.trim():"";
+    if(!code){showEmpty();return;}
+    if(!ensureMermaid()){
+      setTimeout(function(){render(p);},120);
+      return;
+    }
+    clear(root);
+    if(p.title){
+      var t=document.createElement("div");t.className="title";t.textContent=String(p.title);root.appendChild(t);
+    }
+    var d=document.createElement("div");d.id="diagram";root.appendChild(d);
+    var id="m"+Date.now()+Math.floor(Math.random()*1e6);
+    try{
+      mermaid.render(id,code).then(function(out){
+        try{
+          d.appendChild(svgFromString(out.svg));
+          if(out.bindFunctions)out.bindFunctions(d);
+        }catch(e){showError(e&&e.message?e.message:e);}
+      }).catch(function(e){showError(e&&e.message?e.message:e);});
+    }catch(e){showError(e&&e.message?e.message:e);}
+  }
+  function readProps(){return window.opencanvas&&window.opencanvas.props||null;}
+  render(readProps());
+  window.addEventListener("opencanvas:props",function(e){
+    render(e&&e.detail&&e.detail.props?e.detail.props:null);
+  });
+})();
+</script></body></html>`;
 
 /**
  * Calendar renderer template.
