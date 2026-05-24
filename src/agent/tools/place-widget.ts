@@ -210,6 +210,38 @@ function executePlaceWidget(
   plugins: PluginKindHint[] | undefined,
   args: Args,
 ): PlaceResult {
+  const result = executePlaceWidgetInner(plugins, args);
+  // Diagnostic: trace what the model called vs. what was actually placed.
+  // Hypothesis under test on Railway/Gemini: weak models pick kind:'html'
+  // for pomodoro/timer requests instead of kind:'time', producing janky
+  // hand-rolled widgets instead of the native time renderer. Remove once
+  // confirmed/refuted. Grep Railway logs: `[place_widget]`.
+  const payload =
+    typeof args.payload === 'object' && args.payload !== null
+      ? (args.payload as Record<string, unknown>)
+      : null;
+  console.log(
+    '[place_widget]',
+    JSON.stringify({
+      requestedKind: args.kind,
+      role: args.role,
+      payloadKeys: payload ? Object.keys(payload) : null,
+      mode: typeof payload?.['mode'] === 'string' ? payload['mode'] : undefined,
+      hasHtmlField: typeof payload?.['html'] === 'string',
+      resolvedKind: result.ok
+        ? (result.directive as { kind: string }).kind
+        : null,
+      ok: result.ok,
+      error: result.ok ? undefined : result.error.slice(0, 200),
+    }),
+  );
+  return result;
+}
+
+function executePlaceWidgetInner(
+  plugins: PluginKindHint[] | undefined,
+  args: Args,
+): PlaceResult {
   const id = randomUUID();
   const knownKind = (WIDGET_KINDS as readonly string[]).includes(args.kind)
     ? (args.kind as WidgetKind)
