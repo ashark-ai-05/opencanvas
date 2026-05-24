@@ -20,6 +20,11 @@ import {
 } from './refresh-scheduler.js';
 import { WidgetRegistry } from './widget-registry.js';
 import { registerBuiltinWidgets } from './builtin-widgets.js';
+import {
+  loadPersistedTemplates,
+  persistTemplate,
+  deletePersistedTemplate,
+} from './template-persistence.js';
 import { AgentScheduler } from './agent-scheduler.js';
 import { NotebookStore } from './notebook-store.js';
 
@@ -323,11 +328,35 @@ export class BackendState {
   private widgetRegistry: WidgetRegistry | null = null;
   getWidgetRegistry(): WidgetRegistry {
     if (!this.widgetRegistry) {
-      this.widgetRegistry = new WidgetRegistry();
-      // Built-in plugins (chart, etc.) are registered before any
-      // external POSTs so they're always available — even when the
-      // backend boots cold and no third-party plugin has registered.
-      registerBuiltinWidgets(this.widgetRegistry);
+      const registry = new WidgetRegistry();
+      // Built-in plugins (chart, etc.) — registered first, BEFORE the
+      // persistence subscriber is attached so they don't get re-saved
+      // to disk on every boot. Always available on cold start.
+      registerBuiltinWidgets(registry);
+
+      // Persisted user templates — loaded from ~/.opencanvas/templates.json
+      // (or $OPENCANVAS_TEMPLATES_PATH). These are templates the agent
+      // saved via register_widget_kind in prior sessions. Loaded with the
+      // subscriber NOT yet attached so the load is a no-op for the file
+      // (otherwise we'd rewrite it on every boot for no reason).
+      // See src/backend/template-persistence.ts.
+      for (const t of loadPersistedTemplates()) {
+        registry.register(t);
+      }
+
+      // Subscribe AFTER built-ins + persisted templates are loaded.
+      // From here on, every register/unregister event is written through
+      // to disk — that's the "self-improving widgets" loop: a template
+      // registered during one chat turn survives the restart.
+      registry.subscribe((event) => {
+        if (event.type === 'register') {
+          persistTemplate(event.descriptor);
+        } else if (event.type === 'unregister') {
+          deletePersistedTemplate(event.kind);
+        }
+      });
+
+      this.widgetRegistry = registry;
     }
     return this.widgetRegistry;
   }

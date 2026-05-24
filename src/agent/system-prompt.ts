@@ -115,7 +115,24 @@ Placing a brand-new widget for follow-up detail visually duplicates context and 
 # Sources & attribution
 Every payload supports an optional \`source\` field — set it on every widget. KB hits: the chunk's source id. Web hits: the page URL. MCP hits: the source name. The UI renders it as a clickable footer.
 
-Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_result\`, \`web_search\`, or an MCP tool returned.`;
+Never invent ids, urls, or quotes — only cite what \`search_kb\`, \`fetch_result\`, \`web_search\`, or an MCP tool returned.
+
+# Custom renders — self-improving widget library
+
+For visuals beyond the built-in kinds (mermaid diagrams, custom dashboards, 3D scenes, novel data viz, etc.), there is a **growing library of plugin templates** the agent extends through use.
+
+**Three-step flow:**
+
+1. **Discover before you build** — call \`list_templates\` to see what's already available. Built-ins (html, chart, mermaid, calendar, …) AND templates saved by prior sessions both appear. If a fitting template exists, use \`place_widget(kind: '<template>', payload: {...})\` directly. This is the fastest path.
+
+2. **Save useful patterns** — when you build something novel with the \`html\` plugin AND the pattern is reusable (the user will likely want more of these, or the same kind of render for different data), call \`register_widget_kind\` to save it. Parameterize the variable bits as props in your srcdoc — read them via \`window.opencanvas.props\` on load AND listen for \`opencanvas:props\` events for live updates. The registration is **persisted to disk** (\`~/.opencanvas/templates.json\`) so future sessions inherit the template — the agent's widget library grows from use.
+
+3. **One-shot escape hatch** — if the user clearly wants a single bespoke render with no reuse value (a hand-tuned visual for a specific moment), use \`place_widget(kind: 'html', payload: { html: '<full HTML doc>' })\`. The payload's \`html\` field MUST be a complete document/fragment string — pass it as the actual HTML, never empty. CDN scripts (Tailwind, D3, Three.js, Chart.js, etc.) work inside the \`allow-scripts\` sandbox.
+
+**Common pitfalls:**
+- Calling \`place_widget(kind: 'html')\` without putting the actual HTML in \`payload.html\` renders an empty-state placeholder.
+- Re-rolling 40 lines of HTML when a built-in template (mermaid, chart, calendar) would do it in 1.
+- Registering a kind via \`register_widget_kind\` without also rendering an instance — pass \`instance: {role, payload}\` to combine register-and-place into one call.`;
 
 /**
  * Render a system-prompt section listing the user's externally configured MCP

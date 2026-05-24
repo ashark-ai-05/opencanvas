@@ -15,6 +15,7 @@ import { completeTaskTool, completeTaskToolV2 } from './complete-task.js';
 import { readNotesTool, readNotesToolV2 } from './read-notes.js';
 import { appendToNotesTool, appendToNotesToolV2 } from './append-to-notes.js';
 import { registerWidgetKindTool, registerWidgetKindToolV2 } from './register-widget-kind.js';
+import { listTemplatesTool, listTemplatesToolV2 } from './list-templates.js';
 import type { CanvasSnapshot } from '../canvas-snapshot.js';
 import type { WidgetStreamBus } from '../widget-stream-bus.js';
 import type { NotebookStore } from '../../backend/notebook-store.js';
@@ -159,6 +160,7 @@ export function buildOpenCanvasTools(
 
   if (ctx.getWidgetRegistry) {
     tools['register_widget_kind'] = registerWidgetKindToolV2(ctx);
+    tools['list_templates'] = listTemplatesToolV2(ctx);
   }
 
   return tools;
