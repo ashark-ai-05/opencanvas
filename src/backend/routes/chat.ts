@@ -8,6 +8,7 @@ import { buildSystemPrompt } from '../../agent/system-prompt.js';
 import { buildOpenCanvasTools } from '../../agent/tools/index.js';
 import { resolveAiSdkModelWithOptions } from '../../agent/model-resolver.js';
 import { loadExternalMcpTools } from '../../agent/mcp-integration.js';
+import { extractAndRegisterTemplate } from '../../agent/template-extractor.js';
 import {
   streamText,
   convertToModelMessages,
@@ -183,6 +184,16 @@ async function handleV2(
   // convertToModelMessages expects.
   const modelMessages = await convertToModelMessages(messages as unknown as UIMessage[]);
 
+  // Pluck the last user message for the template extractor — gives it
+  // context for naming/describing any template it generalises.
+  const lastUserText = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m?.role === 'user') return extractText(m);
+    }
+    return '';
+  })();
+
   // Agentic loop: cap at 8 steps. Each step = model emits tool calls,
   // we execute them, then call the model again with the results.
   // 8 is generous for most demo turns (most are 1-2 steps).
@@ -194,10 +205,20 @@ async function handleV2(
     stopWhen: stepCountIs(8),
     abortSignal: c.req.raw.signal,
     ...(providerOptions ? { providerOptions } : {}),
-    onFinish: () => {
-      // Drop the per-turn MCP clients. No await — let the close run
-      // in the background so we don't block the stream's natural end.
+    onFinish: (info) => {
+      // Drop the per-turn MCP clients.
       void mcp.close();
+      // Background "learn from this render" pass — when the agent used
+      // the universal html plugin to one-shot something, queue a small
+      // LLM call that generalises the HTML into a reusable template.
+      // Fire-and-forget; never blocks the response or surfaces errors.
+      void scheduleTemplateExtraction({
+        steps: info.steps,
+        userMessage: lastUserText,
+        registry,
+        model,
+        providerOptions,
+      });
     },
     onAbort: () => {
       void mcp.close();
@@ -207,6 +228,67 @@ async function handleV2(
   // Returns a Response with UIMS headers + body. Hono passes it through
   // unchanged. The browser's `useChat` consumes the protocol directly.
   return result.toUIMessageStreamResponse();
+}
+
+/**
+ * Walk a finished streamText result's steps for any `place_widget` tool
+ * call that placed a kind:'html' widget with non-trivial html, and
+ * trigger template extraction. Skip if no qualifying render found.
+ *
+ * Why steps and not tool_calls directly: AI SDK 6's StreamTextResult
+ * exposes the run as an array of "steps" (each step = model turn +
+ * tool executions). Tool calls live at info.steps[i].toolCalls; the
+ * matching results live at info.steps[i].toolResults. We need both —
+ * the input has the original html string the user/model passed; the
+ * result confirms it actually placed (vs erroring).
+ */
+async function scheduleTemplateExtraction(args: {
+  steps: ReadonlyArray<{
+    toolCalls?: ReadonlyArray<{
+      toolName: string;
+      input?: unknown;
+    }>;
+    toolResults?: ReadonlyArray<{
+      toolName: string;
+      output?: unknown;
+    }>;
+  }>;
+  userMessage: string;
+  registry: import('../widget-registry.js').WidgetRegistry;
+  model: import('ai').LanguageModel;
+  providerOptions: import('../../agent/model-resolver.js').ProviderOptionsRecord | undefined;
+}): Promise<void> {
+  for (const step of args.steps) {
+    const calls = step.toolCalls ?? [];
+    const results = step.toolResults ?? [];
+    for (let i = 0; i < calls.length; i++) {
+      const call = calls[i];
+      if (!call || call.toolName !== 'place_widget') continue;
+      const input = call.input as { kind?: string; payload?: { html?: string; title?: string } } | undefined;
+      if (input?.kind !== 'html') continue;
+      const html = input.payload?.html;
+      if (typeof html !== 'string' || html.length < 200) continue;
+      // Only extract if the call actually succeeded (didn't return an
+      // error envelope). Look for the matching result.
+      const matching = results.find((r) => r.toolName === 'place_widget');
+      const out = matching?.output as { ok?: boolean } | undefined;
+      if (out && out.ok === false) continue;
+      // Fire the extraction. Errors are logged inside, never thrown out.
+      void extractAndRegisterTemplate(
+        {
+          html,
+          userMessage: args.userMessage,
+          ...(input.payload?.title ? { title: input.payload.title } : {}),
+        },
+        args.model,
+        args.registry,
+        args.providerOptions,
+      );
+      // Only extract for the first html render of the turn — multiple
+      // identical extractions would waste tokens.
+      return;
+    }
+  }
 }
 
 export function chatRoute(state: BackendState): Hono {

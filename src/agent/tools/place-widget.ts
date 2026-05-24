@@ -69,6 +69,76 @@ function pluginsSection(plugins: PluginKindHint[] | undefined): string {
 }
 
 /**
+ * Smart routing — infer which built-in plugin kind matches a payload
+ * shape when the agent passes an unrecognised `kind` name. Lets calls
+ * like `place_widget({kind: 'sine-wave-anim', payload: {html: '...'}})`
+ * still render via the html plugin instead of erroring out — the agent
+ * gets credit for "shape-matching the right primitive" without having
+ * to know the exact kind name.
+ *
+ * Order matters: checks are specific → generic. `mermaid` is checked
+ * before generic 'code' so a mermaid-shaped code field doesn't get
+ * misrouted, etc.
+ *
+ * Returns the plugin kind to route to, or null if no shape matches.
+ * Only returns kinds that exist in `plugins` (the registry's current
+ * contents), so a built-in deleted later doesn't trigger orphan routes.
+ */
+function inferPluginKindFromPayload(
+  payload: unknown,
+  plugins: PluginKindHint[] | undefined,
+): string | null {
+  if (typeof payload !== 'object' || payload === null) return null;
+  const p = payload as Record<string, unknown>;
+  const pluginExists = (name: string) =>
+    plugins?.some((pl) => pl.kind === name) ?? false;
+
+  // Mermaid: `code` is a string, looks like a mermaid diagram source.
+  if (typeof p['code'] === 'string' && looksLikeMermaid(p['code'])) {
+    if (pluginExists('mermaid')) return 'mermaid';
+  }
+
+  // Vega-Lite chart: payload.spec is an object.
+  if (typeof p['spec'] === 'object' && p['spec'] !== null) {
+    if (pluginExists('chart')) return 'chart';
+  }
+
+  // Calendar: events array OR view + (year|month).
+  if (
+    (Array.isArray(p['events']) && p['events'].length >= 0) ||
+    (typeof p['view'] === 'string' &&
+      (typeof p['year'] === 'number' || typeof p['month'] === 'number'))
+  ) {
+    if (pluginExists('calendar')) return 'calendar';
+  }
+
+  // Universal escape hatch: payload.html is a non-empty string.
+  if (typeof p['html'] === 'string' && (p['html'] as string).length > 20) {
+    if (pluginExists('html')) return 'html';
+  }
+
+  return null;
+}
+
+function looksLikeMermaid(code: string): boolean {
+  const head = code.trim().slice(0, 80).toLowerCase();
+  return (
+    head.startsWith('graph ') ||
+    head.startsWith('flowchart ') ||
+    head.startsWith('sequencediagram') ||
+    head.startsWith('classdiagram') ||
+    head.startsWith('statediagram') ||
+    head.startsWith('erdiagram') ||
+    head.startsWith('gantt') ||
+    head.startsWith('pie ') ||
+    head.startsWith('journey') ||
+    head.startsWith('gitgraph') ||
+    head.startsWith('mindmap') ||
+    head.startsWith('timeline')
+  );
+}
+
+/**
  * Required-prop schema for built-in plugin kinds. When the agent calls
  * `place_widget(kind: 'html')` without `payload.html`, the placement
  * succeeds at the tool level but the rendered widget shows the
@@ -144,9 +214,22 @@ function executePlaceWidget(
   const knownKind = (WIDGET_KINDS as readonly string[]).includes(args.kind)
     ? (args.kind as WidgetKind)
     : null;
-  const pluginKind = !knownKind && plugins?.some((p) => p.kind === args.kind)
-    ? args.kind
-    : null;
+  let pluginKind: string | null =
+    !knownKind && plugins?.some((p) => p.kind === args.kind)
+      ? args.kind
+      : null;
+
+  // Smart routing: if the agent passes an UNKNOWN kind name (not built-in,
+  // not registered), inspect the payload shape and route to whichever
+  // built-in plugin matches. Rescues calls like
+  // `place_widget(kind: 'mermaid-flow', payload: {code: '...'})` where
+  // the kind was invented but the payload shape is recognizable.
+  if (!knownKind && !pluginKind) {
+    const inferred = inferPluginKindFromPayload(args.payload, plugins);
+    if (inferred) {
+      pluginKind = inferred;
+    }
+  }
 
   // 1. Built-in kind path — strict payload validation.
   if (knownKind) {
