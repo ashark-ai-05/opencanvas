@@ -187,7 +187,18 @@ function PluginBody({ shape }: { shape: PluginShape }) {
  *     window.opencanvas.props, replacing on each update
  */
 function wrapSrcdoc(srcdoc: string, props: Record<string, unknown>): string {
-  const initial = JSON.stringify(props);
+  // Embedding JSON inside a <script> tag is unsafe if any string value
+  // contains `</script>` — the HTML parser sees that as the close of the
+  // wrapping script tag, and everything after gets rendered as visible
+  // text. This bites the `html` plugin specifically: agents routinely
+  // pass payload.html = '<!doctype html>...<script>...</script>...'
+  // and the inner `</script>` breaks the shim.
+  //
+  // Fix: escape `</` as `<\/` inside the JSON before embedding. The
+  // JavaScript parser treats `<\/script>` identically to `</script>`
+  // when it's INSIDE a string literal, but the HTML tokenizer no longer
+  // sees a closing tag. Standard pattern for inline JSON-in-HTML.
+  const initial = JSON.stringify(props).replace(/<\/(script|style)/gi, '<\\/$1');
   const shim = `
 <script>
 (function () {
