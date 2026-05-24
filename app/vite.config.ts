@@ -97,9 +97,25 @@ export default defineConfig({
           if (id.includes('/lucide-react/')) {
             return 'vendor-icons';
           }
-          if (id.includes('/react/') || id.includes('/react-dom/')) {
-            return 'vendor-react';
-          }
+          // No manual chunk for react/react-dom.
+          //
+          // Splitting react+react-dom into vendor-react produced a circular
+          // cross-chunk import: vendor-react imported 14 symbols from the
+          // catch-all `vendor` (utilities that happen to live next to react)
+          // and `vendor` imported 16 symbols from vendor-react (anything in
+          // the catch-all that uses React itself — which is ~half of vendor).
+          // Under Rollup's minified output this minified into
+          //   Uncaught ReferenceError: Cannot access 'Z' before initialization
+          //     at vendor-D-7Zb80G.js:9:4310
+          // (Z is the minified name of one of the symbols re-exported through
+          // the cycle). The error was masked while the markdown chunk was
+          // also creating a cycle — once that one was removed, eval order
+          // shifted and the react cycle started firing.
+          //
+          // Letting react live in `vendor` adds ~194KB raw / ~60KB gzipped
+          // to the main vendor chunk. The remaining manual chunk
+          // (vendor-tldraw) is genuinely isolated and big enough that
+          // splitting it still pays off; everything else folds in.
           return 'vendor';
         },
       },
