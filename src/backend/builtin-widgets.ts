@@ -192,7 +192,7 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
 .error{color:#fca5a5;font-size:11px;padding:18px;font-family:'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;overflow:auto;line-height:1.45}
 .status{color:#a1a1aa;font-size:11px;padding:14px;text-align:center;font-family:'JetBrains Mono',ui-monospace,monospace}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" onerror="window.__mermaidCdnFailed=true"></script>
+<script src="/vendor/mermaid.min.js" onerror="window.__mermaidCdnFailed=true"></script>
 </head><body><div id="root"></div>
 <script>
 (function(){
@@ -566,9 +566,9 @@ html,body{margin:0;padding:0;height:100%;background:transparent;color:#fafafa;fo
 .empty .ck{background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;color:#ddd6fe;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px}
 .error{color:#fca5a5;font-size:11px;padding:18px;font-family:'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap;overflow:auto}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/vega@5.30.0/build/vega.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0/build/vega-lite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0/build/vega-embed.min.js"></script>
+<script src="/vendor/vega.min.js"></script>
+<script src="/vendor/vega-lite.min.js"></script>
+<script src="/vendor/vega-embed.min.js"></script>
 </head><body>
 <div id="chart"></div>
 <script>
