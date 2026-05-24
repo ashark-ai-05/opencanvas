@@ -7,6 +7,7 @@ import { buildPreferencesHint } from '../../agent/preferences-hint.js';
 import { buildSystemPrompt } from '../../agent/system-prompt.js';
 import { buildOpenCanvasTools } from '../../agent/tools/index.js';
 import { resolveAiSdkModel } from '../../agent/model-resolver.js';
+import { loadExternalMcpTools } from '../../agent/mcp-integration.js';
 import {
   streamText,
   convertToModelMessages,
@@ -136,7 +137,7 @@ async function handleV2(
   // Build the per-turn tool context. Notebook store getter is wired
   // conditionally — `buildOpenCanvasTools` simply omits the notebook
   // tools when getNotebookStore is undefined.
-  const tools = buildOpenCanvasTools({
+  const openCanvasTools = buildOpenCanvasTools({
     search: state.getSearchService(),
     webSearch: state.getWebSearchProvider(),
     getSnapshot: () => canvasSnapshot,
@@ -148,10 +149,19 @@ async function handleV2(
     getWidgetRegistry: () => registry,
   });
 
-  // Compose the system prompt — DEFAULT_SYSTEM_PROMPT + optional
-  // selection block + the upstream trailer (preferences hint, etc.).
+  // Phase 3: external MCP sources. Connect to every configured source,
+  // discover its tools, wrap each as an AI SDK Tool keyed by
+  // `mcp__<sourceId>__<toolName>`. Per-turn client lifecycle — closed
+  // in onFinish below. Sources that fail to connect are skipped (logged).
+  const mcp = await loadExternalMcpTools(state.profile.sources);
+  const tools = { ...openCanvasTools, ...mcp.tools };
+
+  // Compose the system prompt — DEFAULT_SYSTEM_PROMPT + selection block +
+  // external-tools block (if any MCP sources loaded) + the upstream
+  // trailer (preferences hint, etc.).
   const system = buildSystemPrompt({
     canvasSnapshot,
+    ...(mcp.sources.length > 0 ? { externalSources: mcp.sources } : {}),
     ...(systemPromptTrailer ? { trailer: systemPromptTrailer } : {}),
   });
 
@@ -179,6 +189,14 @@ async function handleV2(
     tools,
     stopWhen: stepCountIs(8),
     abortSignal: c.req.raw.signal,
+    onFinish: () => {
+      // Drop the per-turn MCP clients. No await — let the close run
+      // in the background so we don't block the stream's natural end.
+      void mcp.close();
+    },
+    onAbort: () => {
+      void mcp.close();
+    },
   });
 
   // Returns a Response with UIMS headers + body. Hono passes it through
