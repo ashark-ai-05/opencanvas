@@ -10,6 +10,7 @@ import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
 import { SettingsModal } from './components/SettingsModal';
 import { ShareButton } from './components/ShareButton';
+import { ScreenshotButton } from './components/ScreenshotButton';
 import { OnboardingTour } from './components/OnboardingTour';
 import { useUserSettings } from './state/user-settings-store';
 import { ConversationsSidebar } from './components/ConversationsSidebar';
@@ -249,6 +250,7 @@ export function App() {
           >
             <ServerCog className="size-3.5" />
           </button>
+          <ScreenshotButton />
           <ShareButton activeId={activeId} />
           <button
             type="button"
