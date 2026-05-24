@@ -74,7 +74,7 @@
     "@huggingface/transformers": "^4.0.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@openrouter/ai-sdk-provider": "^2.9.0",
-    "@sourcegraph/amp-sdk": "0.1.0-20260523052302-gdb2632b",
+    "@sourcegraph/amp-sdk": "0.1.0-20260524123501-g6d0650a",
     "ai": "^6.0.0",
     "better-sqlite3": "^11.0.0",
     "cron-parser": "^5.5.0",
