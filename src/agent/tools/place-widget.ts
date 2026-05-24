@@ -68,6 +68,39 @@ function pluginsSection(plugins: PluginKindHint[] | undefined): string {
   ].join('\n');
 }
 
+/**
+ * Required-prop schema for built-in plugin kinds. When the agent calls
+ * `place_widget(kind: 'html')` without `payload.html`, the placement
+ * succeeds at the tool level but the rendered widget shows the
+ * plugin's empty-state placeholder — which the agent interprets as
+ * success, leaving the user with a broken widget. Validate up-front
+ * for the known shapes so the agent gets an immediate, actionable
+ * error instead.
+ *
+ * Future: extend `PluginKindDescriptor` with a `requiredProps?` array
+ * so user-registered kinds can declare the same contract.
+ */
+const BUILTIN_PLUGIN_REQUIREMENTS: Record<
+  string,
+  { prop: string; type: 'string' | 'object'; example: string }
+> = {
+  html: {
+    prop: 'html',
+    type: 'string',
+    example: `payload: { html: '<!doctype html><html><body>...</body></html>' }`,
+  },
+  chart: {
+    prop: 'spec',
+    type: 'object',
+    example: `payload: { spec: { mark: 'bar', encoding: { x: {...}, y: {...} }, data: { values: [...] } } } (Vega-Lite v5)`,
+  },
+  mermaid: {
+    prop: 'code',
+    type: 'string',
+    example: `payload: { code: 'sequenceDiagram\\n  Alice->>Bob: Hello' }`,
+  },
+};
+
 /** Build the description string lazily so plugins can be appended per-build. */
 function buildDescription(plugins?: PluginKindHint[]): string {
   return `Place a widget on the canvas at the role's slot in the active template.
@@ -144,13 +177,39 @@ function executePlaceWidget(
 
   // 2. Plugin kind path — wrap as `kind: 'plugin'` directive that the
   // browser's PluginShape resolves via the registered iframe-srcdoc
-  // descriptor. Plugins accept arbitrary `payload` objects (no
-  // schema validation here); the srcdoc handles what it gets via
-  // window.opencanvas.props.
+  // descriptor.
   if (pluginKind) {
     const inner = (typeof args.payload === 'object' && args.payload !== null
       ? args.payload
       : {}) as Record<string, unknown>;
+
+    // Up-front validation for built-in plugin kinds with well-known
+    // required props. Without this, the model would silently produce
+    // a widget showing the plugin's empty-state placeholder ("No html
+    // prop yet — pass {html} as a string") which it interprets as
+    // success. Returning an error here forces it to retry with the
+    // right payload shape.
+    const requirement = BUILTIN_PLUGIN_REQUIREMENTS[pluginKind];
+    if (requirement) {
+      const value = inner[requirement.prop];
+      const valid =
+        requirement.type === 'string'
+          ? typeof value === 'string' && value.trim().length > 0
+          : typeof value === 'object' && value !== null;
+      if (!valid) {
+        return {
+          ok: false,
+          error:
+            `Invalid payload for kind '${pluginKind}': ` +
+            `payload.${requirement.prop} must be ` +
+            (requirement.type === 'string'
+              ? 'a non-empty string. '
+              : 'a non-null object. ') +
+            `Example: ${requirement.example}`,
+        };
+      }
+    }
+
     const directive = {
       type: 'place' as const,
       id,
