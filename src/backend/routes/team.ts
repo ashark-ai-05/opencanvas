@@ -2,6 +2,11 @@ import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
 import { providerEventsToUIMS, UIMS_HEADERS } from '../uims-stream.js';
 import { parseCanvasSnapshot } from '../../agent/canvas-snapshot.js';
+import { buildSystemPrompt } from '../../agent/system-prompt.js';
+import { buildOpenCanvasTools } from '../../agent/tools/index.js';
+import { resolveAiSdkModel } from '../../agent/model-resolver.js';
+import { loadExternalMcpTools } from '../../agent/mcp-integration.js';
+import { streamText, stepCountIs } from 'ai';
 import type { CanvasSnapshot } from '../../agent/canvas-snapshot.js';
 import type { ProviderEvent } from '../../core/provider.js';
 import type { BackendState } from '../state.js';
@@ -103,6 +108,12 @@ export function teamRoute(state: BackendState): Hono {
     const initialSnapshot = parseCanvasSnapshot(body.canvasSnapshot);
 
     for (const [k, v] of Object.entries(UIMS_HEADERS)) c.header(k, v);
+
+    // v2 path — sequential streamText calls per phase. Gated on the same
+    // flag as chat.ts; see docs/plans/unified-agent.md Phase 4.
+    if (process.env['OPENCANVAS_AGENT'] === 'v2') {
+      return runTeamV2(c, state, userPrompt, initialSnapshot);
+    }
 
     return stream(c, async (s) => {
       const abortController = new AbortController();
@@ -325,6 +336,222 @@ function extractHandoff(text: string, nextAgent: string): string | null {
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * v2 team handler — runs the three phases sequentially using AI SDK's
+ * `streamText`, with `sendStart:false / sendFinish:false` so the outer
+ * team-route frame stays the single message envelope. Per phase:
+ *   1. Emit phase signal + visible header text
+ *   2. Build per-phase tool ctx (snapshot includes prior placements)
+ *   3. Run streamText with the phase's system prompt + handoff trailer
+ *   4. Tap the UI message stream to capture text deltas (for handoff
+ *      extraction) and tool-output-available parts (for accumulated
+ *      snapshot)
+ *   5. Emit handoff signal + accumulate snapshot
+ *
+ * MCP sources are loaded once per run (not per phase) — connection
+ * reuse across phases.
+ */
+async function runTeamV2(
+  c: import('hono').Context,
+  state: BackendState,
+  userPrompt: string,
+  initialSnapshot: CanvasSnapshot,
+): Promise<Response> {
+  return stream(c, async (s) => {
+    const abortController = new AbortController();
+    c.req.raw.signal.addEventListener(
+      'abort',
+      () => abortController.abort(),
+      { once: true },
+    );
+
+    const messageId = `team-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    await s.write(`data: ${JSON.stringify({ type: 'start', messageId })}\n\n`);
+
+    const emitPhaseSignal = async (agent: string, status: 'start' | 'complete') => {
+      await s.write(
+        `data: ${JSON.stringify({
+          type: 'data-team-phase',
+          id: `phase-${agent}-${status}`,
+          data: { agent, status },
+        })}\n\n`,
+      );
+    };
+    const emitHandoff = async (from: string, to: string, message: string) => {
+      await s.write(
+        `data: ${JSON.stringify({
+          type: 'data-team-handoff',
+          id: `handoff-${from}-${to}`,
+          data: { from, to, message },
+        })}\n\n`,
+      );
+    };
+
+    let accumulatedSnapshot: CanvasSnapshot = initialSnapshot;
+    let previousHandoff: { from: string; to: string; message: string } | null = null;
+
+    // Resolve the model + MCP sources once per team run. Reuse across phases.
+    let model: Awaited<ReturnType<typeof resolveAiSdkModel>>;
+    try {
+      model = await resolveAiSdkModel(state.profile);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      await s.write(`data: ${JSON.stringify({ type: 'error', errorText: `model resolution failed: ${msg}` })}\n\n`);
+      await s.write(`data: ${JSON.stringify({ type: 'finish', finishReason: 'error' })}\n\n`);
+      await s.write('data: [DONE]\n\n');
+      return;
+    }
+    const mcp = await loadExternalMcpTools(state.profile.sources);
+
+    try {
+      const registry = state.getWidgetRegistry();
+      const plugins = registry.list().map((d) => ({
+        kind: d.kind,
+        ...(d.label ? { label: d.label } : {}),
+        ...(d.description ? { description: d.description } : {}),
+      }));
+
+      for (let i = 0; i < PHASES.length; i++) {
+        const phase = PHASES[i]!;
+        await emitPhaseSignal(phase.role, 'start');
+
+        // Visible header — one text-id per phase.
+        const phaseTextId = `t-${phase.role}`;
+        await s.write(`data: ${JSON.stringify({ type: 'text-start', id: phaseTextId })}\n\n`);
+        const headerText = i === 0 ? `## ${phase.label}\n\n` : `\n\n---\n\n## ${phase.label}\n\n`;
+        await s.write(`data: ${JSON.stringify({ type: 'text-delta', id: phaseTextId, delta: headerText })}\n\n`);
+        await s.write(`data: ${JSON.stringify({ type: 'text-end', id: phaseTextId })}\n\n`);
+
+        // Per-phase ctx — tool snapshot getter sees prior phases' placements.
+        const snapshotForPhase = accumulatedSnapshot;
+        const openCanvasTools = buildOpenCanvasTools({
+          search: state.getSearchService(),
+          webSearch: state.getWebSearchProvider(),
+          getSnapshot: () => snapshotForPhase,
+          streamBus: null,
+          plugins,
+          getNotebookStore: () => state.getNotebookStore(),
+          getWidgetRegistry: () => registry,
+        });
+        const tools = { ...openCanvasTools, ...mcp.tools };
+
+        // Per-phase system prompt: phase prompt + selection + handoff trailer.
+        const handoffTrailer = previousHandoff
+          ? `Previous agent's handoff to you:\n> ${previousHandoff.message}\n\nAcknowledge this in your response.`
+          : undefined;
+        const system = buildSystemPrompt({
+          base: phase.systemPrompt,
+          canvasSnapshot: snapshotForPhase,
+          ...(mcp.sources.length > 0 ? { externalSources: mcp.sources } : {}),
+          ...(handoffTrailer ? { trailer: handoffTrailer } : {}),
+        });
+
+        const result = streamText({
+          model,
+          system,
+          messages: [{ role: 'user', content: userPrompt }],
+          tools,
+          stopWhen: stepCountIs(8),
+          abortSignal: abortController.signal,
+        });
+
+        // Tap the UI message stream: forward chunks to the client, capture
+        // text-deltas (for handoff extraction) and place_widget tool outputs
+        // (for accumulated snapshot).
+        let phaseText = '';
+        const placedWidgets: CanvasSnapshot['widgets'] = [];
+
+        for await (const chunk of result.toUIMessageStream({
+          sendStart: false,
+          sendFinish: false,
+        })) {
+          const ch = chunk as { type: string; [k: string]: unknown };
+          if (ch.type === 'text-delta' && typeof ch['delta'] === 'string') {
+            phaseText += ch['delta'] as string;
+          } else if (
+            ch.type === 'tool-output-available' &&
+            (ch['toolName'] === 'place_widget' || isPlaceWidgetCall(ch))
+          ) {
+            const widget = directiveOutputToWidget(ch['output']);
+            if (widget) placedWidgets.push(widget);
+          }
+          await s.write(`data: ${JSON.stringify(chunk)}\n\n`);
+        }
+
+        accumulatedSnapshot = {
+          ...accumulatedSnapshot,
+          widgets: [...accumulatedSnapshot.widgets, ...placedWidgets],
+        };
+
+        if (phase.next) {
+          const handoff = extractHandoff(phaseText, phase.next) ??
+            `(no explicit handoff — passing the canvas to ${phase.next})`;
+          previousHandoff = { from: phase.role, to: phase.next.toLowerCase(), message: handoff };
+          await emitHandoff(phase.role, phase.next.toLowerCase(), handoff);
+        }
+
+        await emitPhaseSignal(phase.role, 'complete');
+        if (abortController.signal.aborted) break;
+      }
+
+      await s.write(`data: ${JSON.stringify({ type: 'finish', finishReason: 'stop' })}\n\n`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[team v2] orchestration error:', message);
+      await s.write(`data: ${JSON.stringify({ type: 'error', errorText: message })}\n\n`);
+      await s.write(`data: ${JSON.stringify({ type: 'finish', finishReason: 'error' })}\n\n`);
+    } finally {
+      void mcp.close();
+    }
+    await s.write('data: [DONE]\n\n');
+  });
+}
+
+/**
+ * UI message chunks for place_widget tool calls — the toolName might be
+ * stripped when tools come from an MCP source, so we also accept any
+ * chunk whose tool-input chain ended with a `kind`+`role`+`payload`
+ * shape (the place_widget input signature).
+ *
+ * Conservative: only return true for chunks we're confident are
+ * place_widget. Other false negatives just miss snapshot accumulation.
+ */
+function isPlaceWidgetCall(ch: { [k: string]: unknown }): boolean {
+  return typeof ch['toolName'] === 'string' && ch['toolName'] === 'place_widget';
+}
+
+/**
+ * Pull a CanvasSnapshot widget out of a tool-output-available payload.
+ * Mirrors parsePlaceDirective() but works on the v2 output shape (the
+ * `output` field is the value the tool's execute() returned directly,
+ * not a `{content:[{text:JSON.stringify(...)}]}` envelope).
+ */
+function directiveOutputToWidget(
+  output: unknown,
+): CanvasSnapshot['widgets'][number] | null {
+  if (typeof output !== 'object' || output === null) return null;
+  const obj = output as { id?: string; directive?: unknown };
+  const d = obj.directive;
+  if (typeof d !== 'object' || d === null) return null;
+  const dd = d as {
+    type?: string;
+    id?: string;
+    kind?: string;
+    role?: string;
+    payload?: Record<string, unknown>;
+  };
+  if (dd.type !== 'place' || !dd.id || !dd.kind || !dd.role || !dd.payload) {
+    return null;
+  }
+  return {
+    id: dd.id,
+    kind: dd.kind as never,
+    role: dd.role as never,
+    title: (dd.payload['title'] as string) ?? dd.id,
+    payload: dd.payload,
+  };
 }
 
 function parsePlaceDirective(
