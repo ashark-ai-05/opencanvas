@@ -77,14 +77,20 @@ export default defineConfig({
           if (id.includes('/shiki/') || id.includes('/@shikijs/')) {
             return 'vendor-shiki';
           }
-          if (
-            id.includes('/react-markdown/') ||
-            id.includes('/remark-') ||
-            id.includes('/micromark-') ||
-            id.includes('/mdast-')
-          ) {
-            return 'vendor-markdown';
-          }
+          // No manual chunk for the markdown ecosystem.
+          //
+          // We tried splitting react-markdown/remark-*/micromark-*/mdast-* into
+          // their own `vendor-markdown` chunk, then widened it to cover the
+          // whole unified/vfile/hast-/unist-/character-entities/property-
+          // information surface — but other packages in the catch-all `vendor`
+          // chunk also pull from the markdown ecosystem, producing circular
+          // cross-chunk imports that minify into a TDZ ("Cannot access 'X'
+          // before initialization") error in production.
+          //
+          // Keeping markdown in `vendor` adds ~140KB raw / ~40KB gzipped to
+          // the main vendor chunk, which is acceptable. The other manual
+          // chunks (tldraw, ai, shiki, motion, icons, react) stay because
+          // their dep graphs are isolated and the size win is bigger.
           if (id.includes('/framer-motion/') || id.includes('/motion-')) {
             return 'vendor-motion';
           }
