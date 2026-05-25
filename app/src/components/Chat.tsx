@@ -27,6 +27,10 @@ import { useAnonUsage } from '../state/anon-usage-store';
 import { useUiStore } from '../state/ui-store';
 import { VoiceInputButton } from './VoiceInputButton';
 import { ByoNudge } from './ByoNudge';
+import {
+  ChatCapacityNotice,
+  isCapacityError,
+} from './ChatCapacityNotice';
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
@@ -432,9 +436,13 @@ export function Chat() {
 
   // Surface chat-level errors as a toast (network failure, 5xx, etc.) and
   // dedupe so the same Error doesn't fire repeatedly across re-renders.
+  // The capacity-exceeded 503 is handled inline by <ChatCapacityNotice>
+  // below — suppressing the toast for that case avoids double-surfacing
+  // and lets the BYO conversion CTA stand on its own.
   useEffect(() => {
     if (error && error !== errorShownRef.current) {
       errorShownRef.current = error;
+      if (isCapacityError(error)) return;
       const message = error instanceof Error ? error.message : String(error);
       toast.error('Chat error', { description: message });
     }
@@ -921,6 +929,11 @@ export function Chat() {
           setKbHits(null);
           setKbQuery(null);
         }}
+      />
+
+      <ChatCapacityNotice
+        visible={isCapacityError(error)}
+        onOpenSettings={() => useUiStore.getState().setSettingsOpen(true)}
       />
 
       <ByoNudge

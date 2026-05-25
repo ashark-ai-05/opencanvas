@@ -10,6 +10,10 @@ import { resolveAiSdkModelWithOptions } from '../../agent/model-resolver.js';
 import { loadExternalMcpTools } from '../../agent/mcp-integration.js';
 import { extractAndRegisterTemplate } from '../../agent/template-extractor.js';
 import {
+  getProcessChatSemaphore,
+  leaseFrom,
+} from '../chat-semaphore.js';
+import {
   streamText,
   convertToModelMessages,
   stepCountIs,
@@ -123,9 +127,10 @@ async function handleV2(
     messages: UIChatMessage[];
     canvasSnapshot: ReturnType<typeof parseCanvasSnapshot>;
     systemPromptTrailer: string | undefined;
+    onTurnEnd?: () => void;
   },
 ): Promise<Response> {
-  const { messages, canvasSnapshot, systemPromptTrailer } = args;
+  const { messages, canvasSnapshot, systemPromptTrailer, onTurnEnd } = args;
 
   // Pull plugin descriptors for place_widget's enriched description.
   const registry = state.getWidgetRegistry();
@@ -271,6 +276,10 @@ async function handleV2(
     onFinish: (info) => {
       // Drop the per-turn MCP clients.
       void mcp.close();
+      // Release the chat-concurrency slot. Idempotent — leaseFrom
+      // guards against the same lease being released twice if onAbort
+      // also fires.
+      onTurnEnd?.();
       // Background "learn from this render" pass — when the agent used
       // the universal html plugin to one-shot something, queue a small
       // LLM call that generalises the HTML into a reusable template.
@@ -285,6 +294,7 @@ async function handleV2(
     },
     onAbort: () => {
       void mcp.close();
+      onTurnEnd?.();
     },
   });
 
@@ -398,15 +408,46 @@ export function chatRoute(state: BackendState): Hono {
       ? state.getSessionId(conversationId)
       : undefined;
 
+    // ─── Global chat concurrency cap (HN-day brownout protection) ────
+    // Caps in-flight /v1/chat at OPENCANVAS_CHAT_MAX_CONCURRENT
+    // (default 10) so a traffic spike can't burn through the upstream
+    // model's RPM quota. (N+1)th visitor gets a 503 with a structured
+    // error the frontend renders as a "BYO your own key" panel —
+    // turning the capacity wall into a conversion to the BYO flow.
+    const chatSem = getProcessChatSemaphore();
+    if (!chatSem.tryAcquire()) {
+      c.header('Retry-After', '30');
+      return c.json(
+        {
+          error: 'demo-at-capacity',
+          code: 'CHAT_CAPACITY_EXCEEDED',
+          message:
+            'The demo is at peak capacity. Use your own free Gemini key (60s setup at aistudio.google.com) to keep going — or self-host.',
+          inFlight: chatSem.inFlight(),
+          capacity: chatSem.capacity(),
+        },
+        503,
+      );
+    }
+    const chatLease = leaseFrom(chatSem);
+
     // ─── v2 (AI SDK unified path) ────────────────────────────────────
     // Gated on OPENCANVAS_AGENT=v2 so v1 stays the default until v2
     // is proven on real traffic. See docs/plans/unified-agent.md.
     if (process.env['OPENCANVAS_AGENT'] === 'v2') {
-      return handleV2(c, state, {
-        messages: body.messages,
-        canvasSnapshot,
-        systemPromptTrailer: systemPrompt, // preferences hint + any system msgs
-      });
+      try {
+        return await handleV2(c, state, {
+          messages: body.messages,
+          canvasSnapshot,
+          systemPromptTrailer: systemPrompt, // preferences hint + any system msgs
+          onTurnEnd: () => chatLease.release(),
+        });
+      } catch (e) {
+        // handleV2 throwing synchronously (before stream starts) means
+        // onFinish/onAbort never fire. Release here so we don't leak.
+        chatLease.release();
+        throw e;
+      }
     }
 
     // Apply UIMS headers BEFORE entering streamSSE so DefaultChatTransport
@@ -530,6 +571,9 @@ export function chatRoute(state: BackendState): Hono {
         // Defensive: clear any still-registered ids (e.g. provider
         // crashed mid-stream so end was never emitted).
         for (const id of ownedWidgetIds) state.unregisterStreamWidget(id);
+        // Release the chat-concurrency slot so the next request can
+        // proceed. Idempotent via the lease wrapper.
+        chatLease.release();
       }
     });
   });
