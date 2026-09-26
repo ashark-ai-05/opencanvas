@@ -1044,10 +1044,25 @@ export function Chat() {
                     fastLane.promote();
                     return;
                   }
+                  // Only steal the arrow keys for the choose chip when the
+                  // caret is parked at the very end with nothing selected —
+                  // otherwise a user editing earlier text (or with a
+                  // selection) can never move the caret left/right while a
+                  // choose chip happens to be showing. No dedicated test
+                  // here: reaching `choose` through the real classifier
+                  // needs two intents within 0.15 of each other, which
+                  // isn't cheap to hit with realistic input text (see
+                  // decide.test.ts for direct coverage of the choose state
+                  // itself).
                   if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && fastLane.ui.kind === 'choose') {
-                    e.preventDefault();
-                    fastLane.choose(e.key === 'ArrowLeft' ? 0 : 1);
-                    return;
+                    const ta = e.currentTarget;
+                    const atEndNoSelection =
+                      ta.selectionStart === ta.selectionEnd && ta.selectionStart === ta.value.length;
+                    if (atEndNoSelection) {
+                      e.preventDefault();
+                      fastLane.choose(e.key === 'ArrowLeft' ? 0 : 1);
+                      return;
+                    }
                   }
                   if (e.key === 'Escape' && fastLane.ui.kind !== 'input') {
                     e.preventDefault();
