@@ -55,6 +55,20 @@ describe('useFastLane', () => {
     expect(result.current.resolved?.kind).toBe('tasks');
   });
 
+  it('clearing the box releases a stuck dismissal (fix 10)', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = setup('25 min timer');
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).toBe('committed');
+    act(() => result.current.dismiss());
+    expect(result.current.ui.kind).toBe('input');
+    rerender({ text: '', on: true });
+    act(() => vi.advanceTimersByTime(200));
+    rerender({ text: '20 min timer', on: true });
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).toBe('committed');
+  });
+
   it('promote turns a ghost into committed', () => {
     vi.useFakeTimers();
     const { result } = setup('25 min'); // duration only: ghost

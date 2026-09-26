@@ -61,6 +61,14 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 
   useEffect(() => {
+    // An empty box always releases a stuck dismissal — otherwise dismissing
+    // "25 min timer" and later retyping a *similar* duration ("20 min
+    // timer") would stay silently suppressed by `changedSubstantially`,
+    // which only compares against the dismissed text, not "did the user
+    // clear the box in between".
+    if (text.trim() === '' && dismissedFor !== null) {
+      setDismissedFor(null);
+    }
     if (!enabled || isEscaped(text)) {
       setMem(initialMemory);
       setLastResult(null);
