@@ -46,8 +46,8 @@ importers:
         specifier: ^0.95.1
         version: 0.95.2(zod@4.4.3)
       '@hono/node-server':
-        specifier: ^1.19.17
-        version: 1.19.17(hono@4.13.9)
+        specifier: ^2.1.1
+        version: 2.1.1(hono@4.13.9)
       '@huggingface/transformers':
         specifier: ^4.3.0
         version: 4.3.0(@types/node@25.9.1)
@@ -58,8 +58,8 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0(ai@6.0.191(zod@4.4.3))(zod@4.4.3)
       '@sourcegraph/amp-sdk':
-        specifier: 0.1.0-20260524123501-g6d0650a
-        version: 0.1.0-20260524123501-g6d0650a
+        specifier: 0.1.0-20260729105907-g72d5ca3
+        version: 0.1.0-20260729105907-g72d5ca3
       ai:
         specifier: ^6.0.191
         version: 6.0.191(zod@4.4.3)
@@ -179,8 +179,8 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0(vite@6.4.2(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0))
       concurrently:
-        specifier: ^9.0.0
-        version: 9.2.1
+        specifier: ^10.0.5
+        version: 10.0.5
       electron:
         specifier: ^42.2.0
         version: 42.2.0
@@ -271,6 +271,37 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
+
+  '@ampcode/cli-darwin-arm64@0.0.1790380893-geeadb1':
+    resolution: {integrity: sha512-H8nu42NzXHT1QAx/GHGZI9wX4OaXtJjgahwOs7xfPfRuJxwEf9PzCYzHG9P3ke1vrR1zFsWU5PYmzIJBG3Jz/A==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@ampcode/cli-darwin-x64@0.0.1790380893-geeadb1':
+    resolution: {integrity: sha512-RtCUTB4pdFHZURCNEAfggYgDwflrBOSVOJGbvhNrpsJMgFTZfsSCrO0mkn4VkogtCmjx5vor5vFit7GcY7mHxA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@ampcode/cli-linux-arm64@0.0.1790380893-geeadb1':
+    resolution: {integrity: sha512-qT0PqIPsZh7cbUDvX79ucHW2CvvMVkkcSFXgSIBESMOQMbg955c+I3CR/xVcTOpDg3FXe7C6HMIF/Tx75KtsVg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@ampcode/cli-linux-x64@0.0.1790380893-geeadb1':
+    resolution: {integrity: sha512-kpP/jp+YfV3v3e5UBa5+QQG5rNGIWBIPkpmlWzF7bfcr66R9HFS2+nOXHkTMZcV0I/E3sPG3Hk8PwcBVmjZHVw==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@ampcode/cli-win32-x64@0.0.1790380893-geeadb1':
+    resolution: {integrity: sha512-Vz2cF+n1GehEV+k3tGzLGwIow4Nwgkc2fQDeFneapOJzoyhg2V7eNwdspreicu0AC94Vtx+J+HGopTGOZbMSpw==}
+    cpu: [x64]
+    os: [win32]
+
+  '@ampcode/cli@0.0.1790380893-geeadb1':
+    resolution: {integrity: sha512-sUUVbySS6EpRpf8kSHc2XSmD7x6TfVFpeicPCO8ZE/Gj7lBv3GjbC32PEaoAVEa9wDTwk6fMQQAjzJ2N0JjstQ==}
+    hasBin: true
 
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
@@ -854,6 +885,12 @@ packages:
   '@hono/node-server@1.19.17':
     resolution: {integrity: sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ==}
     engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
+
+  '@hono/node-server@2.1.1':
+    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
+    engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
 
@@ -2036,8 +2073,8 @@ packages:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260524123501-g6d0650a':
-    resolution: {integrity: sha512-/SWFRCnD245aoXeXItt2XYlR9bUurhyQpVCMOArJxfWpt3MDOEp5w6jCvUMR5y9e8iWPj6Qgk85CRXxI3PCbjA==}
+  '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
+    resolution: {integrity: sha512-2IHl7tBrNI2+hpLTS9TD267FM4T+XOHaS2lqn1OQS656pepaFVHLXULHVmCzdkaXdRC/xM2h6ZerraLftyggFA==}
     engines: {node: '>=18'}
     deprecated: Renamed to @ampcode/sdk - see https://ampcode.com/news/npm-package-changes
     hasBin: true
@@ -2825,6 +2862,10 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+
   character-entities-html4@2.1.0:
     resolution: {integrity: sha512-1v7fgQRj6hnSwFpq1Eu0ynr/CDEw0rXo2B61qXrLNdHZmPKgb7fqS1a2JwF0rISo9q77jDI8VMEHoApn8qDoZA==}
 
@@ -2910,9 +2951,9 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
-  concurrently@9.2.1:
-    resolution: {integrity: sha512-fsfrO0MxV64Znoy8/l1vVIjjHa29SZyyqPgQBwhiDcaW8wJc2W3XWVOGx4M3oJBnv/zdUZIIp1gDeS98GzP8Ng==}
-    engines: {node: '>=18'}
+  concurrently@10.0.5:
+    resolution: {integrity: sha512-JaP/CoftUrCcAFW/g//RbgEGwlelnEae6cfBLgH6ZdO6s8jPkn6p9SB9u6pdVxYXoiSnFqseOlHfrEfF82TVOg==}
+    engines: {node: '>=22'}
     hasBin: true
 
   content-disposition@1.1.0:
@@ -4836,8 +4877,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.8.3:
-    resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
+  shell-quote@1.9.0:
+    resolution: {integrity: sha512-Iov+JwFv/2HcTpcwNMKd8+IWNb8tboQJNQTkAY/LLVK7gGH9jy+LGkVqPxfekHl+yMmiqXszdGWXgkfml7hjqA==}
     engines: {node: '>= 0.4'}
 
   side-channel-list@1.0.1:
@@ -4995,13 +5036,13 @@ packages:
     resolution: {integrity: sha512-MvjXzkz/BOfyVDkG0oFOtBxHX2u3gKbMHIF/dXblZsgD3BWOFLmHovIpZY7BykJdAjcqRCBi1WYBNdEC9yI7vg==}
     engines: {node: '>= 8.0'}
 
+  supports-color@10.2.2:
+    resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
+    engines: {node: '>=18'}
+
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
-
-  supports-color@8.1.1:
-    resolution: {integrity: sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==}
-    engines: {node: '>=10'}
 
   swr@2.4.1:
     resolution: {integrity: sha512-2CC6CiKQtEwaEeNiqWTAw9PGykW8SR5zZX8MZk6TeAvEAnVS7Visz8WzphqgtQ8v2xz/4Q5K+j+SeMaKXeeQIA==}
@@ -5692,6 +5733,29 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
+  '@ampcode/cli-darwin-arm64@0.0.1790380893-geeadb1':
+    optional: true
+
+  '@ampcode/cli-darwin-x64@0.0.1790380893-geeadb1':
+    optional: true
+
+  '@ampcode/cli-linux-arm64@0.0.1790380893-geeadb1':
+    optional: true
+
+  '@ampcode/cli-linux-x64@0.0.1790380893-geeadb1':
+    optional: true
+
+  '@ampcode/cli-win32-x64@0.0.1790380893-geeadb1':
+    optional: true
+
+  '@ampcode/cli@0.0.1790380893-geeadb1':
+    optionalDependencies:
+      '@ampcode/cli-darwin-arm64': 0.0.1790380893-geeadb1
+      '@ampcode/cli-darwin-x64': 0.0.1790380893-geeadb1
+      '@ampcode/cli-linux-arm64': 0.0.1790380893-geeadb1
+      '@ampcode/cli-linux-x64': 0.0.1790380893-geeadb1
+      '@ampcode/cli-win32-x64': 0.0.1790380893-geeadb1
+
   '@antfu/install-pkg@1.1.0':
     dependencies:
       package-manager-detector: 1.6.0
@@ -6177,6 +6241,10 @@ snapshots:
   '@floating-ui/utils@0.2.11': {}
 
   '@hono/node-server@1.19.17(hono@4.13.9)':
+    dependencies:
+      hono: 4.13.9
+
+  '@hono/node-server@2.1.1(hono@4.13.9)':
     dependencies:
       hono: 4.13.9
 
@@ -7294,8 +7362,9 @@ snapshots:
 
   '@sindresorhus/is@4.6.0': {}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260524123501-g6d0650a':
+  '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
     dependencies:
+      '@ampcode/cli': 0.0.1790380893-geeadb1
       zod: 3.25.76
 
   '@stablelib/base64@1.0.1': {}
@@ -8209,6 +8278,8 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
+  chalk@5.6.2: {}
+
   character-entities-html4@2.1.0: {}
 
   character-entities-legacy@3.0.0: {}
@@ -8276,14 +8347,14 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  concurrently@9.2.1:
+  concurrently@10.0.5:
     dependencies:
-      chalk: 4.1.2
+      chalk: 5.6.2
       rxjs: 7.8.2
-      shell-quote: 1.8.3
-      supports-color: 8.1.1
+      shell-quote: 1.9.0
+      supports-color: 10.2.2
       tree-kill: 1.2.2
-      yargs: 17.7.2
+      yargs: 18.0.0
 
   content-disposition@1.1.0: {}
 
@@ -10702,7 +10773,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.8.3: {}
+  shell-quote@1.9.0: {}
 
   side-channel-list@1.0.1:
     dependencies:
@@ -10866,11 +10937,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  supports-color@7.2.0:
-    dependencies:
-      has-flag: 4.0.0
+  supports-color@10.2.2: {}
 
-  supports-color@8.1.1:
+  supports-color@7.2.0:
     dependencies:
       has-flag: 4.0.0
 
