@@ -28,6 +28,11 @@ describe('parseReminder', () => {
       time: null,
     });
   });
+  it('day-first reminder still finds the trigger and the time (fix 3)', () => {
+    const d = parseReminder('friday remind me to pay rent 6pm', REF);
+    expect(d.time).toBe('18:00');
+    expect(d.task).toBe('Pay rent');
+  });
   it('keeps a time when given', () => {
     const d = parseReminder("don't forget to call mom tomorrow at 6pm", REF);
     expect(d.task).toBe('Call mom');
@@ -57,5 +62,11 @@ describe('parseEvent', () => {
   });
   it('no date → date null', () => {
     expect(parseEvent('coffee with sam', REF).date).toBeNull();
+  });
+  it('day-first event keeps its time (fix 3)', () => {
+    const d = parseEvent('monday standup with priya 10am', REF);
+    expect(d.title).toBe('Standup');
+    expect(d.time).toBe('10:00');
+    expect(d.when).toMatch(/Mon 28 Sep, 10:00/);
   });
 });

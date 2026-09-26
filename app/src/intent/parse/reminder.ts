@@ -9,8 +9,10 @@ export type ReminderData = {
   time: string | null;
 };
 
+// Not anchored to the start: a day-first reminder ("friday remind me to pay
+// rent 6pm") has the trigger phrase in the middle of the text.
 const TRIGGER =
-  /^(?:remind me (?:to|about|of)?|reminder\s*:?|don'?t forget (?:to)?|remember (?:to)?)\s*/i;
+  /(?:remind me (?:to|about|of)?|reminder\s*:?|don'?t forget (?:to)?|remember (?:to)?)\s*/i;
 
 export function parseReminder(text: string, ref: Date): ReminderData {
   let t = collapse(text).replace(TRIGGER, '');
