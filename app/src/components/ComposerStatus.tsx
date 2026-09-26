@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, Plus, ExternalLink, Database, X } from 'lucide-react';
 import type { SearchResult } from '../api/search';
@@ -18,12 +19,14 @@ export function ComposerStatus({
   kbBusy,
   onPlace,
   onDismissHits,
+  leading,
 }: {
   query: string | null;
   hits: SearchResult[] | null;
   kbBusy: boolean;
   onPlace: (hit: SearchResult) => void;
   onDismissHits: () => void;
+  leading?: ReactNode;
 }) {
   const [hitsOpen, setHitsOpen] = useState(false);
 
@@ -31,10 +34,11 @@ export function ComposerStatus({
   const showHitsChip =
     query !== null && (kbBusy || (hitCount !== null && hitCount > 0));
 
-  if (!showHitsChip) return null;
+  if (!showHitsChip && !leading) return null;
 
   return (
     <div className="opencanvas-composer-status-row">
+      {leading}
       {showHitsChip && (
         <button
           type="button"

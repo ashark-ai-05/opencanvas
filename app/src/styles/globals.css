@@ -2308,6 +2308,67 @@ header button:hover {
   color: #fafafa;
 }
 
+/* Fast lane chip — live preview of the widget Enter will place. */
+.opencanvas-fastlane-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #e4e4e7;
+  background: rgba(45, 212, 191, 0.10);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  transition: opacity 140ms ease, border-color 140ms ease;
+}
+.opencanvas-fastlane-chip.is-ghost {
+  opacity: 0.6;
+  border-style: dashed;
+}
+.opencanvas-fastlane-chip.is-choose {
+  background: rgba(167, 139, 250, 0.10);
+  border-color: rgba(167, 139, 250, 0.32);
+}
+.opencanvas-fastlane-summary {
+  font-weight: 600;
+  color: #5eead4;
+}
+.opencanvas-fastlane-muted {
+  color: #a1a1aa;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.opencanvas-fastlane-chip kbd {
+  font: 600 10px/1 ui-monospace, monospace;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.opencanvas-fastlane-option {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  cursor: pointer;
+}
+.opencanvas-fastlane-dismiss {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  color: #a1a1aa;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.opencanvas-fastlane-dismiss:hover {
+  color: #fafafa;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 /* Hits popover — anchored to the composer status row, expands UPWARD so
    it doesn't shove the input down. Capped at 40vh so a flood of results
    can't push the messages off-screen. */
