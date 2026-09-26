@@ -562,7 +562,7 @@ export function Chat() {
    */
   const placeFastLane = (): boolean => {
     const r = fastLane.resolved;
-    if (!r || !r.payload || fastLane.ui.kind !== 'committed') return false;
+    if (!r || !r.payload || !fastLane.placeable) return false;
     const editor = getEditor();
     if (!editor) return false;
     let payload: Record<string, unknown>;

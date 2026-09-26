@@ -8,11 +8,13 @@ import {
   force,
   initialMemory,
   promote as promoteMem,
+  rawState,
+  THRESHOLDS,
   type DecideMemory,
   type UiState,
 } from '../intent/decide';
 import { resolve, type IconName } from '../intent/registry';
-import type { CardIntent } from '../intent/types';
+import type { CardIntent, IntentResult } from '../intent/types';
 
 export const FAST_LANE_DEBOUNCE_MS = 120;
 
@@ -32,6 +34,14 @@ export type FastLaneView = {
   resolved: FastLaneResolved | null;
   /** Present for the choose state: [label, label]. */
   options: [{ intent: CardIntent; label: string }, { intent: CardIntent; label: string }] | null;
+  /**
+   * True only when the committed intent is still backed by the latest
+   * classify result (or was explicitly forced). A committed intent can
+   * otherwise go stale under hysteresis — it takes two consecutive wins
+   * (or a ≥0.85 override) for a challenger to unseat it — so Enter must
+   * check this, not just `ui.kind === 'committed'`.
+   */
+  placeable: boolean;
   promote: () => void;
   choose: (i: 0 | 1) => void;
   dismiss: () => void;
@@ -47,11 +57,13 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
   const { enabled } = opts;
   const ref = opts.ref ?? (() => new Date());
   const [mem, setMem] = useState<DecideMemory>(initialMemory);
+  const [lastResult, setLastResult] = useState<IntentResult | null>(null);
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!enabled || isEscaped(text)) {
       setMem(initialMemory);
+      setLastResult(null);
       return;
     }
     if (dismissedFor !== null) {
@@ -63,6 +75,7 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
     }
     const id = setTimeout(() => {
       const result = classify(text, { ref: ref() });
+      setLastResult(result);
       setMem((m) => decide(m, result, text));
     }, FAST_LANE_DEBOUNCE_MS);
     return () => clearTimeout(id);
@@ -70,7 +83,26 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, enabled, dismissedFor]);
 
+  // `mem.ui` is hysteresis memory: once committed, it takes two consecutive
+  // challenger wins (or a ≥0.85 override) to change, so it can stay
+  // "committed: todo" for a beat after the text has moved on entirely to
+  // "25 min". `support` is how much the *latest* classify result still
+  // backs that committed/ghost intent; when it collapses below dropBelow,
+  // the view hides the stale chip even though the internal memory (still
+  // useful for its hysteresis on the next keystroke) hasn't caught up yet.
+  const internalIntent = activeIntent(mem.ui);
+  const support =
+    lastResult && internalIntent ? (lastResult.intent.probabilities[internalIntent] ?? 0) : 0;
+  const fresh = lastResult ? rawState(lastResult) : null;
+  const placeable =
+    mem.ui.kind === 'committed' &&
+    (mem.ui.forced === true || (fresh?.kind === 'committed' && fresh.intent === mem.ui.intent));
+  const stale =
+    (mem.ui.kind === 'committed' || mem.ui.kind === 'ghost') && support < THRESHOLDS.dropBelow;
+  const ui: UiState = stale ? { kind: 'input' } : mem.ui;
+
   const resolved = useMemo<FastLaneResolved | null>(() => {
+    if (stale) return null;
     const intent = activeIntent(mem.ui);
     if (!intent || !enabled) return null;
     const r = resolve(intent, text, ref());
@@ -83,7 +115,7 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
       payload: r.payload,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mem.ui, text, enabled]);
+  }, [mem.ui, text, enabled, stale]);
 
   const options = useMemo<FastLaneView['options']>(() => {
     if (mem.ui.kind !== 'choose') return null;
@@ -113,5 +145,5 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
     setMem(initialMemory);
   }, [text]);
 
-  return { ui: mem.ui, resolved, options, promote, choose, dismiss };
+  return { ui, resolved, options, placeable, promote, choose, dismiss };
 }

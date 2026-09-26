@@ -64,6 +64,37 @@ describe('useFastLane', () => {
     expect(result.current.ui.kind).toBe('committed');
   });
 
+  it('drops a stale committed intent once support falls away (fix 1a)', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = setup('buy milk, eggs, bread');
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).toBe('committed');
+    expect(result.current.resolved?.kind).toBe('tasks');
+    rerender({ text: '25 min', on: true });
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).not.toBe('committed');
+    expect(result.current.resolved?.kind).not.toBe('tasks');
+  });
+
+  it('placeable goes false once the committed intent no longer matches a fresh classify (fix 1b)', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = setup('25 min timer');
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).toBe('committed');
+    expect(result.current.placeable).toBe(true);
+    rerender({ text: '25 min timer is too short, what do you think?', on: true });
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.placeable).toBe(false);
+  });
+
+  it('a freshly committed intent is placeable (fix 1c)', () => {
+    vi.useFakeTimers();
+    const { result } = setup('25 min timer');
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).toBe('committed');
+    expect(result.current.placeable).toBe(true);
+  });
+
   it('choose forces an option', () => {
     vi.useFakeTimers();
     const { result, rerender } = setup('25 min timer');
