@@ -85,6 +85,21 @@ export interface UserSettings {
   model: string;
   /** API key — stays in localStorage, sent as a header per request. */
   apiKey: string;
+  /**
+   * Fast lane (instant local widgets for timers, lists, reminders…).
+   * null = auto: on for local builds, off when the backend reports demo
+   * mode. true/false = the user's explicit choice.
+   */
+  fastLane: boolean | null;
+}
+
+/** Resolve the tri-state setting against the backend's demo flag. */
+export function resolveFastLaneEnabled(
+  setting: boolean | null | undefined,
+  demo: boolean,
+): boolean {
+  if (setting === true || setting === false) return setting;
+  return !demo;
 }
 
 interface UserSettingsStore extends UserSettings {
@@ -96,7 +111,7 @@ interface UserSettingsStore extends UserSettings {
   reset: () => void;
 }
 
-const EMPTY: UserSettings = { provider: null, model: '', apiKey: '' };
+const EMPTY: UserSettings = { provider: null, model: '', apiKey: '', fastLane: null };
 
 export const useUserSettings = create<UserSettingsStore>()(
   persist(
@@ -117,6 +132,7 @@ export const useUserSettings = create<UserSettingsStore>()(
         provider: state.provider,
         model: state.model,
         apiKey: state.apiKey,
+        fastLane: state.fastLane,
       }),
     },
   ),

@@ -7,6 +7,8 @@ export type HealthResponse = {
   /** Active model id (e.g. 'gemini-flash-lite-latest'). Null when the provider has no model concept. */
   model: string | null;
   embedder: string;
+  /** True when the backend runs with OPENCANVAS_DEMO=1. Optional for older backends. */
+  demo?: boolean;
 };
 
 export async function fetchHealth(): Promise<HealthResponse> {

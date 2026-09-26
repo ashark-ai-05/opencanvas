@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, Eye, EyeOff, Sparkles } from 'lucide-react';
 import {
   useUserSettings,
+  resolveFastLaneEnabled,
   USER_PROVIDERS,
   PROVIDER_DEFAULT_MODELS,
   PROVIDER_KEY_URLS,
   type UserProvider,
 } from '../state/user-settings-store';
+import { useAppStore } from '../state/app-store';
 
 /**
  * "Settings" modal — currently scoped to BYO model + API key.
@@ -43,6 +45,9 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
   const [model, setModel] = useState(stored.model);
   const [apiKey, setApiKey] = useState(stored.apiKey);
   const [showKey, setShowKey] = useState(false);
+  const isDemo = useAppStore(
+    (s) => s.health.status === 'ok' && s.health.data.demo === true,
+  );
 
   // Sync local form when the modal opens (so reopening shows current).
   useEffect(() => {
@@ -405,6 +410,29 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                 you initiate. Cleared if you click Reset or your browser clears site
                 data.
               </p>
+            </div>
+
+            {/* Fast lane toggle */}
+            <div style={{ marginBottom: 18 }}>
+              <label
+                htmlFor="settings-fast-lane"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  color: '#e4e4e7',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  id="settings-fast-lane"
+                  type="checkbox"
+                  checked={resolveFastLaneEnabled(stored.fastLane, isDemo)}
+                  onChange={(e) => update({ fastLane: e.target.checked })}
+                />
+                <span>Instant widgets for timers, lists and reminders (no model call)</span>
+              </label>
             </div>
 
             {/* Actions */}

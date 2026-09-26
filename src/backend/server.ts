@@ -106,6 +106,7 @@ app.get('/v1/health', async (c) => {
     llm: state.getLLMProvider().id,
     model: llmConfig.model ?? null,
     embedder: state.getEmbedder().id,
+    demo: isDemoMode(),
   });
 });
 

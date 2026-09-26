@@ -37,6 +37,12 @@ describe('GET /v1/health', () => {
     expect(json.ok).toBe(true);
     expect(typeof json.profile).toBe('string');
   });
+
+  it('reports whether demo mode is on', async () => {
+    const res = await app.request('/v1/health');
+    const json = (await res.json()) as { demo: boolean };
+    expect(typeof json.demo).toBe('boolean');
+  });
 });
 
 describe('GET /v1/sources', () => {
