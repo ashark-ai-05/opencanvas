@@ -1,6 +1,6 @@
 # Fast lane: local intent → instant widget
 
-*Design spec. Status: approved 2026-09-26.*
+*Design spec. Status: implemented 2026-09-26.*
 *Inspired by [anishfn/shapeshift](https://github.com/anishfn/shapeshift) (MIT): "the model decides, code computes."*
 
 ## 1. Problem

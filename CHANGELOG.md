@@ -7,6 +7,15 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Fast lane: instant local widgets** — a keyword classifier plus
+  deterministic parsers (chrono-node for dates) recognise utility prompts
+  (timer, stopwatch, clock, checklist, reminder, event, note, calc,
+  convert) as you type. Enter places the widget through the dispatcher
+  with no model call; ⌘/Ctrl+Enter asks the model instead. Calm-UI
+  hysteresis ported from anishfn/shapeshift (MIT). Off by default in
+  demo mode for the first deploy (`/v1/health` now reports `demo`).
+  Setting: "Instant widgets" in Settings. Design:
+  `docs/plans/fast-lane-intent.md`.
 - **Unified agent path via Vercel AI SDK** — same widget-placing agent
   for every provider (Gemini, Anthropic, OpenAI, Groq, Ollama,
   OpenRouter). Previously only the Claude Agent SDK adapter had

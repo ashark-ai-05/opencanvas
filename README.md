@@ -117,6 +117,8 @@ Every widget is a **typed contract**: a Zod schema for props plus a React compon
 
 **Runtime plugins.** The agent can call `register_widget_kind` mid-conversation to declare a brand-new widget on the fly. A Python REPL (Pyodide) and a JS REPL ship as examples. Plugin iframes run with `sandbox="allow-scripts"` and no `allow-same-origin`: null origin, no access to the parent DOM.
 
+**Instant widgets.** Timers, stopwatches, clocks, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter with no model call, so they work offline and with no API key. A chip above the composer previews exactly what will be placed; ⌘↵ sends the same text to the model instead. Toggle it in Settings.
+
 ---
 
 ## MCP-native
