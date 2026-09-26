@@ -40,7 +40,7 @@ import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
 import { useFastLane } from '../hooks/useFastLane';
 import { FastLaneChip } from './FastLaneChip';
-import { FastLaneNote, isLocalNote, notLocalNote } from './FastLaneNote';
+import { FastLaneNote, isLocalNote, outboundMessages } from './FastLaneNote';
 import { useAppStore } from '../state/app-store';
 import { validatePayloadForKind } from '../../../src/agent/payloads';
 import type {
@@ -391,7 +391,7 @@ export function Chat() {
         const settingsHeaders = getUserSettingsHeaders();
         return {
           api,
-          body: { ...body, messages: msgs.filter(notLocalNote) },
+          body: { ...body, messages: outboundMessages(msgs) },
           headers: { ...headers, ...settingsHeaders },
           credentials,
         };
@@ -693,8 +693,11 @@ export function Chat() {
     if (messages.length === 0) return;
     const last = messages[messages.length - 1];
     if (!last || last.role !== 'assistant') return;
+    // A fast-lane placement never triggers an index POST — it's a local
+    // note, not a real assistant turn, and its text was never sent anyway.
+    if (isLocalNote(last)) return;
     lastIndexedRef.current = messages.length;
-    void indexConversation(activeId, messages.filter(notLocalNote));
+    void indexConversation(activeId, outboundMessages(messages));
   }, [status, messages, activeId]);
 
   return (

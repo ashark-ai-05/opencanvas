@@ -13,6 +13,11 @@ export function notLocalNote<T extends { metadata?: unknown }>(m: T): boolean {
   return !isLocalNote(m);
 }
 
+/** The subset of `msgs` that may leave the client — sent to the model or indexed. */
+export function outboundMessages<T extends { metadata?: unknown }>(msgs: readonly T[]): T[] {
+  return msgs.filter(notLocalNote);
+}
+
 export function FastLaneNote({ text, onAsk }: { text: string; onAsk: (text: string) => void }) {
   return (
     <div className="opencanvas-fastlane-note">

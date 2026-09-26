@@ -7,13 +7,16 @@ import '@testing-library/jest-dom';
 // top-level `const`s referenced in a factory throw at transform time on
 // this vitest version — see the codebase convention in
 // chat-tool-handler.test.tsx).
-const { sendMessage, setMessages } = vi.hoisted(() => ({
+const { sendMessage, setMessages, mockMessages } = vi.hoisted(() => ({
   sendMessage: vi.fn(),
   setMessages: vi.fn(),
+  // A plain mutable box, not a `let` — vi.hoisted values are captured once,
+  // so tests mutate `.current` to change what the next render sees.
+  mockMessages: { current: [] as unknown[] },
 }));
 vi.mock('@ai-sdk/react', () => ({
   useChat: () => ({
-    messages: [],
+    messages: mockMessages.current,
     sendMessage,
     setMessages,
     status: 'ready',
@@ -38,11 +41,13 @@ vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), succe
 
 import { Chat } from '../../app/src/components/Chat';
 import { useUserSettings } from '../../app/src/state/user-settings-store';
+import { outboundMessages } from '../../app/src/components/FastLaneNote';
 
 beforeEach(() => {
   sendMessage.mockReset();
   setMessages.mockReset();
   applyToolDirective.mockReset();
+  mockMessages.current = [];
   useUserSettings.getState().reset();
   // kbSearch() fires a fetch on send; keep jsdom quiet.
   globalThis.fetch = vi.fn(() =>
@@ -99,5 +104,32 @@ describe('fast lane in Chat', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1));
     expect(applyToolDirective).not.toHaveBeenCalled();
+  });
+
+  it('never indexes a conversation whose last message is a local fast-lane note', async () => {
+    mockMessages.current = [
+      { id: 'u1', role: 'user', parts: [{ type: 'text', text: '25 min timer' }] },
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [{ type: 'text', text: 'Placed Timer 25:00 without the model.' }],
+        metadata: { local: 'fast-lane', originalText: '25 min timer' },
+      },
+    ];
+    render(<Chat />);
+    // Give the indexConversation effect a beat to fire if it were going to.
+    await new Promise((r) => setTimeout(r, 50));
+    const calls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    const indexed = calls.some(([url]) => String(url).includes('/v1/index-conversation'));
+    expect(indexed).toBe(false);
+  });
+});
+
+describe('outboundMessages', () => {
+  it('drops the local fast-lane note and keeps everything else', () => {
+    const userMsg = { id: 'u1', metadata: undefined };
+    const localNote = { id: 'a1', metadata: { local: 'fast-lane', originalText: '25 min timer' } };
+    const assistantMsg = { id: 'a2', metadata: undefined };
+    expect(outboundMessages([userMsg, localNote, assistantMsg])).toEqual([userMsg, assistantMsg]);
   });
 });
