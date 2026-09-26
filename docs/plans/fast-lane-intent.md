@@ -1,6 +1,6 @@
 # Fast lane: local intent → instant widget
 
-*Design spec. Status: draft for review. 2026-09-26.*
+*Design spec. Status: approved 2026-09-26.*
 *Inspired by [anishfn/shapeshift](https://github.com/anishfn/shapeshift) (MIT): "the model decides, code computes."*
 
 ## 1. Problem
@@ -214,12 +214,12 @@ its own Vite vendor chunk, loaded on first classify). No other additions.
 3. Follow-ups, each its own small spec: direction 2 (intent → template),
    more intents (countdown, poll), optional provider-backed classifier.
 
-## 9. Open questions for review
+## 9. Decisions (resolved 2026-09-26)
 
-- Should a fast-lane placement create a chat transcript line at all, or stay
-  canvas-only? Spec says a one-liner for honesty; the counter-argument is
-  transcript noise.
-- `event` maps to `calendar` (a whole month grid for one event). A dedicated
-  compact event card would be better but is a new kind. Accept `calendar`
-  for v1, or defer `event` until an event kind exists?
-- Default on or off in demo mode for the first deploy (§8 says off).
+- **Transcript line: yes.** A fast-lane placement appends a one-line local
+  note to the chat ("Placed Timer 25:00 without the model") with an "Ask the
+  model instead" action. Honesty over tidiness.
+- **`event` → `calendar` in v1.** Accept the month grid. Revisit when a
+  compact event kind exists.
+- **Demo mode: off for the first deploy.** Local builds default on. Flip
+  demo after one deploy of fixture growth (§8).
