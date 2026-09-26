@@ -38,7 +38,6 @@ import {
 import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
-import { useUiStore } from '../state/ui-store';
 import { useFastLane } from '../hooks/useFastLane';
 import { FastLaneChip } from './FastLaneChip';
 import { FastLaneNote, isLocalNote, notLocalNote } from './FastLaneNote';
