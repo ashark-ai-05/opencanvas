@@ -2368,6 +2368,13 @@ header button:hover {
   color: #fafafa;
   background: rgba(255, 255, 255, 0.08);
 }
+.opencanvas-fastlane-note { margin-top: 2px; }
+.opencanvas-fastlane-note-ask {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #c4b5fd; background: transparent; border: none;
+  padding: 0; cursor: pointer;
+}
+.opencanvas-fastlane-note-ask:hover { color: #e9d5ff; text-decoration: underline; }
 
 /* Hits popover — anchored to the composer status row, expands UPWARD so
    it doesn't shove the input down. Capped at 40vh so a flood of results

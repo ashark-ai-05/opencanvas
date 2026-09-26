@@ -22,7 +22,11 @@ import { ShowThinking } from './ShowThinking';
 import { ComposerStatus } from './ComposerStatus';
 import { EmptyChatBanner } from './EmptyChatBanner';
 import { useChatActions } from '../state/chat-actions-store';
-import { getUserSettingsHeaders } from '../state/user-settings-store';
+import {
+  getUserSettingsHeaders,
+  resolveFastLaneEnabled,
+  useUserSettings,
+} from '../state/user-settings-store';
 import { useAnonUsage } from '../state/anon-usage-store';
 import { useUiStore } from '../state/ui-store';
 import { VoiceInputButton } from './VoiceInputButton';
@@ -35,6 +39,11 @@ import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
 import { useUiStore } from '../state/ui-store';
+import { useFastLane } from '../hooks/useFastLane';
+import { FastLaneChip } from './FastLaneChip';
+import { FastLaneNote, isLocalNote, notLocalNote } from './FastLaneNote';
+import { useAppStore } from '../state/app-store';
+import { validatePayloadForKind } from '../../../src/agent/payloads';
 import type {
   ToolDirective,
   WidgetKind,
@@ -383,7 +392,7 @@ export function Chat() {
         const settingsHeaders = getUserSettingsHeaders();
         return {
           api,
-          body: { ...body, messages: msgs },
+          body: { ...body, messages: msgs.filter(notLocalNote) },
           headers: { ...headers, ...settingsHeaders },
           credentials,
         };
@@ -392,6 +401,14 @@ export function Chat() {
   });
   const [input, setInput] = useState('');
   const isStreaming = status === 'streaming' || status === 'submitted';
+
+  const fastLaneSetting = useUserSettings((s) => s.fastLane);
+  const isDemo = useAppStore(
+    (s) => s.health.status === 'ok' && s.health.data.demo === true,
+  );
+  const fastLane = useFastLane(input, {
+    enabled: resolveFastLaneEnabled(fastLaneSetting, isDemo) && !isStreaming,
+  });
 
   // Parallel KB search: every chat submit also fires `/v1/search` so we
   // can show the user the raw hits the agent will reason over. The agent
@@ -539,25 +556,67 @@ export function Chat() {
     }
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * Fast lane: place the previewed widget locally. Returns false whenever
+   * anything is off (not committed, incomplete parse, no editor, payload
+   * rejected by the schema) so the caller falls through to the model path.
+   */
+  const placeFastLane = (): boolean => {
+    const r = fastLane.resolved;
+    if (!r || !r.payload || fastLane.ui.kind !== 'committed') return false;
+    const editor = getEditor();
+    if (!editor) return false;
+    let payload: Record<string, unknown>;
+    try {
+      payload = validatePayloadForKind(r.kind, r.payload);
+    } catch (e) {
+      logger.warn('[fast-lane] payload rejected, falling back to model:', e);
+      return false;
+    }
+    const id = crypto.randomUUID();
+    try {
+      applyToolDirective(
+        editor,
+        { type: 'place', id, kind: r.kind, role: 'primary', payload },
+        useTemplateStore.getState().activeTemplateId,
+      );
+    } catch (e) {
+      logger.error('[fast-lane] place failed:', e);
+      return false;
+    }
+    usePreferences.getState().record(activeId, r.kind, 'placed');
+    const originalText = input;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant' as const,
+        parts: [{ type: 'text' as const, text: `Placed ${r.summary} without the model.` }],
+        metadata: { local: 'fast-lane', originalText },
+      },
+    ]);
+    return true;
+  };
+
+  const submit = (forceModel: boolean) => {
     if (!input.trim() || isStreaming) return;
-    // Slash commands (e.g. /clear, /template, /help) execute locally and
-    // never reach the LLM. tryRunCommand returns true if it consumed the
-    // input — even for unknown commands, so we don't accidentally send
-    // "/typo" up as a chat message.
     if (tryRunCommand(input)) {
+      setInput('');
+      return;
+    }
+    if (!forceModel && placeFastLane()) {
       setInput('');
       return;
     }
     kbSearch(input);
     sendMessage({ text: input });
     setInput('');
-    // Bump the anon-usage counter so the BYO nudge fires after ~8
-    // anonymous messages. No-op when the user already has BYO
-    // configured (the nudge's `shouldShowNudge(hasOverride)` returns
-    // false in that case).
     useAnonUsage.getState().bumpMessages();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submit(false);
   };
 
   // Slash-suggestion popover — shows when input starts with "/".
@@ -636,7 +695,7 @@ export function Chat() {
     const last = messages[messages.length - 1];
     if (!last || last.role !== 'assistant') return;
     lastIndexedRef.current = messages.length;
-    void indexConversation(activeId, messages);
+    void indexConversation(activeId, messages.filter(notLocalNote));
   }, [status, messages, activeId]);
 
   return (
@@ -683,6 +742,15 @@ export function Chat() {
                 </span>
                 <CopyMessageButton text={extractMessageText(m)} />
               </div>
+              {isLocalNote(m) && (
+                <FastLaneNote
+                  text={m.metadata.originalText}
+                  onAsk={(text) => {
+                    kbSearch(text);
+                    sendMessage({ text });
+                  }}
+                />
+              )}
               {/* "Show thinking + sources" — collapsible per-message
                   panel that surfaces both reasoning chunks (type
                   'reasoning' parts from AI SDK v6) AND the KB hits the
@@ -912,6 +980,7 @@ export function Chat() {
           now. The live step has moved INSIDE the input field (see
           InputLiveOverlay below). */}
       <ComposerStatus
+        leading={fastLane.ui.kind === 'input' ? null : <FastLaneChip view={fastLane} />}
         query={kbQuery}
         hits={kbHits}
         kbBusy={kbBusy}
@@ -965,6 +1034,27 @@ export function Chat() {
                 rows={1}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
+                  const isModKey = e.metaKey || e.ctrlKey;
+                  if (e.key === 'Enter' && isModKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    submit(true);
+                    return;
+                  }
+                  if (e.key === 'Tab' && fastLane.ui.kind === 'ghost') {
+                    e.preventDefault();
+                    fastLane.promote();
+                    return;
+                  }
+                  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && fastLane.ui.kind === 'choose') {
+                    e.preventDefault();
+                    fastLane.choose(e.key === 'ArrowLeft' ? 0 : 1);
+                    return;
+                  }
+                  if (e.key === 'Escape' && fastLane.ui.kind !== 'input') {
+                    e.preventDefault();
+                    fastLane.dismiss();
+                    return;
+                  }
                   // Enter (no shift) submits; Shift+Enter inserts a newline.
                   if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                     e.preventDefault();
