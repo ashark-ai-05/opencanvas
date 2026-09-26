@@ -223,3 +223,10 @@ its own Vite vendor chunk, loaded on first classify). No other additions.
   compact event kind exists.
 - **Demo mode: off for the first deploy.** Local builds default on. Flip
   demo after one deploy of fixture growth (§8).
+- **`event` → `key-value-card`, not `calendar` (planning change).** `calendar`
+  is a plugin kind whose renderer is fetched from `/v1/canvas/widget-kinds`,
+  which breaks the zero-network goal. A key-value card (When / With / Mode /
+  Where) is compact and renders offline.
+- **Bypass key is Cmd/Ctrl+Enter, not Shift+Enter (planning change).**
+  Shift+Enter inserts a newline today; a newline already escapes the fast
+  lane, so both paths reach the model. The chip says "⌘↵ ask model".
