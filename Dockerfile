@@ -11,7 +11,7 @@
 # ─── 1. Base ───────────────────────────────────────────────────────────
 FROM node:24-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
-RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN corepack enable && corepack prepare pnpm@10.34.5 --activate
 WORKDIR /app
 
 # ─── 2. Install deps (with dev for build) ──────────────────────────────

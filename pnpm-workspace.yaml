@@ -1,0 +1,36 @@
+# pnpm project settings. pnpm 11+ no longer reads the `pnpm` field in
+# package.json, and dependabot uses the latest pnpm unless packageManager
+# pins it — so settings live here, where every pnpm version finds them.
+
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - onnxruntime-node
+  - protobufjs
+  - sharp
+  - electron
+
+# Transitive vulnerability pins (see `pnpm audit --prod`).
+overrides:
+  tar: '^7.5.11'
+  '@tootallnate/once': '^3.0.1'
+  '@anthropic-ai/sdk': '^0.95.1'
+  ip-address: '^10.3.1'
+  protobufjs: '^7.6.5'
+  qs: '^6.16.0'
+  ws: '^8.20.1'
+  '@xmldom/xmldom': '^0.8.15'
+  adm-zip: '^0.6.1'
+  dompurify: '^3.4.13'
+  fast-uri: '^3.1.6'
+  linkify-it: '^5.0.2'
+  markdown-it: '^14.2.0'
+  sharp: '^0.35.4'
+
+auditConfig:
+  ignoreGhsas:
+    # @tiptap/core mergeAttributes prototype pollution, fixed in 3.30.4.
+    # Only reachable via tldraw 3.x (pins tiptap 2.x); tldraw 4+ needs a
+    # commercial licence. We never pass user JSON into tiptap attribute
+    # merging, so the vulnerable path is unreachable in OpenCanvas.
+    - GHSA-cp6q-959q-f8rh
