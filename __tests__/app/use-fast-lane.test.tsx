@@ -95,6 +95,18 @@ describe('useFastLane', () => {
     expect(result.current.placeable).toBe(true);
   });
 
+  it('a huge string while committed resolves to null without throwing (fix 4)', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = setup('25 min timer');
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.ui.kind).toBe('committed');
+    const huge = 'x'.repeat(6000);
+    expect(() => rerender({ text: huge, on: true })).not.toThrow();
+    expect(result.current.resolved).toBeNull();
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.resolved).toBeNull();
+  });
+
   it('choose forces an option', () => {
     vi.useFakeTimers();
     const { result, rerender } = setup('25 min timer');

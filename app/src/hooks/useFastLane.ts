@@ -102,30 +102,44 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
   const ui: UiState = stale ? { kind: 'input' } : mem.ui;
 
   const resolved = useMemo<FastLaneResolved | null>(() => {
+    // Defence in depth: even though the effect above resets `mem` for
+    // escaped text, the memo must never call into a parser on text the
+    // fast lane has disowned (e.g. a huge paste), and a parser throwing
+    // on odd input must never surface past this hook.
+    if (isEscaped(text)) return null;
     if (stale) return null;
     const intent = activeIntent(mem.ui);
     if (!intent || !enabled) return null;
-    const r = resolve(intent, text, ref());
-    return {
-      intent,
-      kind: r.entry.kind,
-      label: r.entry.label,
-      icon: r.entry.icon,
-      summary: r.summary,
-      payload: r.payload,
-    };
+    try {
+      const r = resolve(intent, text, ref());
+      return {
+        intent,
+        kind: r.entry.kind,
+        label: r.entry.label,
+        icon: r.entry.icon,
+        summary: r.summary,
+        payload: r.payload,
+      };
+    } catch {
+      return null;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mem.ui, text, enabled, stale]);
 
   const options = useMemo<FastLaneView['options']>(() => {
+    if (isEscaped(text)) return null;
     if (mem.ui.kind !== 'choose') return null;
-    const [a, b] = mem.ui.options;
-    const la = resolve(a, text, ref()).entry.label;
-    const lb = resolve(b, text, ref()).entry.label;
-    return [
-      { intent: a, label: la },
-      { intent: b, label: lb },
-    ];
+    try {
+      const [a, b] = mem.ui.options;
+      const la = resolve(a, text, ref()).entry.label;
+      const lb = resolve(b, text, ref()).entry.label;
+      return [
+        { intent: a, label: la },
+        { intent: b, label: lb },
+      ];
+    } catch {
+      return null;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mem.ui, text]);
 
