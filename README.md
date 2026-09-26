@@ -126,7 +126,7 @@ Threat model, including what is out of scope, in [SECURITY.md](./SECURITY.md).
 
 ## Under the hood
 
-React + tldraw v3 (one shape util per widget kind) and Zustand in the browser. Hono, better-sqlite3 + sqlite-vec and the Vercel AI SDK on the backend. Electron for desktop. tldraw is pinned to v3 because v4+ needs a commercial licence key, and this project stays MIT and free to self-host. Design notes live in [`docs/plans/`](./docs/plans/).
+React + tldraw v3 (one shape util per widget kind) and Zustand in the browser. Hono, better-sqlite3 + sqlite-vec and the Vercel AI SDK on the backend. Electron for desktop. tldraw is pinned to v3 because v4+ needs a commercial licence key, and this project stays MIT and free to self-host. Design notes live in [`docs/plans/`](./docs/plans/). The instant-widget classifier borrows its calm-UI state machine and "model decides, code computes" split from [shapeshift](https://github.com/anishfn/shapeshift) (MIT); unlike shapeshift it uses no hosted classifier, so it runs entirely in the browser.
 
 ```bash
 pnpm test                                      # backend, 397 tests
