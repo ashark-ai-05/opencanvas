@@ -66,6 +66,9 @@ importers:
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3
+      chrono-node:
+        specifier: ^2.10.1
+        version: 2.10.1
       cron-parser:
         specifier: ^5.5.0
         version: 5.5.0
@@ -272,35 +275,35 @@ packages:
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
 
-  '@ampcode/cli-darwin-arm64@0.0.1790380893-geeadb1':
-    resolution: {integrity: sha512-H8nu42NzXHT1QAx/GHGZI9wX4OaXtJjgahwOs7xfPfRuJxwEf9PzCYzHG9P3ke1vrR1zFsWU5PYmzIJBG3Jz/A==}
+  '@ampcode/cli-darwin-arm64@0.0.1790395249-g17ed45':
+    resolution: {integrity: sha512-om359wpoyAIEF/c6YCZKT0pGGD9Ss7Vn8yu/gkywXzS0cdAfxeiHAWpw0MDH6dRcjDCiUVHxX2V1Zl4cOPyTlg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ampcode/cli-darwin-x64@0.0.1790380893-geeadb1':
-    resolution: {integrity: sha512-RtCUTB4pdFHZURCNEAfggYgDwflrBOSVOJGbvhNrpsJMgFTZfsSCrO0mkn4VkogtCmjx5vor5vFit7GcY7mHxA==}
+  '@ampcode/cli-darwin-x64@0.0.1790395249-g17ed45':
+    resolution: {integrity: sha512-kMsgVTiRy+Hwe9xw9MeHkqNtsricTkZeNLoU0kgOBr18MC04DwZ/ekIyEXWWshtBQCEbIGpEvirAs5r7mKhhLw==}
     cpu: [x64]
     os: [darwin]
 
-  '@ampcode/cli-linux-arm64@0.0.1790380893-geeadb1':
-    resolution: {integrity: sha512-qT0PqIPsZh7cbUDvX79ucHW2CvvMVkkcSFXgSIBESMOQMbg955c+I3CR/xVcTOpDg3FXe7C6HMIF/Tx75KtsVg==}
+  '@ampcode/cli-linux-arm64@0.0.1790395249-g17ed45':
+    resolution: {integrity: sha512-P4+KPieMe7VOGPfdcKwi40t2Zite16eHyk319IsQj12s0x4NB0aAb0byQD++xMinc+IG4OIqMB/JHI8ffClMBA==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@ampcode/cli-linux-x64@0.0.1790380893-geeadb1':
-    resolution: {integrity: sha512-kpP/jp+YfV3v3e5UBa5+QQG5rNGIWBIPkpmlWzF7bfcr66R9HFS2+nOXHkTMZcV0I/E3sPG3Hk8PwcBVmjZHVw==}
+  '@ampcode/cli-linux-x64@0.0.1790395249-g17ed45':
+    resolution: {integrity: sha512-7HWylP+gqHrY62fNxd02xdIByKPXvylxkv1oBTwlIJMx0xFbcP+BuyDgPXNRqTTMU+hueIYguTNHvbV63xvu/g==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@ampcode/cli-win32-x64@0.0.1790380893-geeadb1':
-    resolution: {integrity: sha512-Vz2cF+n1GehEV+k3tGzLGwIow4Nwgkc2fQDeFneapOJzoyhg2V7eNwdspreicu0AC94Vtx+J+HGopTGOZbMSpw==}
+  '@ampcode/cli-win32-x64@0.0.1790395249-g17ed45':
+    resolution: {integrity: sha512-MWCKqdry3e4AG0sxBPeRF7klwAAqzA7QVsfWqEik3UQ27y9lDEUfVrf4Gl0PgWh4+mLu2pHfkXqTbpiuXkWUGQ==}
     cpu: [x64]
     os: [win32]
 
-  '@ampcode/cli@0.0.1790380893-geeadb1':
-    resolution: {integrity: sha512-sUUVbySS6EpRpf8kSHc2XSmD7x6TfVFpeicPCO8ZE/Gj7lBv3GjbC32PEaoAVEa9wDTwk6fMQQAjzJ2N0JjstQ==}
+  '@ampcode/cli@0.0.1790395249-g17ed45':
+    resolution: {integrity: sha512-g7PtfIPentqvW3PJJqbvS5JVLGK09WXIKJ4xe6eZaS4DDrdpJZiQ9M5o0o+km3Vso+ej+mQTBBw6o9o5dpFLoQ==}
     hasBin: true
 
   '@antfu/install-pkg@1.1.0':
@@ -2884,6 +2887,10 @@ packages:
 
   chromium-pickle-js@0.2.0:
     resolution: {integrity: sha512-1R5Fho+jBq0DDydt+/vHWj5KJNJCKdARKOCwZUen84I5BreWoLqRLANH1U87eJy1tiASPtMnGqJJq0ZsLoRPOw==}
+
+  chrono-node@2.10.1:
+    resolution: {integrity: sha512-tPOsBzYVAK5zth+CiHCgp5NGeqRc4mMD8FPthQ5IxkgjPWWxIFdM5odnmfw//IRAzl6C++Xy8olQW7wn5qBR1g==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   ci-info@4.3.1:
     resolution: {integrity: sha512-Wdy2Igu8OcBpI2pZePZ5oWjPC38tmDVx5WKUXKwlLYkA0ozo85sLsLvkBbBn/sZaSCMFOGZJ14fvW9t5/d7kdA==}
@@ -5733,28 +5740,28 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@ampcode/cli-darwin-arm64@0.0.1790380893-geeadb1':
+  '@ampcode/cli-darwin-arm64@0.0.1790395249-g17ed45':
     optional: true
 
-  '@ampcode/cli-darwin-x64@0.0.1790380893-geeadb1':
+  '@ampcode/cli-darwin-x64@0.0.1790395249-g17ed45':
     optional: true
 
-  '@ampcode/cli-linux-arm64@0.0.1790380893-geeadb1':
+  '@ampcode/cli-linux-arm64@0.0.1790395249-g17ed45':
     optional: true
 
-  '@ampcode/cli-linux-x64@0.0.1790380893-geeadb1':
+  '@ampcode/cli-linux-x64@0.0.1790395249-g17ed45':
     optional: true
 
-  '@ampcode/cli-win32-x64@0.0.1790380893-geeadb1':
+  '@ampcode/cli-win32-x64@0.0.1790395249-g17ed45':
     optional: true
 
-  '@ampcode/cli@0.0.1790380893-geeadb1':
+  '@ampcode/cli@0.0.1790395249-g17ed45':
     optionalDependencies:
-      '@ampcode/cli-darwin-arm64': 0.0.1790380893-geeadb1
-      '@ampcode/cli-darwin-x64': 0.0.1790380893-geeadb1
-      '@ampcode/cli-linux-arm64': 0.0.1790380893-geeadb1
-      '@ampcode/cli-linux-x64': 0.0.1790380893-geeadb1
-      '@ampcode/cli-win32-x64': 0.0.1790380893-geeadb1
+      '@ampcode/cli-darwin-arm64': 0.0.1790395249-g17ed45
+      '@ampcode/cli-darwin-x64': 0.0.1790395249-g17ed45
+      '@ampcode/cli-linux-arm64': 0.0.1790395249-g17ed45
+      '@ampcode/cli-linux-x64': 0.0.1790395249-g17ed45
+      '@ampcode/cli-win32-x64': 0.0.1790395249-g17ed45
 
   '@antfu/install-pkg@1.1.0':
     dependencies:
@@ -7364,7 +7371,7 @@ snapshots:
 
   '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
     dependencies:
-      '@ampcode/cli': 0.0.1790380893-geeadb1
+      '@ampcode/cli': 0.0.1790395249-g17ed45
       zod: 3.25.76
 
   '@stablelib/base64@1.0.1': {}
@@ -8291,6 +8298,8 @@ snapshots:
   chownr@3.0.0: {}
 
   chromium-pickle-js@0.2.0: {}
+
+  chrono-node@2.10.1: {}
 
   ci-info@4.3.1: {}
 

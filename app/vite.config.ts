@@ -63,6 +63,9 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
+          if (id.includes('/chrono-node/')) {
+            return 'vendor-chrono';
+          }
           if (id.includes('/tldraw/') || id.includes('/@tldraw/')) {
             return 'vendor-tldraw';
           }

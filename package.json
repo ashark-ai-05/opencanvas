@@ -78,6 +78,7 @@
     "@sourcegraph/amp-sdk": "0.1.0-20260729105907-g72d5ca3",
     "ai": "^6.0.191",
     "better-sqlite3": "^13.0.3",
+    "chrono-node": "^2.10.1",
     "cron-parser": "^5.5.0",
     "framer-motion": "^12.40.0",
     "hono": "^4.13.9",
