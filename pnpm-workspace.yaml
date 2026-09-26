@@ -12,7 +12,6 @@ onlyBuiltDependencies:
 
 # Transitive vulnerability pins (see `pnpm audit --prod`).
 overrides:
-  tar: '^7.5.11'
   '@tootallnate/once': '^3.0.1'
   '@anthropic-ai/sdk': '^0.95.1'
   ip-address: '^10.3.1'
@@ -26,6 +25,23 @@ overrides:
   linkify-it: '^5.0.2'
   markdown-it: '^14.2.0'
   sharp: '^0.35.4'
+  # 2026-09-27 audit sweep (mostly electron-builder / vite / node-gyp transitives)
+  tar: '^7.5.21'
+  js-yaml: '^4.3.2'
+  nanoid: '^3.3.18'
+  postcss: '^8.5.23'
+  browserslist: '^4.28.7'
+  baseline-browser-mapping: '^2.11.0'
+  tmp: '^0.2.6'
+  form-data: '^4.0.6'
+  body-parser: '^2.3.0'
+  '@babel/core': '^7.29.6'
+  builder-util-runtime: '^9.7.0'
+  'undici@6': '^6.28.0'
+  'undici@7': '^7.29.0'
+  'brace-expansion@1': '^1.1.18'
+  'brace-expansion@2': '^2.1.4'
+  'brace-expansion@5': '^5.0.9'
 
 auditConfig:
   ignoreGhsas:
