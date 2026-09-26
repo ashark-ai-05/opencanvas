@@ -10,7 +10,7 @@ Your LLM doesn't print markdown. It **places typed widgets** on a tldraw canvas:
 
 **BYO model · MCP-native · Self-improving · Local-first · MIT**
 
-[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-610%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![security](https://img.shields.io/badge/security-policy-22c55e)](./SECURITY.md)
+[![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml) [![tests](https://img.shields.io/badge/tests-775%20passing-2dd4bf)]() [![tsc](https://img.shields.io/badge/tsc-clean-a78bfa)]() [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE) [![security](https://img.shields.io/badge/security-policy-22c55e)](./SECURITY.md)
 
 ![demo](docs/demo.gif)
 
@@ -30,6 +30,16 @@ Your LLM doesn't print markdown. It **places typed widgets** on a tldraw canvas:
 
 ---
 
+## What's new
+
+- **Instant widgets, no model call.** Timers, stopwatches, clocks, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter in under 50 ms. Works offline and with no API key. A chip previews exactly what will land; ⌘↵ asks the model instead. Toggle in Settings. [Design notes](./docs/plans/fast-lane-intent.md).
+- **One agent for every provider.** Gemini, OpenAI, Groq, Ollama and OpenRouter now get the same tool-calling agent Claude had, via the Vercel AI SDK. No more text-only wrappers.
+- **Sturdier under the hood.** better-sqlite3 13 (fixes a Node 24 crash that took the demo down), a clean production dependency audit, and pnpm pinned so lockfiles stay reproducible.
+
+Full history in [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
 ## Why OpenCanvas
 
 Chat apps give you a scrolling wall of text. OpenCanvas gives the model a **canvas** and a **toolbox**.
@@ -45,6 +55,7 @@ Ask for a sales breakdown and you get a Vega-Lite chart next to a kanban of foll
 | **Self-improving widgets** | ✅ extracts templates from its own renders | ❌ | ❌ | ❌ | ❌ |
 | **Open source, self-hosted** | ✅ MIT | ❌ | ❌ | ❌ | ❌ |
 | **Fully local option** | ✅ Ollama + bundled ONNX embeddings | ❌ | ⚠️ partial | ❌ | ❌ |
+| **Instant widgets without a model** | ✅ timers, lists, reminders, calc parsed locally | ❌ | ❌ | ❌ | ❌ |
 
 Under the hood, that translates to:
 
@@ -202,7 +213,7 @@ pnpm app:build                                     # production bundle
 pnpm dist                                          # electron-builder installer
 ```
 
-**610 tests**: 396 backend, 214 frontend. CI runs both suites plus a production dependency audit on every push.
+**775 tests**: 397 backend, 378 frontend. CI runs both suites plus a production dependency audit on every push.
 
 ---
 
