@@ -10,6 +10,13 @@ import { useNotebookStore } from '../../app/src/state/notebook-store';
 
 const MOCK_NOTE = { body: '# Hello\n\nSome notes.', updatedAt: 1000 };
 
+// CalendarTab opens on the current month (local time). Calendar fixtures
+// must live in that month or the day cell never renders, so derive the
+// date at run time instead of hard-coding one that rots as time passes.
+const now = new Date();
+const CURRENT_YM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+const CAL_DUE_DATE = `${CURRENT_YM}-10`;
+
 const MOCK_TASKS = [
   {
     id: 'task-1',
@@ -50,7 +57,7 @@ function makeFetch() {
               id: 'task-cal',
               title: 'Calendar task',
               done: false,
-              dueDate: '2026-05-10',
+              dueDate: CAL_DUE_DATE,
               notes: null,
               createdAt: 500,
               updatedAt: 500,
@@ -224,12 +231,12 @@ describe('<NotebookPanel>', () => {
     // Pre-seed the month cache so the day cell renders immediately
     useNotebookStore.setState({
       tasksByMonth: {
-        '2026-05': [
+        [CURRENT_YM]: [
           {
             id: 'task-cal',
             title: 'Calendar task',
             done: false,
-            dueDate: '2026-05-10',
+            dueDate: CAL_DUE_DATE,
             notes: null,
             createdAt: 500,
             updatedAt: 500,
@@ -243,13 +250,15 @@ describe('<NotebookPanel>', () => {
 
     // Find and click the day cell with tasks (aria-label includes the date)
     const dayCell = await screen.findByRole('button', {
-      name: /2026-05-10.*task/i,
+      name: new RegExp(`${CAL_DUE_DATE}.*task`, 'i'),
     });
     await user.click(dayCell);
 
     // Should switch to Tasks tab with filter pill showing
     await waitFor(() => {
-      expect(screen.getByText(/showing tasks for 2026-05-10/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(`showing tasks for ${CAL_DUE_DATE}`, 'i')),
+      ).toBeInTheDocument();
     });
   });
 
