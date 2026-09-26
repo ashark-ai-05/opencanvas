@@ -40,7 +40,21 @@ Ask a question. Instead of five paragraphs, you get a chart, a table and a kanba
 
 ## Why a canvas
 
-Chat is a stream. The things you actually want from a model, a table, a diagram, a snippet, a plan, are not. OpenCanvas gives the model a **canvas** and a **toolbox**: it calls `place_widget` with a typed payload, a Zod schema validates it, tldraw renders it. The chat panel shrinks to a breadcrumb. The content lives where you can see it.
+Chat is a stream. The things you actually want from a model are not.
+
+<p align="center">
+  <img src="docs/why-canvas.svg" alt="Left: a chat transcript scrolling endlessly with the one useful line buried in it. Right: the same prompt on OpenCanvas, where a chart, a table and a kanban land side by side and the chat shrinks to one line." width="100%">
+</p>
+
+The model never prints the answer. It calls `place_widget` with a typed payload; a Zod schema checks it; tldraw draws it. Three things fall out of that one decision:
+
+- **Answers become objects.** Drag them, pin them, link them, export them. They survive the next question.
+- **The chat gets out of the way.** One line pointing at what was placed, not five paragraphs hiding it.
+- **The canvas remembers.** Every widget and every conversation indexes into a local store; `⌘K` finds them again next week.
+
+<details>
+<summary><b>How it compares</b> to Claude Artifacts, ChatGPT Canvas and Cursor Composer</summary>
+<br>
 
 | | OpenCanvas | Claude Artifacts | ChatGPT Canvas | Cursor Composer |
 |---|---|---|---|---|
@@ -50,6 +64,8 @@ Chat is a stream. The things you actually want from a model, a table, a diagram,
 | **Instant widgets without a model** | ✅ | ❌ | ❌ | ❌ |
 | **Model registers new widget kinds at runtime** | ✅ | ❌ | ❌ | ❌ |
 | **Open source, local-first** | ✅ MIT | ❌ | ❌ | ❌ |
+
+</details>
 
 ---
 
