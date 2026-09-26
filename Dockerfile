@@ -16,7 +16,7 @@ WORKDIR /app
 
 # ─── 2. Install deps (with dev for build) ──────────────────────────────
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # better-sqlite3 + onnxruntime build native bindings — they need build
 # tools at install time. Keep them in this stage; we drop them in the
 # runtime image.
@@ -41,7 +41,7 @@ FROM base AS runtime
 ENV NODE_ENV=production OPENCANVAS_DEMO=1 HOST=0.0.0.0
 
 # Production deps only — slimmer image.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 make g++ \
     && rm -rf /var/lib/apt/lists/* \
