@@ -14,8 +14,15 @@ const has = (re: RegExp, t: string) => re.test(t);
 const QUESTION = /^(what|why|how|who|where|when|which|explain|summari[sz]e|describe|tell me|compare|show me|make|create|write|draft|plan|list the|find)\b/;
 const GATHER = /\b(meeting|meet|standup|stand-up|sync|lunch|dinner|breakfast|brunch|coffee|call|interview|appointment|1:1|one on one|party|drinks|catch ?up|demo|review)\b/;
 const REMIND = /\b(remind me|reminder|don'?t forget|remember to)\b/;
+const REMIND_LEAD = /^(remind me|reminder\b)/;
 const CLOCK_WORD = /\b(clock|current time|local time)\b/;
 const TIME_QUERY = /\b(what time|what'?s the time|time in)\b/;
+const ACTIVITY_WORD = /\b(focus|break|nap|rest|meditat\w*|workout|study)\b/;
+const STARTS_STOPWATCH = /^(stopwatch\b|start (?:a )?stopwatch\b)/;
+// Text that names a build/write/explain task rather than a utility request —
+// "build a stopwatch component", "15 minute meditation script" and the like
+// should never commit a widget even though they contain a duration word.
+const NON_UTILITY = /\b(build|design|implement|component|script|guide|recipe|plan for|for beginners|tutorial|explain|write)\b/;
 
 /**
  * Additive keyword evidence per intent. `none` carries a base weight so a
@@ -46,30 +53,50 @@ export function intentScores(raw: string, ref: Date): Scores {
   if (!stopwatch && !conv && !calc.result) {
     if (has(/\b(timer|countdown|focus session)\b/, t)) add('timer', 4);
     if (timer.seconds != null) add('timer', 4);
-    // "25 min focus" / "10 min break": a duration plus an activity word commits.
-    if (timer.seconds != null && has(/\b(focus|break|nap|rest|meditat\w*|workout|study)\b/, t)) add('timer', 3);
+    // "25 min focus" / "10 min break": a duration plus an activity word
+    // commits, but only for short utterances — "30 min workout plan for
+    // beginners" is a request to write a plan, not to start a timer.
+    if (timer.seconds != null && has(ACTIVITY_WORD, t) && words.length <= 4) add('timer', 3);
     if (timer.pomodoro) add('timer', 7);
   }
-  if (stopwatch) add('stopwatch', 8);
+  if (stopwatch) {
+    // A short utterance or an explicit "(start a) stopwatch" lead is strong
+    // evidence; the word appearing anywhere in a longer sentence ("build a
+    // stopwatch component", "a stopwatch is more accurate than a sundial")
+    // is much weaker.
+    add('stopwatch', words.length <= 4 || STARTS_STOPWATCH.test(t) ? 8 : 2);
+  }
 
   const zone = findZone(t);
   const clockWord = has(CLOCK_WORD, t);
   if (clockWord) add('clock', 5);
-  // A zone name plus any time word is a clock; "what time" alone is not.
-  if (zone && (clockWord || has(TIME_QUERY, t) || has(/\btime\b/, t))) add('clock', 8);
+  // A zone name plus a clock-shaped time word is a clock; the bare word
+  // "time" alone is not ("best time to visit paris", "la liga results this
+  // time") and only short utterances count ("clock pst", not a sentence
+  // that happens to mention a city and the word "time").
+  if (zone && (clockWord || has(TIME_QUERY, t)) && words.length <= 6) add('clock', 8);
 
   const todo = parseTodo(t);
   const hasSep = /[,;]/.test(t);
-  if (todo.explicit && todo.items.length >= 1) add('todo', 5);
+  // A LEAD keyword ("todo:", "checklist:") is unambiguous. A bare leading
+  // VERB ("order the results by date", "get the latest news") is common in
+  // ordinary sentences and only counts as explicit list evidence alongside
+  // a comma/semicolon separator.
+  const todoExplicit = todo.explicitVia === 'keyword' || (todo.explicitVia === 'verb' && hasSep);
+  if (todoExplicit && todo.items.length >= 1) add('todo', 5);
   // "compare hono and express" splits on "and" but is not a list; need a comma or a keyword.
-  if (todo.items.length >= 2 && (todo.explicit || hasSep)) add('todo', 3);
-  if (todo.items.length >= 3 && (todo.explicit || hasSep)) add('todo', 1);
+  if (todo.items.length >= 2 && (todoExplicit || hasSep)) add('todo', 3);
+  if (todo.items.length >= 3 && (todoExplicit || hasSep)) add('todo', 1);
 
   const note = parseNote(t);
   if (note.explicit) add('note', 9);
 
   const date = firstDate(t, ref);
-  if (has(REMIND, t)) {
+  // "remind me…" / "reminder:" is unambiguous on its own. A softer trigger
+  // like "don't forget" or "remember to" only counts as a reminder when a
+  // date is actually present — otherwise "remember to cite your sources"
+  // and "don't forget to add error handling" would wrongly commit.
+  if (REMIND_LEAD.test(t) || (has(REMIND, t) && date)) {
     add('reminder', 7);
     if (date) add('reminder', 2);
   }
@@ -80,9 +107,17 @@ export function intentScores(raw: string, ref: Date): Scores {
   if (date && date.hasTime && has(GATHER, t)) add('event', 1);
   if (has(REMIND, t) && s.event) s.event = s.event * 0.3;
 
-  // A question overrides utility intents unless a parser fully succeeded.
-  if (isQuestion && !conv && calc.result == null && !s.clock) {
-    for (const k of ['timer', 'todo', 'event', 'reminder'] as const) {
+  // Text that names a build/write/explain task rather than a utility
+  // request ("build a stopwatch component", "15 minute meditation script",
+  // "30 min workout plan for beginners") — never a utility widget even
+  // though it may contain a duration or a utility word.
+  const nonUtility = has(NON_UTILITY, t);
+  if (nonUtility) add('none', 3);
+
+  // A question — or a build/write/explain request — overrides utility
+  // intents unless a parser fully succeeded.
+  if ((isQuestion || nonUtility) && !conv && calc.result == null && !s.clock) {
+    for (const k of ['timer', 'stopwatch', 'todo', 'event', 'reminder'] as const) {
       if (s[k]) s[k] = s[k]! * 0.4;
     }
   }

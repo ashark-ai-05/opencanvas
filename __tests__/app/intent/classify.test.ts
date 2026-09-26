@@ -69,6 +69,20 @@ const FIXTURE: [string, IntentKey][] = [
   ['what time', 'none'], // no zone, no clock keyword yet
   ['plan my week', 'none'],
   ['show me a kanban for the launch', 'none'],
+  // fix 2 — classifier false positives
+  ['remember to cite your sources', 'none'],
+  ["don't forget to add error handling", 'none'],
+  ['order the results by date and name', 'none'],
+  ['get the latest news and summarise it', 'none'],
+  ['grab the data and plot it', 'none'],
+  ['build a stopwatch component in react', 'none'],
+  ['a stopwatch is more accurate than a sundial', 'none'],
+  ['best time to visit paris', 'none'],
+  ['est time for the migration', 'none'],
+  ['la liga results this time', 'none'],
+  ['30 min workout plan for beginners', 'none'],
+  ['15 minute meditation script', 'none'],
+  ['2024-2025', 'none'],
 ];
 
 describe('classify fixture', () => {

@@ -106,6 +106,10 @@ export function parseCalc(text: string): CalcData {
     };
   }
 
+  // A bare year range ("2024-2025") reads as subtraction but is never
+  // meant as one — guard it before the generic arithmetic path.
+  if (/^\d{4}\s*-\s*\d{4}$/.test(t)) return EMPTY(t);
+
   const expr = t
     .replace(/(\d)\s*[x×]\s*(\d)/g, '$1*$2')
     .replace(/÷/g, '/')
