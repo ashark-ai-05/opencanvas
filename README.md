@@ -160,4 +160,4 @@ Issues and PRs welcome, see [CONTRIBUTING.md](./CONTRIBUTING.md). Security repor
 
 ## License
 
-[MIT](./LICENSE). Built on tldraw v3, Hono, better-sqlite3 + sqlite-vec and the Vercel AI SDK. The instant-widget state machine is adapted from [shapeshift](https://github.com/anishfn/shapeshift) (MIT) and runs entirely in the browser, with no hosted classifier.
+[MIT](./LICENSE). Built on tldraw v3, Hono, better-sqlite3 + sqlite-vec and the Vercel AI SDK. Instant-widget detection runs entirely in the browser, with no hosted classifier.
