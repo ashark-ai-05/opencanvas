@@ -6,6 +6,10 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.1.0] — 2026-09-27
+
 ### Added
 - **Fast lane: instant local widgets** — a keyword classifier plus
   deterministic parsers (chrono-node for dates) recognise utility prompts

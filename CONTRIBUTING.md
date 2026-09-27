@@ -22,6 +22,14 @@ Headless without Electron:
 pnpm dev                   # → http://127.0.0.1:3458
 ```
 
+Before opening a PR, run both suites and the typecheck:
+
+```bash
+pnpm typecheck
+pnpm test                                      # backend
+pnpm vitest run --config app/vite.config.ts    # frontend
+```
+
 ## What we look for in a PR
 
 - **One change per PR.** A bug fix + a refactor + a doc tweak in one
