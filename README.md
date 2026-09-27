@@ -28,16 +28,6 @@ Ask a question. Instead of five paragraphs, you get a chart, a table and a kanba
 
 ---
 
-## What's new
-
-- **Instant widgets, no model call.** Timers, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter in under 50 ms. Works offline and with no API key. A chip previews exactly what will land; ⌘↵ asks the model instead.
-- **One agent for every provider.** Gemini, OpenAI, Groq, Ollama and OpenRouter get the same tool-calling agent Claude had. No more text-only wrappers.
-- **Hardened.** better-sqlite3 13 (fixes a Node 24 crash), a swept dependency tree, secret scanning and protected release tags on the repo.
-
-[Changelog](./CHANGELOG.md)
-
----
-
 ## Why a canvas
 
 Chat is a stream. The things you actually want from a model are not.
@@ -78,7 +68,13 @@ cp .env.example .env       # add one provider key, or none for local-only
 pnpm electron:dev          # backend + Vite + Electron
 ```
 
-No Electron? `pnpm dev` and open http://127.0.0.1:3458. No API key? Timers, lists and reminders already work; add [Ollama](https://ollama.com) for a fully offline agent. Public demo of your own: [docs/deploy-railway.md](./docs/deploy-railway.md).
+No Electron? `pnpm dev` and open http://127.0.0.1:3458. Public demo of your own: [docs/deploy-railway.md](./docs/deploy-railway.md).
+
+**No API key? Start typing anyway.** Timers, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter, with no model call. Add [Ollama](https://ollama.com) for a fully offline agent on top.
+
+<p align="center">
+  <img src="docs/instant-widgets.svg" alt="Typing '25 min focus' into the composer. A chip previews 'Timer 25:00 · Focus', Enter places a live timer on the canvas, and a note reads 'Placed Timer 25:00 · Focus without the model' with an 'Ask the model instead' link." width="100%">
+</p>
 
 ---
 
@@ -140,9 +136,7 @@ Threat model, including what is out of scope, in [SECURITY.md](./SECURITY.md).
 
 ---
 
-## Under the hood
-
-React + tldraw v3 (one shape util per widget kind) and Zustand in the browser. Hono, better-sqlite3 + sqlite-vec and the Vercel AI SDK on the backend. Electron for desktop. tldraw is pinned to v3 because v4+ needs a commercial licence key, and this project stays MIT and free to self-host. Design notes live in [`docs/plans/`](./docs/plans/). The instant-widget classifier borrows its calm-UI state machine and "model decides, code computes" split from [shapeshift](https://github.com/anishfn/shapeshift) (MIT); unlike shapeshift it uses no hosted classifier, so it runs entirely in the browser.
+## Develop
 
 ```bash
 pnpm test                                      # backend, 397 tests
@@ -150,6 +144,20 @@ pnpm vitest run --config app/vite.config.ts    # frontend, 378 tests
 pnpm typecheck && pnpm app:build && pnpm dist  # tsc, bundle, installers
 ```
 
+Issues and PRs welcome, see [CONTRIBUTING.md](./CONTRIBUTING.md). Security reports go through [SECURITY.md](./SECURITY.md).
+
 ---
 
-Experimental. Solo project. Issues and PRs welcome, see [CONTRIBUTING.md](./CONTRIBUTING.md). Security reports go through [SECURITY.md](./SECURITY.md). MIT.
+## What's new
+
+- **Instant widgets, no model call.** Timers, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter in under 50 ms. Works offline and with no API key. A chip previews exactly what will land; ⌘↵ asks the model instead.
+- **One agent for every provider.** Gemini, OpenAI, Groq, Ollama and OpenRouter get the same tool-calling agent Claude had. No more text-only wrappers.
+- **Hardened.** better-sqlite3 13 (fixes a Node 24 crash), a swept dependency tree, secret scanning and protected release tags on the repo.
+
+[Changelog](./CHANGELOG.md)
+
+---
+
+## License
+
+[MIT](./LICENSE). Built on tldraw v3, Hono, better-sqlite3 + sqlite-vec and the Vercel AI SDK. The instant-widget state machine is adapted from [shapeshift](https://github.com/anishfn/shapeshift) (MIT) and runs entirely in the browser, with no hosted classifier.

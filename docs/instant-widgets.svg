@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <defs>
+    <clipPath id="typing"><rect x="76" y="212" width="0" height="30"><animate attributeName="width" values="0;0;118;118;118;0" keyTimes="0;0.05;0.3;0.78;0.9;1" dur="8s" repeatCount="indefinite"/></rect></clipPath>
+    <pattern id="dots2" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.2" fill="#3f3f46" opacity="0.55"/></pattern>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+  </defs>
+  <rect width="960" height="300" rx="20" fill="#0b0b0f"/>
+
+  <!-- canvas -->
+  <rect x="40" y="36" width="880" height="128" rx="12" fill="#131318" stroke="#27272a"/>
+  <rect x="40" y="36" width="880" height="128" rx="12" fill="url(#dots2)"/>
+  <text x="56" y="60" font-size="11" font-weight="700" fill="#52525b" letter-spacing="1.4">CANVAS</text>
+
+  <!-- timer widget lands -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;1;0" keyTimes="0;0.5;0.56;0.86;0.94;1" dur="8s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="0 10;0 10;0 0;0 0" keyTimes="0;0.5;0.56;1" dur="8s" repeatCount="indefinite"/>
+    <rect x="380" y="52" width="200" height="100" rx="10" fill="#18181b" stroke="#2dd4bf" stroke-opacity="0.7"/>
+    <text x="480" y="74" font-size="11" font-weight="600" fill="#a1a1aa" text-anchor="middle" letter-spacing="1">FOCUS</text>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="34" font-weight="700" fill="#5eead4" text-anchor="middle">
+      <text x="480" y="118" opacity="0">25:00<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.5;0.56;0.66;0.67;1" dur="8s" repeatCount="indefinite"/></text>
+      <text x="480" y="118" opacity="0">24:59<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.66;0.67;0.76;0.77;1" dur="8s" repeatCount="indefinite"/></text>
+      <text x="480" y="118" opacity="0">24:58<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.76;0.77;0.86;0.94;1" dur="8s" repeatCount="indefinite"/></text>
+    </g>
+    <rect x="404" y="136" width="152" height="4" rx="2" fill="#27272a"/>
+    <rect x="404" y="136" width="152" height="4" rx="2" fill="#2dd4bf"><animate attributeName="width" values="152;152;152;150;148;148" keyTimes="0;0.5;0.56;0.67;0.86;1" dur="8s" repeatCount="indefinite"/></rect>
+  </g>
+
+  <!-- "no model call" badge -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;1;0" keyTimes="0;0.56;0.62;0.86;0.94;1" dur="8s" repeatCount="indefinite"/>
+    <rect x="720" y="50" width="184" height="26" rx="13" fill="#18181b" stroke="#27272a"/>
+    <circle cx="736" cy="63" r="4" fill="#5eead4"/>
+    <text x="746" y="67" font-size="11" fill="#a1a1aa">0 model calls · placed in 38 ms</text>
+  </g>
+
+  <!-- chip above the composer -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;1;0" keyTimes="0;0.32;0.37;0.78;0.9;1" dur="8s" repeatCount="indefinite"/>
+    <rect x="56" y="200" width="0" height="0"/>
+    <rect x="60" y="170" width="0" height="0"/>
+    <g transform="translate(60 199)">
+      <rect x="0" y="-26" width="392" height="26" rx="13" fill="rgba(45,212,191,0.10)" stroke="#2dd4bf" stroke-opacity="0.45"/>
+      <text x="14" y="-9" font-size="12" fill="#5eead4" font-weight="700">⏱ Timer 25:00 · Focus</text>
+      <text x="168" y="-9" font-size="11" fill="#a1a1aa"><tspan font-family="ui-monospace, Menlo, monospace" fill="#e4e4e7">↵</tspan> place   <tspan font-family="ui-monospace, Menlo, monospace" fill="#e4e4e7">⌘↵</tspan> ask model</text>
+    </g>
+  </g>
+
+  <!-- composer -->
+  <rect x="40" y="206" width="880" height="42" rx="12" fill="#131318" stroke="#27272a">
+    <animate attributeName="stroke" values="#27272a;#27272a;#2dd4bf;#2dd4bf;#27272a;#27272a" keyTimes="0;0.44;0.47;0.5;0.53;1" dur="8s" repeatCount="indefinite"/>
+  </rect>
+  <text x="76" y="233" font-size="15" fill="#52525b" opacity="1">Ask OpenCanvas anything…<animate attributeName="opacity" values="1;1;0;0;0;1" keyTimes="0;0.05;0.06;0.86;0.94;1" dur="8s" repeatCount="indefinite"/></text>
+  <text x="76" y="233" font-size="15" fill="#fafafa" clip-path="url(#typing)">25 min focus</text>
+  <!-- caret -->
+  <rect x="76" y="219" width="2" height="18" fill="#fafafa">
+    <animate attributeName="x" values="76;76;194;194;194;76" keyTimes="0;0.05;0.3;0.78;0.9;1" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1;0;1;0;1;0;1;0;1;0;1;0;1;0;1;0" dur="8s" repeatCount="indefinite"/>
+  </rect>
+  <!-- Enter key press -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.42;0.45;0.52;0.55;1" dur="8s" repeatCount="indefinite"/>
+    <rect x="856" y="213" width="52" height="28" rx="6" fill="#27272a" stroke="#3f3f46"/>
+    <text x="882" y="232" font-size="13" fill="#fafafa" text-anchor="middle" font-family="ui-monospace, Menlo, monospace">↵</text>
+  </g>
+
+  <!-- transcript line -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;1;0" keyTimes="0;0.58;0.64;0.86;0.94;1" dur="8s" repeatCount="indefinite"/>
+    <circle cx="52" cy="272" r="4" fill="url(#accent2)"/>
+    <text x="64" y="276" font-size="12" fill="#a1a1aa">Placed Timer 25:00 · Focus without the model.</text>
+    <text x="356" y="276" font-size="12" fill="#c4b5fd">Ask the model instead</text>
+  </g>
+  <text x="920" y="276" font-size="12" fill="#52525b" text-anchor="end">works offline · no API key</text>
+</svg>
