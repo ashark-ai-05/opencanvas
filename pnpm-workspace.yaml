@@ -45,8 +45,9 @@ overrides:
 
 auditConfig:
   ignoreGhsas:
-    # @tiptap/core mergeAttributes prototype pollution, fixed in 3.30.4.
-    # Only reachable via tldraw 3.x (pins tiptap 2.x); tldraw 4+ needs a
-    # commercial licence. We never pass user JSON into tiptap attribute
-    # merging, so the vulnerable path is unreachable in OpenCanvas.
+    # @tiptap/core mergeAttributes prototype pollution (GHSA-cp6q-959q-f8rh).
+    # The advisory range is "< 3.30.4", but the fix was backported to the 2.x
+    # line in @tiptap/core 2.27.3, which is what tldraw 3.x resolves here
+    # (tldraw 4+ needs a commercial licence, so we stay on tiptap 2).
+    # Keep this ignore until the advisory range is corrected upstream.
     - GHSA-cp6q-959q-f8rh
