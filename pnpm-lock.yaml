@@ -88,8 +88,8 @@ importers:
         specifier: ^5.5.0
         version: 5.5.0
       framer-motion:
-        specifier: ^12.40.0
-        version: 12.40.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^14.0.0
+        version: 14.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       hono:
         specifier: ^4.13.9
         version: 4.13.9
@@ -295,35 +295,35 @@ packages:
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
 
-  '@ampcode/cli-darwin-arm64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-hQ1R664wJzWCvGd3lEF4hVlFgydxxcz+ZSwODlXGxTNLx9/jsYGK58++dw/E/ltYUySjZbD7P0lYNk4Dn7j1fQ==}
+  '@ampcode/cli-darwin-arm64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-rbTFPqNTQ3CcEldGZ7vHd7dmVAhZ/K6cNckpT33CkzMTCNiVVzCxt1gBsYMWnN15335htn3tAgY2pLstftIuRw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ampcode/cli-darwin-x64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-0wZUgsrJ2D+9ligdqaBExRs26KMYqzvHcReq4jTh8aIa+e3kKW74kBwbDElO9ids+edMxNSjfwZnIQWulmv+aA==}
+  '@ampcode/cli-darwin-x64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-y0R+HYmhQrsRisKS5MQxaHJPiOya5nM+Hkdrs/SgOQRsuUn1Atr0paluTQTuXxgcZNzhWvhMMerPaTnUG6FVvA==}
     cpu: [x64]
     os: [darwin]
 
-  '@ampcode/cli-linux-arm64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-Dit3/K4rU5erLh0VYxchBJnUAhjnn571cbN86Ycp8BPSfYn1KSWXn3mgCq1TEyRrJOnb2w++B7HQO4Yn+Sp6Jw==}
+  '@ampcode/cli-linux-arm64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-CETJeWlzo3FTTWjtH0VWKPTngwS34J8J8kvazdDp1qd/bzIxK16Zhp25GIW2jpMzEnGW4JtaKNRmQs83GrK0Zg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@ampcode/cli-linux-x64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-iw70lgCpZA4rImTYGQzrGbD904z+RoqUFJZoVOmJ+5mBT7vqXirpGH/u84vR+dWyMHHXdCVhbuiJcyOdmAriuw==}
+  '@ampcode/cli-linux-x64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-M6IJNQ7u9uOmJxTR5+VYGNs44Dt9lrdDH6TGpxu7ckjib9kvvsvgXLQmsTbymIdGPm7dkZgYFHFAScuQAxcATw==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@ampcode/cli-win32-x64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-tCbs8LjGYyW72yNSWF9Wow+vHzUcFf9qge0sRx9jtjOyQT/EpEtcB76KkYKmFnWYtWd5JhfInj6DzOAs4aAloQ==}
+  '@ampcode/cli-win32-x64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-9Aok/MyfoV0IhS4PY1OSGP4YXXI/LVX7mLgxNld3WEJWVsBNwfXUJw7HdHS/HjPCqiLJ3ovqD2mm0DtIIUqtqA==}
     cpu: [x64]
     os: [win32]
 
-  '@ampcode/cli@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-cp1lZ9z96MCKUO6EuVhS4FWBv65/hLmUcOUqUBjY9cJNReNV5MLgjjyv5mazFn49Ey6Ypnnnw4+WgjoP/7DiMQ==}
+  '@ampcode/cli@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-eq8pg1p4Tak0OX3uOZ8odqTUS6bwXXlwgMmZIh69OvigTjUkij69ALrR5iHBP71FSe/duy8RayuGlmmvQnJZHQ==}
     hasBin: true
 
   '@antfu/install-pkg@1.1.0':
@@ -477,12 +477,12 @@ packages:
     peerDependencies:
       '@babel/core': ^7.29.6
 
-  '@babel/runtime@7.29.10':
-    resolution: {integrity: sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.29.7':
@@ -3509,15 +3509,12 @@ packages:
   fractional-indexing-jittered@1.0.0:
     resolution: {integrity: sha512-0tLU0FOedVY7lrvN4LK0DVj6FTuYM0pWDpN97/8UTZE2lx1+OwX8+2uL7IOWc2PmktYTHQjMT6FvZZ3SGCdZdg==}
 
-  framer-motion@12.40.0:
-    resolution: {integrity: sha512-uaBd3qC1v3KQqBEjwTUd183K6PbS+j0yR9w9VmEOLWA/tnUcSn8Xa3uck7t4dgpDoUss8xQTcj8W2L07lrnLFg==}
+  framer-motion@14.0.0:
+    resolution: {integrity: sha512-QAtHmybrDFSliyW1sexMtSQTQd+1jw2ajibEmzpuI4XdPVzQkn+dAzJMm2sW3pl9MJuSS4xN51djQ7huhlP/VA==}
     peerDependencies:
-      '@emotion/is-prop-valid': '*'
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
-      '@emotion/is-prop-valid':
-        optional: true
       react:
         optional: true
       react-dom:
@@ -4267,11 +4264,11 @@ packages:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     hasBin: true
 
-  motion-dom@12.40.0:
-    resolution: {integrity: sha512-HxU3ZaBwNPVQUBQf1xxgq+7JrPNZvjLVxgbpEZL7RrWJnsxOf0/OM+yrHG9ogLQ31Do/r57Oz2gQWPK+6q62mg==}
+  motion-dom@14.0.0:
+    resolution: {integrity: sha512-aU3ApXo1yTpeUi3JU+jbDk2TELjxPE3MbBMUP7nZHlARb6RweJK+ojmLjpuB0YsY6zhbBl1YWGo8LMsI1/Llqw==}
 
-  motion-utils@12.39.0:
-    resolution: {integrity: sha512-8nadJAJjTtqRkmRF36FoJTrywK9nnFmnPwnSMyxaOCU7GDjN9RTMJIxx9De8ErM+vpPhMccr/6fo5WciyQLnMQ==}
+  motion-utils@14.0.0:
+    resolution: {integrity: sha512-jBsyjVxTTRZNeuvd/v+btVXr90LQkYl4HhRu9T2ARc+PMnvkmjsjRVeAg4Qm10b6TlTw+kykWI8gu/6LuvpLSQ==}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -5711,28 +5708,28 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@ampcode/cli-darwin-arm64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-darwin-arm64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-darwin-x64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-darwin-x64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-linux-arm64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-linux-arm64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-linux-x64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-linux-x64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-win32-x64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-win32-x64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli@0.0.1791561655-g7895f0':
+  '@ampcode/cli@0.0.1791302439-g888480':
     optionalDependencies:
-      '@ampcode/cli-darwin-arm64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-darwin-x64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-linux-arm64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-linux-x64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-win32-x64': 0.0.1791561655-g7895f0
+      '@ampcode/cli-darwin-arm64': 0.0.1791302439-g888480
+      '@ampcode/cli-darwin-x64': 0.0.1791302439-g888480
+      '@ampcode/cli-linux-arm64': 0.0.1791302439-g888480
+      '@ampcode/cli-linux-x64': 0.0.1791302439-g888480
+      '@ampcode/cli-win32-x64': 0.0.1791302439-g888480
 
   '@antfu/install-pkg@1.1.0':
     dependencies:
@@ -5890,9 +5887,9 @@ snapshots:
       '@babel/core': 7.29.7
       '@babel/helper-plugin-utils': 7.28.6
 
-  '@babel/runtime@7.29.10': {}
-
   '@babel/runtime@7.29.2': {}
+
+  '@babel/runtime@7.29.7': {}
 
   '@babel/template@7.29.7':
     dependencies:
@@ -7359,7 +7356,7 @@ snapshots:
 
   '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
     dependencies:
-      '@ampcode/cli': 0.0.1791561655-g7895f0
+      '@ampcode/cli': 0.0.1791302439-g888480
       zod: 3.25.76
 
   '@stablelib/base64@1.0.1': {}
@@ -7441,7 +7438,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.29.7
-      '@babel/runtime': 7.29.10
+      '@babel/runtime': 7.29.7
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -8928,10 +8925,10 @@ snapshots:
 
   fractional-indexing-jittered@1.0.0: {}
 
-  framer-motion@12.40.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  framer-motion@14.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
-      motion-dom: 12.40.0
-      motion-utils: 12.39.0
+      motion-dom: 14.0.0
+      motion-utils: 14.0.0
       tslib: 2.8.1
     optionalDependencies:
       react: 19.2.6
@@ -9898,11 +9895,11 @@ snapshots:
     dependencies:
       minimist: 1.2.8
 
-  motion-dom@12.40.0:
+  motion-dom@14.0.0:
     dependencies:
-      motion-utils: 12.39.0
+      motion-utils: 14.0.0
 
-  motion-utils@12.39.0: {}
+  motion-utils@14.0.0: {}
 
   ms@2.1.3: {}
 
