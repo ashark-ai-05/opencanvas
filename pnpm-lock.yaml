@@ -49,8 +49,8 @@ importers:
         specifier: ^3.0.71
         version: 3.0.71(zod@4.4.3)
       '@ai-sdk/openai':
-        specifier: ^3.0.118
-        version: 3.0.118(zod@4.4.3)
+        specifier: ^4.0.84
+        version: 4.0.84(zod@4.4.3)
       '@ai-sdk/react':
         specifier: ^3.0.300
         version: 3.0.300(react@19.2.6)(zod@4.4.3)
@@ -259,9 +259,9 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/openai@3.0.118':
-    resolution: {integrity: sha512-0J7TvmekLfPsgrUJbEP7sf3dfstnLCu1Q9ngDvvpQXYWJf0NGTMVpNRq+aqUSMGO2OudIJwyZpm4uWePwKkbog==}
-    engines: {node: '>=18'}
+  '@ai-sdk/openai@4.0.84':
+    resolution: {integrity: sha512-RsHz+jqstQ+wnMex1BLzIlwseDRzJAruT7ZW1X1azCEI9cVkSQVn17JS6qVntdi+DKkAMPg4rP1APixDEZFKiw==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -277,6 +277,12 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/provider-utils@5.0.54':
+    resolution: {integrity: sha512-amqDxFnw9+dpVrDACRDGmExUUNOH9C1D2bhg/DqWJnamEOieDTXBBXLHujSby/0MqHdAFksnpE8Pzfqx6ABMBw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/provider@3.0.10':
     resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
     engines: {node: '>=18'}
@@ -289,41 +295,45 @@ packages:
     resolution: {integrity: sha512-IpefF5ssZVOZCD4Wu7zxt6PwZoGT2HLVjxpJ10Bjx6EAmRfLYJPjyrfxb0RYDlwvXnDb9nkQ7Do/oJVDuRFzew==}
     engines: {node: '>=18'}
 
+  '@ai-sdk/provider@4.0.22':
+    resolution: {integrity: sha512-1Jtmn36VNMOBo9CMUQrPqsR744qtqRloEiXpWCYS8ffPlhS2CrSNmoho5lPjp3R7EnkzBsGI6p51TA7fQJQZdA==}
+    engines: {node: '>=22'}
+
   '@ai-sdk/react@3.0.300':
     resolution: {integrity: sha512-4hPPcRNRu1YPVNCGZlfDa9590UEkbh3umfbdFvKkGTr1+8gryy4L+zn5AZosODfBP0fZYJVyHvwW9/vhBXSA1w==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
 
-  '@ampcode/cli-darwin-arm64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-hQ1R664wJzWCvGd3lEF4hVlFgydxxcz+ZSwODlXGxTNLx9/jsYGK58++dw/E/ltYUySjZbD7P0lYNk4Dn7j1fQ==}
+  '@ampcode/cli-darwin-arm64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-rbTFPqNTQ3CcEldGZ7vHd7dmVAhZ/K6cNckpT33CkzMTCNiVVzCxt1gBsYMWnN15335htn3tAgY2pLstftIuRw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ampcode/cli-darwin-x64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-0wZUgsrJ2D+9ligdqaBExRs26KMYqzvHcReq4jTh8aIa+e3kKW74kBwbDElO9ids+edMxNSjfwZnIQWulmv+aA==}
+  '@ampcode/cli-darwin-x64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-y0R+HYmhQrsRisKS5MQxaHJPiOya5nM+Hkdrs/SgOQRsuUn1Atr0paluTQTuXxgcZNzhWvhMMerPaTnUG6FVvA==}
     cpu: [x64]
     os: [darwin]
 
-  '@ampcode/cli-linux-arm64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-Dit3/K4rU5erLh0VYxchBJnUAhjnn571cbN86Ycp8BPSfYn1KSWXn3mgCq1TEyRrJOnb2w++B7HQO4Yn+Sp6Jw==}
+  '@ampcode/cli-linux-arm64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-CETJeWlzo3FTTWjtH0VWKPTngwS34J8J8kvazdDp1qd/bzIxK16Zhp25GIW2jpMzEnGW4JtaKNRmQs83GrK0Zg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@ampcode/cli-linux-x64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-iw70lgCpZA4rImTYGQzrGbD904z+RoqUFJZoVOmJ+5mBT7vqXirpGH/u84vR+dWyMHHXdCVhbuiJcyOdmAriuw==}
+  '@ampcode/cli-linux-x64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-M6IJNQ7u9uOmJxTR5+VYGNs44Dt9lrdDH6TGpxu7ckjib9kvvsvgXLQmsTbymIdGPm7dkZgYFHFAScuQAxcATw==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@ampcode/cli-win32-x64@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-tCbs8LjGYyW72yNSWF9Wow+vHzUcFf9qge0sRx9jtjOyQT/EpEtcB76KkYKmFnWYtWd5JhfInj6DzOAs4aAloQ==}
+  '@ampcode/cli-win32-x64@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-9Aok/MyfoV0IhS4PY1OSGP4YXXI/LVX7mLgxNld3WEJWVsBNwfXUJw7HdHS/HjPCqiLJ3ovqD2mm0DtIIUqtqA==}
     cpu: [x64]
     os: [win32]
 
-  '@ampcode/cli@0.0.1791561655-g7895f0':
-    resolution: {integrity: sha512-cp1lZ9z96MCKUO6EuVhS4FWBv65/hLmUcOUqUBjY9cJNReNV5MLgjjyv5mazFn49Ey6Ypnnnw4+WgjoP/7DiMQ==}
+  '@ampcode/cli@0.0.1791302439-g888480':
+    resolution: {integrity: sha512-eq8pg1p4Tak0OX3uOZ8odqTUS6bwXXlwgMmZIh69OvigTjUkij69ALrR5iHBP71FSe/duy8RayuGlmmvQnJZHQ==}
     hasBin: true
 
   '@antfu/install-pkg@1.1.0':
@@ -477,12 +487,12 @@ packages:
     peerDependencies:
       '@babel/core': ^7.29.6
 
-  '@babel/runtime@7.29.10':
-    resolution: {integrity: sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.29.7':
@@ -2671,6 +2681,9 @@ packages:
 
   '@vitest/spy@5.0.2':
     resolution: {integrity: sha512-Ijc7T1nT9efNb5LxvjaBrEqw3f/QwUv5EE0nKqZxgqsaV/FxAAZ8baGylA8X/Z2oS4Lp+K74Jr6dTJsDKxJDeg==}
+
+  '@workflow/serde@4.1.0':
+    resolution: {integrity: sha512-pav4F2BoirECWR7Nf1TKt+2eETcBj7jj4cBefQ8VXQCA6NPkaKeLfj/zMgi+3zYV5ZIBT4GuUiphsj0/b9hPQQ==}
 
   '@xmldom/xmldom@0.8.15':
     resolution: {integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==}
@@ -5667,10 +5680,10 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.56(zod@4.4.3)
       zod: 4.4.3
 
-  '@ai-sdk/openai@3.0.118(zod@4.4.3)':
+  '@ai-sdk/openai@4.0.84(zod@4.4.3)':
     dependencies:
-      '@ai-sdk/provider': 3.0.17
-      '@ai-sdk/provider-utils': 4.0.54(zod@4.4.3)
+      '@ai-sdk/provider': 4.0.22
+      '@ai-sdk/provider-utils': 5.0.54(zod@4.4.3)
       zod: 4.4.3
 
   '@ai-sdk/provider-utils@4.0.54(zod@4.4.3)':
@@ -5689,6 +5702,15 @@ snapshots:
       undici: 6.29.0
       zod: 4.4.3
 
+  '@ai-sdk/provider-utils@5.0.54(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.22
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.1.1
+      undici: 7.30.0
+      zod: 4.4.3
+
   '@ai-sdk/provider@3.0.10':
     dependencies:
       json-schema: 0.4.0
@@ -5698,6 +5720,10 @@ snapshots:
       json-schema: 0.4.0
 
   '@ai-sdk/provider@3.0.18':
+    dependencies:
+      json-schema: 0.4.0
+
+  '@ai-sdk/provider@4.0.22':
     dependencies:
       json-schema: 0.4.0
 
@@ -5711,28 +5737,28 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@ampcode/cli-darwin-arm64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-darwin-arm64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-darwin-x64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-darwin-x64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-linux-arm64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-linux-arm64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-linux-x64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-linux-x64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli-win32-x64@0.0.1791561655-g7895f0':
+  '@ampcode/cli-win32-x64@0.0.1791302439-g888480':
     optional: true
 
-  '@ampcode/cli@0.0.1791561655-g7895f0':
+  '@ampcode/cli@0.0.1791302439-g888480':
     optionalDependencies:
-      '@ampcode/cli-darwin-arm64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-darwin-x64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-linux-arm64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-linux-x64': 0.0.1791561655-g7895f0
-      '@ampcode/cli-win32-x64': 0.0.1791561655-g7895f0
+      '@ampcode/cli-darwin-arm64': 0.0.1791302439-g888480
+      '@ampcode/cli-darwin-x64': 0.0.1791302439-g888480
+      '@ampcode/cli-linux-arm64': 0.0.1791302439-g888480
+      '@ampcode/cli-linux-x64': 0.0.1791302439-g888480
+      '@ampcode/cli-win32-x64': 0.0.1791302439-g888480
 
   '@antfu/install-pkg@1.1.0':
     dependencies:
@@ -5890,9 +5916,9 @@ snapshots:
       '@babel/core': 7.29.7
       '@babel/helper-plugin-utils': 7.28.6
 
-  '@babel/runtime@7.29.10': {}
-
   '@babel/runtime@7.29.2': {}
+
+  '@babel/runtime@7.29.7': {}
 
   '@babel/template@7.29.7':
     dependencies:
@@ -7359,7 +7385,7 @@ snapshots:
 
   '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
     dependencies:
-      '@ampcode/cli': 0.0.1791561655-g7895f0
+      '@ampcode/cli': 0.0.1791302439-g888480
       zod: 3.25.76
 
   '@stablelib/base64@1.0.1': {}
@@ -7441,7 +7467,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.29.7
-      '@babel/runtime': 7.29.10
+      '@babel/runtime': 7.29.7
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -7969,6 +7995,8 @@ snapshots:
       vite: 6.4.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.0)
 
   '@vitest/spy@5.0.2': {}
+
+  '@workflow/serde@4.1.0': {}
 
   '@xmldom/xmldom@0.8.15': {}
 
@@ -10983,8 +11011,7 @@ snapshots:
 
   undici@6.29.0: {}
 
-  undici@7.30.0:
-    optional: true
+  undici@7.30.0: {}
 
   unified@11.0.5:
     dependencies:
