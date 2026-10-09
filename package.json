@@ -84,7 +84,7 @@
     "hono": "^4.13.9",
     "lucide-react": "^0.460.0",
     "mammoth": "^1.12.3",
-    "mermaid": "^11.17.2",
+    "mermaid": "^12.1.0",
     "ollama": "*",
     "ollama-ai-provider-v2": "^3.6.0",
     "onnxruntime-node": "^1.30.0",
