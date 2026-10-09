@@ -24,7 +24,7 @@ overrides:
   fast-uri: '^3.1.6'
   linkify-it: '^5.0.2'
   markdown-it: '^14.2.0'
-  sharp: '^0.35.4'
+  sharp: '^0.35.5'
   # 2026-09-27 audit sweep (mostly electron-builder / vite / node-gyp transitives)
   tar: '^7.5.21'
   js-yaml: '^4.3.2'
@@ -51,3 +51,9 @@ auditConfig:
     # (tldraw 4+ needs a commercial licence, so we stay on tiptap 2).
     # Keep this ignore until the advisory range is corrected upstream.
     - GHSA-cp6q-959q-f8rh
+    # sprintf-js DoS via unbounded precision specifiers (GHSA-hp3w-g68c-fv3c).
+    # No patched release exists. Reached only through mammoth -> argparse 1.x,
+    # which mammoth requires only from its CLI entry (bin/mammoth).
+    # OpenCanvas calls the library API (convertToHtml / extractRawText) and
+    # never passes untrusted format strings, so the vulnerable path is unreachable.
+    - GHSA-hp3w-g68c-fv3c
