@@ -6,7 +6,7 @@
 
 ### Stop reading AI replies. Watch them assemble on an infinite canvas.
 
-Ask a question. Instead of five paragraphs, you get a chart, a table and a kanban side by side, each one a real widget you can drag, pin and keep. Any model, including local. Runs on your machine. MIT.
+Ask a question and get a chart, a table and a kanban side by side, each one a real widget you can drag, pin and keep. Any model, including local, running on your machine under MIT.
 
 [![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml)
 [![tests](https://img.shields.io/badge/tests-775%20passing-2dd4bf)](./docs/guide.md#develop)
@@ -64,6 +64,12 @@ pnpm electron:dev                       # or `pnpm dev` → http://127.0.0.1:345
 - **Memory that compounds.** Every conversation indexes into a local SQLite + sqlite-vec store. `⌘K` finds any widget from any chat, weeks later.
 - **Drive it from anywhere.** A REST API and SSE bus let cron jobs, scripts and other agents place widgets on your canvas.
 - **Yours.** Binds to `127.0.0.1`, token-guarded routes, null-origin sandboxes for model-written HTML, no telemetry. [Threat model](./SECURITY.md).
+
+<p align="center">
+  <img src="docs/widgets.png" alt="Six OpenCanvas widgets: a Vega-Lite bar chart, a kanban board, a table, a running timer, a syntax-highlighted code block and a sandboxed HTML embed, all rendered on the dark canvas." width="100%">
+</p>
+
+*Six of the 15 built-in widget kinds. Each is a schema plus a React component; the model learns them from the tool description.*
 
 ---
 
