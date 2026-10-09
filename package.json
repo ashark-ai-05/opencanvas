@@ -64,7 +64,7 @@
   },
   "packageManager": "pnpm@10.34.5",
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.122",
+    "@ai-sdk/anthropic": "^4.0.72",
     "@ai-sdk/google": "^3.0.127",
     "@ai-sdk/groq": "^3.0.71",
     "@ai-sdk/openai": "^3.0.118",
