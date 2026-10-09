@@ -66,7 +66,7 @@ pnpm electron:dev                       # or `pnpm dev` → http://127.0.0.1:345
 - **Yours.** Binds to `127.0.0.1`, token-guarded routes, null-origin sandboxes for model-written HTML, no telemetry. [Threat model](./SECURITY.md).
 
 <p align="center">
-  <img src="docs/widgets.png" alt="Six OpenCanvas widgets: a Vega-Lite bar chart, a kanban board, a table, a running timer, a syntax-highlighted code block and a sandboxed HTML embed, all rendered on the dark canvas." width="100%">
+  <img src="docs/widgets.png" alt="Six OpenCanvas widgets: a Vega-Lite bar chart, a kanban board, a table, a running pomodoro timer, a TypeScript code block and a sandboxed HTML embed, all rendered on the dark canvas." width="100%">
 </p>
 
 *Six of the 15 built-in widget kinds. Each is a schema plus a React component; the model learns them from the tool description.*
