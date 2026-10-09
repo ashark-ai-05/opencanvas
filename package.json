@@ -67,7 +67,7 @@
     "@ai-sdk/anthropic": "^3.0.122",
     "@ai-sdk/google": "^3.0.127",
     "@ai-sdk/groq": "^3.0.71",
-    "@ai-sdk/openai": "^3.0.118",
+    "@ai-sdk/openai": "^4.0.84",
     "@ai-sdk/react": "^3.0.300",
     "@anthropic-ai/claude-agent-sdk": "^0.3.150",
     "@anthropic-ai/sdk": "*",
