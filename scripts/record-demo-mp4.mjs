@@ -117,6 +117,32 @@ const KANBAN = {
 };
 
 // Gallery extras. Each is shown alone at 600x380 CSS px.
+// Fuller variants so the roomier gallery tiles are not half empty.
+const GALLERY_TABLE = {
+  ...TABLE,
+  payload: {
+    ...TABLE.payload,
+    rows: [
+      ...TABLE.payload.rows,
+      ['D: Newsletter swap', '$1k', '2.4k', 'Low'],
+      ['E: Conference booth', '$18k', '3.8k', 'High'],
+      ['F: Influencer pack', '$7k', '5.1k', 'Medium'],
+      ['G: Referral program', '$3k', '4.6k', 'Low'],
+    ],
+  },
+};
+const GALLERY_KANBAN = {
+  ...KANBAN,
+  payload: {
+    ...KANBAN.payload,
+    columns: [
+      { name: 'Doing', colour: 'amber', cards: [{ title: 'Write launch post', tag: 'content' }, { title: 'Record demo', tag: 'content' }, { title: 'Press list', tag: 'pr' }] },
+      { name: 'Next', colour: 'violet', cards: [{ title: 'Line up partners', tag: 'bd', priority: 'high' }, { title: 'Pricing page', tag: 'web' }] },
+      { name: 'Done', colour: 'green', cards: [{ title: 'Pick launch date', tag: 'ops' }, { title: 'Waitlist page', tag: 'web' }, { title: 'Brand kit', tag: 'design' }] },
+    ],
+  },
+};
+
 const TIMER = {
   kind: 'time',
   role: 'detail',
@@ -281,7 +307,7 @@ async function runGallery() {
 
   const W = 600, H = 380;
   const items = [
-    ['chart', CHART], ['kanban', KANBAN], ['table', TABLE],
+    ['chart', CHART], ['kanban', GALLERY_KANBAN], ['table', GALLERY_TABLE],
     ['timer', TIMER], ['code', CODE], ['html', HTML],
   ];
   const files = [];
