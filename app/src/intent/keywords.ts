@@ -83,7 +83,9 @@ export function intentScores(raw: string, ref: Date): Scores {
   // ordinary sentences and only counts as explicit list evidence alongside
   // a comma/semicolon separator.
   const todoExplicit = todo.explicitVia === 'keyword' || (todo.explicitVia === 'verb' && hasSep);
-  if (todoExplicit && todo.items.length >= 1) add('todo', 5);
+  const todoLead = todo.explicitVia === 'keyword';
+  // A lead keyword alone must clear the commit bar: "todo: buy milk".
+  if (todoExplicit && todo.items.length >= 1) add('todo', todoLead ? 7 : 5);
   // "compare hono and express" splits on "and" but is not a list; need a comma or a keyword.
   if (todo.items.length >= 2 && (todoExplicit || hasSep)) add('todo', 3);
   if (todo.items.length >= 3 && (todoExplicit || hasSep)) add('todo', 1);
@@ -106,18 +108,24 @@ export function intentScores(raw: string, ref: Date): Scores {
   if (date && (has(GATHER, t) || has(/\bwith\s+[a-z]/, t))) add('event', 3);
   if (date && date.hasTime && has(GATHER, t)) add('event', 1);
   if (has(REMIND, t) && s.event) s.event = s.event * 0.3;
+  // "todo: ship the demo" is a list item, not a "demo" meeting, unless a
+  // date says otherwise.
+  if (todoLead && !date && s.event) s.event = 0;
 
   // Text that names a build/write/explain task rather than a utility
   // request ("build a stopwatch component", "15 minute meditation script",
   // "30 min workout plan for beginners") — never a utility widget even
   // though it may contain a duration or a utility word.
   const nonUtility = has(NON_UTILITY, t);
-  if (nonUtility) add('none', 3);
+  if (nonUtility && !todoLead) add('none', 3);
 
   // A question — or a build/write/explain request — overrides utility
   // intents unless a parser fully succeeded.
   if ((isQuestion || nonUtility) && !conv && calc.result == null && !s.clock) {
     for (const k of ['timer', 'stopwatch', 'todo', 'event', 'reminder'] as const) {
+      // "checklist: write the README, ship" — the lead keyword outranks
+      // a task verb inside an item.
+      if (k === 'todo' && todoLead) continue;
       if (s[k]) s[k] = s[k]! * 0.4;
     }
   }

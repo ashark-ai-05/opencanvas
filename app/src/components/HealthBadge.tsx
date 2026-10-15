@@ -42,7 +42,7 @@ export function HealthBadge() {
     `\nembed:   ${embedder}`;
   return (
     <div
-      className="flex items-center gap-2 text-sm text-zinc-300"
+      className="flex items-center gap-2 text-sm text-zinc-300 whitespace-nowrap"
       title={tooltip}
     >
       <span className="size-2 rounded-full bg-green-500" />

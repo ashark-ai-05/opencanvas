@@ -1,4 +1,4 @@
-import type { Editor } from 'tldraw';
+import { Box, type Editor } from 'tldraw';
 import { toast } from 'sonner';
 import type { SearchResult } from '../api/search';
 import { TEMPLATES_BY_ID } from './templates';
@@ -26,7 +26,7 @@ export function placeResultsOnCanvas(
 
   const { activeTemplateId } = useTemplateStore.getState();
   const template = TEMPLATES_BY_ID[activeTemplateId];
-  const placements = template.layout(results, editor.getViewportPageBounds());
+  const placements = template.layout(results, placementBounds(editor));
 
   for (const p of placements) {
     editor.createShape({
@@ -76,10 +76,43 @@ const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
 };
 
 /**
+ * The part of the viewport a new widget can land in without hiding
+ * under the floating chat. When the chat is open and docked on the right
+ * half of the screen, the usable width ends where the chat begins, so a
+ * freshly placed answer is never born underneath the panel that asked
+ * for it. Falls back to the full viewport (tests, minimized or full-width
+ * chat, a chat dragged to the left).
+ */
+export function placementBounds(editor: Editor): Box {
+  const page = editor.getViewportPageBounds();
+  const bounds = new Box(page.x, page.y, page.w, page.h);
+  try {
+    if (typeof document === 'undefined') return bounds;
+    const chat = document.querySelector('.opencanvas-chat-floating');
+    if (!chat || chat.getAttribute('data-mode') === 'minimized') return bounds;
+    const screen = (editor as unknown as {
+      getViewportScreenBounds?: () => { x: number; w: number };
+    }).getViewportScreenBounds?.();
+    if (!screen || screen.w <= 0) return bounds;
+    const left = chat.getBoundingClientRect().left - screen.x - 24;
+    const ratio = left / screen.w;
+    // Only shrink when the chat sits on the right and leaves real room.
+    if (ratio < 0.45 || ratio >= 1) return bounds;
+    bounds.w = page.w * ratio;
+  } catch {
+    /* layout probing must never break placement */
+  }
+  return bounds;
+}
+
+/**
  * After this many opencanvas widgets are on the canvas, new placements start
  * collapsed so dense canvases don't visually overflow. Spec §12.
+ * Was 3, which collapsed the 4th widget of a normal answer (a chart, a
+ * table, a kanban, a note) into a 44px stub, so the "watch it assemble"
+ * moment ended in a pile of headers. 8 still guards genuinely dense canvases.
  */
-const COLLAPSE_THRESHOLD = 3;
+const COLLAPSE_THRESHOLD = 8;
 
 /**
  * Per-widget streaming state.
@@ -231,7 +264,7 @@ function flushBurstTidy(editor: Editor, templateId: TemplateId): void {
     existingByRole.set(role, (existingByRole.get(role) ?? 0) + 1);
   }
 
-  const viewport = editor.getViewportPageBounds();
+  const viewport = placementBounds(editor);
   let moved = 0;
 
   editor.batch(() => {
@@ -292,7 +325,7 @@ export function applyToolDirective(
       const slot = tpl.slotForRole(
         directive.role,
         occupancy,
-        editor.getViewportPageBounds(),
+        placementBounds(editor),
       );
       // Take the larger of (template slot) and (per-kind default) for each
       // dimension — keeps wide widgets like table/file-tree from being
@@ -454,7 +487,7 @@ export function applyToolDirective(
       const slot = tpl.slotForRole(
         directive.role,
         occupancy,
-        editor.getViewportPageBounds(),
+        placementBounds(editor),
       );
       const def = DEFAULT_SIZE[directive.kind] ?? { w: 320, h: 200 };
       const w = Math.max(slot.w, def.w);

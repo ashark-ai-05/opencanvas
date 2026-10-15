@@ -25,3 +25,20 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   `checklist: milk, eggs` chip then Enter → a tasks widget is placed ✅
 - Known (not fixed): `todo: ship the demo` (one item) only reaches "ghost" (needs Tab), and so does
   `remind me to …`. Recorded as a classifier gap.
+
+## Round 2
+- Round 1 CI **failed** at typecheck: the new test imported without `.js` (NodeNext). Locally I
+  had run vitest and the app tsconfig but not `pnpm typecheck` after adding the test. Fixed. Lesson:
+  run the exact CI sequence (`typecheck → test → app tests`) before every push.
+- Tests: backend 401 passed / 2 skipped, app **388** → **789** ✅. `pnpm typecheck` clean, app tsconfig
+  back to its 6 pre-existing errors (round 2 briefly added 4; fixed).
+- One backend run showed `1 failed` under heavy box load (a parallel UI build plus recording); two reruns
+  came back 401/401. Logged as a possible flake under CPU contention.
+- Playwright (fresh context, :3457): 0 console errors, 0 failed requests. `todo: buy milk`,
+  `todo: ship the demo` and `checklist: milk, eggs, bread` all place locally ✅
+- Recording QA (frame-by-frame review of first-run.mp4): timer ticks, event "Sat 17 Oct, 09:00"
+  is correct for "tomorrow", conversion 7.46 mi is correct, and the REST table shows the real commits.
+- Known: the `→` glyph in the conversion card *title* renders blank in headless Linux Chromium
+  (font coverage), while the body is fine. The REST-placed table is 200px tall, so only 3 of 6 rows show
+  without scrolling.
+- Perf: DOMContentLoaded 0.3–2.1s on the production bundle (the high end was under box load), JS 2.5 MB.

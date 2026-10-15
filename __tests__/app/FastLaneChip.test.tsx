@@ -9,6 +9,7 @@ const base = (over: Partial<FastLaneView>): FastLaneView => ({
   resolved: null,
   options: null,
   promote: vi.fn(),
+  resolveNow: () => null,
   choose: vi.fn(),
   dismiss: vi.fn(),
   ...over,

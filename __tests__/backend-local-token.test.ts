@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { withLocalToken, isLoopbackHost } from '../src/backend/server';
-import { getAuthToken } from '../src/backend/auth';
+import { withLocalToken, isLoopbackHost } from '../src/backend/server.js';
+import { getAuthToken } from '../src/backend/auth.js';
 
 const HTML = '<!doctype html><html><head><title>x</title></head></html>';
 

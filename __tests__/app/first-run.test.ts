@@ -23,6 +23,13 @@ const place = {
 };
 
 describe('first widget on a fresh canvas', () => {
+  it('keeps a normal multi-widget answer expanded', () => {
+    const real = ['markdown', 'tasks', 'chart', 'table'].map((k) => ({ type: 'opencanvas:' + k, meta: {} }));
+    const { editor, calls } = editorWith(real);
+    applyToolDirective(editor, place, 'ask-anything');
+    expect(calls[0]!.props['h']).toBeGreaterThan(44);
+  });
+
   it('opens expanded even though three welcome samples are present', () => {
     const seeds = ['markdown', 'tasks', 'sticky-note'].map((k) => ({
       type: 'opencanvas:' + k,
@@ -34,8 +41,8 @@ describe('first widget on a fresh canvas', () => {
     expect(calls[0]!.meta?.['collapsed']).toBeUndefined();
   });
 
-  it('still auto-collapses once three real widgets exist', () => {
-    const real = ['markdown', 'tasks', 'chart'].map((k) => ({ type: 'opencanvas:' + k, meta: {} }));
+  it('still auto-collapses once eight real widgets exist', () => {
+    const real = ['markdown', 'tasks', 'chart', 'table', 'kanban', 'time', 'markdown', 'tasks'].map((k) => ({ type: 'opencanvas:' + k, meta: {} }));
     const { editor, calls } = editorWith(real);
     applyToolDirective(editor, place, 'ask-anything');
     expect(calls[0]!.props['h']).toBe(44);

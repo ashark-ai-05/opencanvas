@@ -39,3 +39,34 @@ an instant widget, ask a question) both failed visibly.
   instant-widget chips, *Connect a model* (Settings) and the provider guide.
 - CSP allows tldraw's font CDN, which takes console errors to 0.
 - Fixed the broken `#install` README anchor in the capacity notice.
+
+## Round 2 (2026-10-16)
+
+**Critique after round 1.** Install and first contact work now, but the README still sells with a
+scripted dashboard GIF, and nothing shows the claim that matters most to a skeptic: *does
+it really work with no key?* While recording an honest first-run GIF, three more defects
+showed up that would ruin any demo:
+- `checklist: record the GIF, write the README, ship` went to the model, because the word "write"
+  marked it as a writing task and overrode the explicit `checklist:` lead. `todo: buy milk`
+  (one item) never committed at all, so it needed Tab.
+- The 4th widget of any answer was born collapsed (threshold 3). A model answer with
+  chart + table + kanban + note ended as three cards and a stub. That breaks the
+  "watch it assemble" hook itself.
+- New widgets landed **underneath the floating chat panel** on the right.
+
+**Reasons to share now:** a 34-second, unedited, no-key recording, plus "your scripts draw
+here too" shown with this repo's real `git log`.
+
+**Weakest part:** it's still a destination app. Recording also showed the header status
+reading `claude-agent-sdk` with a green dot when no model is authenticated (honesty gap).
+
+**Built this round:**
+- `docs/first-run.gif` + `.mp4` and a reproducible `scripts/record-first-run.mjs` (real app,
+  no mocks, real git data), in the README with an honest caption that also labels the hero GIF as scripted.
+- Classifier: a `todo:` / `checklist:` lead keyword now commits on its own and outranks task
+  verbs and a stray "demo" meeting word. "write a todo app" and "build a checklist component"
+  still go to the model (tests added).
+- Auto-collapse threshold 3 → 8.
+- `placementBounds()`: new widgets avoid the floating chat when it's docked right.
+- Header model badge no longer wraps onto two lines.
+- Fixed round 1's CI break (missing `.js` extensions in a new test import).
