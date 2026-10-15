@@ -108,6 +108,9 @@ export function intentScores(raw: string, ref: Date): Scores {
   if (date && (has(GATHER, t) || has(/\bwith\s+[a-z]/, t))) add('event', 3);
   if (date && date.hasTime && has(GATHER, t)) add('event', 1);
   if (has(REMIND, t) && s.event) s.event = s.event * 0.3;
+  // A leading "remind me…" is the request itself: "remind me to call mom
+  // tomorrow" is a reminder about a call, not a call event.
+  if (REMIND_LEAD.test(t)) s.event = 0;
   // "todo: ship the demo" is a list item, not a "demo" meeting, unless a
   // date says otherwise.
   if (todoLead && !date && s.event) s.event = 0;

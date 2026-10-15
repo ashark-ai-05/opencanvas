@@ -34,6 +34,9 @@ jobs:
       - name: typecheck
         run: pnpm typecheck
 
+      - name: typecheck (app)
+        run: pnpm typecheck:app
+
       - name: backend tests
         run: pnpm test
 

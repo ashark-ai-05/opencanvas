@@ -95,3 +95,27 @@ clear split from mcp-screen.
   0.77 MB** of JS on the wire.
 - README section "OpenCanvas or mcp-screen?", with a table and the REST drawing path.
 - CHANGELOG `[Unreleased]` written up.
+
+## Round 4 (2026-10-16): type safety, instant-widget gaps, layout
+
+**Critique.** After round 3 the first minute works, but replaying it with a critical eye turns up:
+- `remind me to call mom tomorrow` only showed a ghost chip, so Enter asked a model you don't
+  have. "remind me" is the most natural instant-widget phrase there is.
+- Cards ignored their content. A one-item reminder was a 260px box, a 6-row REST table was
+  clipped to 3 rows, and a wide table in the right-hand column slid **under the chat**.
+- The welcome card clipped its own last two lines (77px of hidden text) on a fresh install.
+- The arrow in "12 km → mi" fell back to a thin system font. Google's `latin` subset of
+  Geist/Inter has ↑ and ↓ but not →. It vanished in the GIF.
+- The app's own TypeScript had 6 errors that CI never saw.
+
+**Built:**
+- `remind me …` / `reminder: …` commit on their own; "call" or "lunch" inside a reminder no longer
+  splits the vote with "event". Questions about reminders still go to the model.
+- `contentSize()`: tables size to their rows (all visible up to 14, then scroll) and columns;
+  task lists size to their items. Wide cards are clamped to the area left of the chat.
+- The welcome copy was trimmed so it fits (the gear tip lives in the tour).
+- A 9 KB self-hosted Inter arrows subset (OFL), registered per weight under both families. A
+  first attempt with a `100 900` weight range hijacked weight-650 titles into Noto Sans; QA caught it
+  via CDP platform-font inspection, and it was fixed with discrete weights.
+- All 6 app type errors fixed (`Conversation.name` → `title` in the share title, which was a real bug:
+  shares with no text always fell back to "Shared OpenCanvas"). `pnpm typecheck:app` is now a CI step.

@@ -8,6 +8,7 @@ const base = (over: Partial<FastLaneView>): FastLaneView => ({
   ui: { kind: 'input' },
   resolved: null,
   options: null,
+  placeable: false,
   promote: vi.fn(),
   resolveNow: () => null,
   choose: vi.fn(),

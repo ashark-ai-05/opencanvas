@@ -20,12 +20,12 @@
  */
 import type { Editor } from 'tldraw';
 import { applyToolDirective } from '../canvas/dispatcher';
-import type { ToolDirective } from '../../../src/agent/types';
+import type { ToolDirective, WidgetKind } from '../../../src/agent/types';
 
 const FLAG_KEY = 'opencanvas:welcome-seeded:v1';
 
 interface SeedWidget {
-  kind: ToolDirective extends { type: 'place'; kind: infer K } ? K : never;
+  kind: WidgetKind;
   role: 'primary' | 'detail' | 'related';
   title: string;
   payload: Record<string, unknown>;
@@ -47,9 +47,7 @@ const SEEDS: SeedWidget[] = [
         "**Ask anything in the chat** — the agent places widgets here as it answers.\n\n" +
         "Try one of the prompts in the chat panel, or just type:\n\n" +
         "- *\"Build a Pomodoro timer\"*\n" +
-        "- *\"Show me a flowchart for OAuth\"*\n" +
-        "- *\"Compare React vs Vue in a table\"*\n\n" +
-        'Use the **gear icon** in the header to bring your own model + API key.',
+        "- *\"Show me a flowchart for OAuth\"*",
     },
   },
   {
@@ -125,7 +123,11 @@ export function seedWelcomeWidgetsIfFirstVisit(
         payload: seed.payload,
       } as ToolDirective;
       try {
-        applyToolDirective(editor, directive, templateId);
+        applyToolDirective(
+          editor,
+          directive,
+          templateId as Parameters<typeof applyToolDirective>[2],
+        );
         // Tag as a sample so the dispatcher's auto-collapse ignores it.
         const sid = ('shape:' + seedId) as never;
         const placed = editor.getShape(sid);

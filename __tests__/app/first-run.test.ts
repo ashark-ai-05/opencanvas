@@ -63,3 +63,25 @@ describe('isNoModelError', () => {
     ).toBe(false);
   });
 });
+
+import { contentSize } from '../../app/src/canvas/dispatcher';
+describe('contentSize (tables fit their rows)', () => {
+  const cols = [{ key: 'a' }, { key: 'b' }, { key: 'c' }];
+  it('grows with rows so nothing is clipped', () => {
+    const six = contentSize('table', { columns: cols, rows: Array(6).fill(['x', 'y', 'z']) })!;
+    const two = contentSize('table', { columns: cols, rows: Array(2).fill(['x', 'y', 'z']) })!;
+    expect(six.h - two.h).toBe(4 * 34);
+    expect(six.h).toBe(44 + 24 + 34 + 6 * 34);
+  });
+  it('caps very long tables and widens per column', () => {
+    expect(contentSize('table', { columns: cols, rows: Array(200).fill([]) })!.h).toBe(44 + 24 + 34 + 14 * 34);
+    expect(contentSize('table', { columns: Array(8).fill({ key: 'k' }), rows: [] })!.w).toBe(860);
+  });
+  it('sizes task lists to their items', () => {
+    expect(contentSize('tasks', { items: [{ text: 'a' }] })!.h).toBe(44 + 24 + 40 + 8);
+    expect(contentSize('tasks', { items: Array(50).fill({ text: 'a' }) })!.h).toBe(420);
+  });
+  it('leaves other kinds to the template', () => {
+    expect(contentSize('markdown', { body: 'x' })).toBeNull();
+  });
+});

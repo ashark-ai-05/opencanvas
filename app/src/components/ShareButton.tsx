@@ -63,7 +63,7 @@ export function ShareButton({ activeId }: { activeId: string }) {
             .trim();
           if (text.length > 0) return text.slice(0, 120);
         }
-        return conv?.name ?? 'Shared OpenCanvas';
+        return conv?.title || 'Shared OpenCanvas';
       })();
 
       const res = await fetch('/v1/share', {

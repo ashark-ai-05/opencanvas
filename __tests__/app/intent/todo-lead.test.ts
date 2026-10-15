@@ -15,3 +15,13 @@ describe('todo / checklist lead keyword', () => {
     (t) => expect(state(t).kind).toBe('input'),
   );
 });
+
+describe('remind me lead', () => {
+  it.each(['remind me to ship the demo', 'remind me to call mom tomorrow', 'remind me to stretch at 3pm'])(
+    'commits %s as a reminder',
+    (t) => expect(state(t)).toEqual({ kind: 'committed', intent: 'reminder' }),
+  );
+  it('leaves questions about reminders to the model', () => {
+    expect(state('what should I remind my team about').kind).toBe('input');
+  });
+});

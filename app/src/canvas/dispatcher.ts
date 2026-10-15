@@ -76,6 +76,35 @@ const DEFAULT_SIZE: Record<WidgetKind, { w: number; h: number }> = {
 };
 
 /**
+ * Size for kinds whose height follows their data. Tables: card header
+ * (44) + body padding (24) + column header (34) + 34px per row, so every
+ * row is visible up to 14 rows, after which the card scrolls. Width
+ * grows ~150px per column. Tasks: 40px per item. Returns null for kinds
+ * sized by template.
+ * Exported for tests.
+ */
+export function contentSize(
+  kind: string,
+  payload: unknown,
+): { w: number; h: number } | null {
+  if (!payload || typeof payload !== 'object') return null;
+  if (kind === 'tasks') {
+    // 40px per item: a one-line reminder is a small card, not a 260px box.
+    const items = (payload as { items?: unknown }).items;
+    const n = Array.isArray(items) ? items.length : 0;
+    return { w: 320, h: Math.min(44 + 24 + Math.max(n, 1) * 40 + 8, 420) };
+  }
+  if (kind !== 'table') return null;
+  const p = payload as { rows?: unknown; columns?: unknown };
+  const rows = Array.isArray(p.rows) ? p.rows.length : 0;
+  const cols = Array.isArray(p.columns) ? p.columns.length : 0;
+  const ROW = 34;
+  const h = 44 + 24 + ROW + Math.min(Math.max(rows, 1), 14) * ROW;
+  const w = Math.min(Math.max(cols * 150, 360), 860);
+  return { w, h };
+}
+
+/**
  * The part of the viewport a new widget can land in without hiding
  * under the floating chat. When the chat is open and docked on the right
  * half of the screen, the usable width ends where the chat begins, so a
@@ -331,8 +360,11 @@ export function applyToolDirective(
       // dimension — keeps wide widgets like table/file-tree from being
       // clipped while still respecting the template's spatial intent.
       const def = DEFAULT_SIZE[directive.kind] ?? { w: 320, h: 200 };
-      const w = Math.max(slot.w, def.w);
-      const h = Math.max(slot.h, def.h);
+      const fit = contentSize(directive.kind, directive.payload);
+      const w = Math.max(slot.w, def.w, fit?.w ?? 0);
+      // Content-sized kinds take their measured height: no clipped rows,
+      // and no tall empty card for a 2-row table either.
+      const h = fit ? fit.h : Math.max(slot.h, def.h);
 
       // Resolve overlap with already-placed opencanvas widgets. Templates are
       // role-aware but blind to actual canvas state — when the agent fans
@@ -340,7 +372,12 @@ export function applyToolDirective(
       // occupancy can collide with adjacent roles' slots OR with shapes
       // the user moved manually. Sweep down/right until we find an empty
       // spot near the template's preferred position.
-      const { x, y } = findFreePosition(editor, slot.x, slot.y, w, h);
+      // Keep wide cards inside the usable area (left of the chat): a
+      // 520px table in the right-hand "related" column used to spill
+      // under the chat panel.
+      const area = placementBounds(editor);
+      const prefX = Math.max(area.x, Math.min(slot.x, area.x + area.w - w));
+      const { x, y } = findFreePosition(editor, prefX, slot.y, w, h);
 
       const totalOpenCanvas = editor
         .getCurrentPageShapes()

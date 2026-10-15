@@ -14,6 +14,71 @@
  * Spec: docs/superpowers/specs/2026-05-09-modernise-ui-design.md
  */
 
+/* Arrows (U+2190–21FF) are missing from the Google Fonts latin subset of
+ * Geist and Inter, so "12 km → mi" dropped to a thin system font. Serve a
+ * 9 KB self-hosted Inter arrows subset under both family names. unicode-range
+ * means it is only fetched when an arrow is actually on screen.
+ * See app/public/fonts/README.md. */
+/* Discrete weights matching the Google faces (400–700), not a 100–900
+ * range: a range face is a closer match for in-between weights like 650
+ * and would hijack the whole run, sending every other glyph to a system font. */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-arrows.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+2190-21FF;
+}
+
 :root {
   --font-sans: 'Geist', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
