@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../state/app-store';
+import { useUiStore } from '../state/ui-store';
 
 export function HealthBadge() {
   const { health, refreshHealth } = useAppStore();
+  const modelStatus = useUiStore((s) => s.modelStatus);
 
   useEffect(() => {
     refreshHealth();
@@ -40,6 +42,22 @@ export function HealthBadge() {
     `\nllm:     ${llm}` +
     (model ? `\nmodel:   ${model}` : '') +
     `\nembed:   ${embedder}`;
+  if (modelStatus === 'missing' && !health.data.demo) {
+    return (
+      <button
+        type="button"
+        data-testid="health-no-model"
+        onClick={() => useUiStore.getState().setSettingsOpen(true)}
+        className="flex items-center gap-2 text-sm text-amber-300 whitespace-nowrap hover:text-amber-200"
+        title={`${tooltip}\n\nThe model rejected the last request (no or invalid key). Click to connect one. Instant widgets still work.`}
+      >
+        <span className="size-2 rounded-full bg-amber-400" />
+        <span className="font-medium">{llm}</span>
+        <span className="text-amber-200/70">· not connected</span>
+      </button>
+    );
+  }
+
   return (
     <div
       className="flex items-center gap-2 text-sm text-zinc-300 whitespace-nowrap"

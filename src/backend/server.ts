@@ -513,6 +513,15 @@ async function maybeWireStaticSpa(): Promise<void> {
   // single-port mode can hand the SPA its auth token.
   app.get('/', serveIndex);
   app.get('/index.html', serveIndex);
+  // gzip the hashed JS/CSS bundles (≈2.5 MB → ≈0.8 MB on the wire). Scoped
+  // to /assets so SSE streams under /v1 are never buffered by compression.
+  const { compress } = await import('hono/compress');
+  app.use('/assets/*', compress());
+  // Vite content-hashes everything under /assets, so it can be cached forever.
+  app.use('/assets/*', async (c, next) => {
+    await next();
+    if (c.res.ok) c.header('Cache-Control', 'public, max-age=31536000, immutable');
+  });
   app.use('/*', serveStatic({ root, precompressed: true }));
   app.get('*', serveIndex);
   console.log(`[opencanvas backend] serving SPA from ${root}`);

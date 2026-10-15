@@ -70,3 +70,28 @@ reading `claude-agent-sdk` with a green dot when no model is authenticated (hone
 - `placementBounds()`: new widgets avoid the floating chat when it's docked right.
 - Header model badge no longer wraps onto two lines.
 - Fixed round 1's CI break (missing `.js` extensions in a new test import).
+
+## Round 3 (2026-10-16)
+
+**Critique after round 2.** A new user now gets a working first minute, but two trust gaps remain:
+- The header keeps a **green dot** next to `claude-agent-sdk` even after the model has just
+  rejected the request, so the app tells you it's fine when it's not.
+- In `pnpm start` mode the backend sends **2.5 MB of uncompressed JS** with no caching, so
+  every reload pays the full cost.
+- The README never answers the obvious question for anyone who found mcp-screen first:
+  "which one do I want?"
+
+**Reasons to star or share:** an honest no-key GIF, one command, zero console errors, and a
+clear split from mcp-screen.
+
+**Weakest part (still):** opencanvas is a destination app, and install still needs clone + pnpm
+(there's no npx or published Docker image yet). See the next ideas in the final report.
+
+**Built this round:**
+- Honest model badge: it turns amber and reads "· not connected" after a keyless or auth failure, and
+  clicking it opens Settings. Closing Settings resets it; it goes back to green after a clean turn. Demo
+  mode is unaffected.
+- gzip plus `immutable` caching for `/assets` (SSE under `/v1` deliberately untouched): **2.53 MB →
+  0.77 MB** of JS on the wire.
+- README section "OpenCanvas or mcp-screen?", with a table and the REST drawing path.
+- CHANGELOG `[Unreleased]` written up.

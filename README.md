@@ -9,7 +9,7 @@
 Ask a question and get a chart, a table and a kanban side by side, each one a real widget you can drag, pin and keep. Any model, including local, running on your machine under MIT.
 
 [![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/tests-789%20passing-2dd4bf)](./docs/guide.md#develop)
+[![tests](https://img.shields.io/badge/tests-790%20passing-2dd4bf)](./docs/guide.md#develop)
 [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE)
 [![stars](https://img.shields.io/github/stars/ashark-ai-05/opencanvas?style=flat&color=a78bfa)](https://github.com/ashark-ai-05/opencanvas/stargazers)
 
@@ -74,9 +74,16 @@ One process, one port, no `.env` needed. Connect a model later in **Settings**, 
 
 *Six of the 15 built-in widget kinds. Each is a schema plus a React component; the model learns them from the tool description.*
 
-### Sibling project: mcp-screen
+### OpenCanvas or mcp-screen?
 
-Already living in Claude Code, Codex or opencode? **[mcp-screen](https://github.com/ashark-ai-05/mcp-screen)** brings a lighter version of this idea to terminal agents. It's an MCP server that opens a local canvas next to your terminal, with typed widgets, click-to-answer questions, MCP Apps rendering and a live map of which files your agents are touching. It reuses OpenCanvas's event bus, widget-registry and null-origin sandbox designs, without tldraw or a chat UI of its own.
+Same visual language, different jobs:
+
+| You want… | Use |
+|---|---|
+| A full chat-plus-canvas workspace with any model, memory, a KB and schedules | **OpenCanvas** (this repo) |
+| A screen that your existing terminal agent (Claude Code, Codex, opencode) draws on, next to the terminal you already use | **[mcp-screen](https://github.com/ashark-ai-05/mcp-screen)** |
+
+mcp-screen reuses OpenCanvas's event bus, widget-registry and null-origin sandbox designs, without tldraw or a chat UI of its own. Scripts and agents can also draw on OpenCanvas directly: `POST /v1/canvas/widgets` ([API reference](https://ashark-ai-05.github.io/opencanvas/api.html)).
 
 ---
 

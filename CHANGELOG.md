@@ -6,7 +6,21 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- `pnpm start`: one process on one port (127.0.0.1:3457) with no `.env`. It builds the UI on first run and opens the browser.
+- A "No model connected yet" inline card with one-click instant-widget chips, replacing the raw `authentication_failed` toast.
+- The header badge turns amber and reads "not connected" after the model rejects a turn.
+- `docs/first-run.gif` and `scripts/record-first-run.mjs`, an unedited no-key first run.
+- gzip and immutable caching for `/assets` when the backend serves the UI (2.5 MB → 0.77 MB on the wire).
+
+### Fixed
+- The first widget placed on a fresh canvas started collapsed, because welcome samples counted toward auto-collapse.
+- Auto-collapse kicked in at the 4th widget (threshold raised 3 → 8).
+- Pressing Enter before the fast-lane debounce fired sent instant widgets to the model.
+- `todo: …` / `checklist: …` lead keywords were overridden by task verbs and words like "demo".
+- New widgets were placed underneath the floating chat.
+- 16 CSP console errors on every load (tldraw fonts).
+- A broken `#install` README anchor in the demo capacity notice.
 
 ## [0.1.0] — 2026-09-27
 

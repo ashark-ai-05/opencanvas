@@ -26,6 +26,14 @@ export type UiState = {
   /** True while a chat turn is mid-stream — drives the composer status pill. */
   chatBusy: boolean;
   setChatBusy: (busy: boolean) => void;
+  /**
+   * What the last real chat turn told us about the model: 'missing' after a
+   * keyless/auth failure, 'ok' after a turn that finished cleanly. The
+   * header badge uses it so it never shows a green dot for a model that
+   * just rejected us.
+   */
+  modelStatus: 'unknown' | 'ok' | 'missing';
+  setModelStatus: (s: 'unknown' | 'ok' | 'missing') => void;
   /** Sources panel drawer open / closed. */
   sourcesOpen: boolean;
   setSourcesOpen: (open: boolean) => void;
@@ -101,6 +109,8 @@ export const useUiStore = create<UiState>((set) => ({
     set((state) => ({ chatWindow: { ...state.chatWindow, ...patch } })),
   chatBusy: false,
   setChatBusy: (chatBusy) => set({ chatBusy }),
+  modelStatus: 'unknown',
+  setModelStatus: (modelStatus) => set({ modelStatus }),
   sourcesOpen: false,
   setSourcesOpen: (sourcesOpen) => set({ sourcesOpen }),
   handToolActive: false,
@@ -115,5 +125,10 @@ export const useUiStore = create<UiState>((set) => ({
     set({ chatTabsVisible });
   },
   settingsOpen: false,
-  setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
+  // Closing Settings may have fixed the key, so forget a stale "missing".
+  setSettingsOpen: (settingsOpen) =>
+    set((st) => ({
+      settingsOpen,
+      ...(settingsOpen || st.modelStatus !== 'missing' ? {} : { modelStatus: 'unknown' as const }),
+    })),
 }));

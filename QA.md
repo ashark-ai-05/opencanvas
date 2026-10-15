@@ -42,3 +42,17 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   (font coverage), while the body is fine. The REST-placed table is 200px tall, so only 3 of 6 rows show
   without scrolling.
 - Perf: DOMContentLoaded 0.3–2.1s on the production bundle (the high end was under box load), JS 2.5 MB.
+
+## Round 3
+- Ran the exact CI sequence locally: `pnpm typecheck` ✅ → backend **401** passed / 2 skipped →
+  app **389** passed → **790** ✅. `pnpm audit --prod --audit-level=moderate` exit 0.
+- Round 2 CI on main: **success**.
+- `pnpm start --rebuild` from a fresh HOME. curl checks: `/assets/vendor-tldraw-*.js` is 983 KB raw and
+  292 KB gzipped, with `cache-control: public, max-age=31536000, immutable`. `/v1/health` 200. A forged
+  `Host: evil.com` gets **no** token meta tag ✅
+- Playwright: JS transfer **771 KB** (was 2.53 MB). Load 0.39–0.64s across 3 runs (one 8.5s outlier
+  while the box load average was about 8, not reproducible). 0 console errors.
+- Keyless "explain the CAP theorem": notice after about 1.0s, badge `claude-agent-sdk · not connected` in
+  amber ✅. Screenshot: /workspace/qa-oc/r3-badge.png.
+- Observed: the first question in a brand-new HOME spends several seconds on "Searching your
+  knowledge base" while the bundled ONNX embedder warms up. Not fixed yet.

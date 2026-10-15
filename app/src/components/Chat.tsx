@@ -456,6 +456,16 @@ export function Chat() {
   // The capacity-exceeded 503 is handled inline by <ChatCapacityNotice>
   // below — suppressing the toast for that case avoids double-surfacing
   // and lets the BYO conversion CTA stand on its own.
+  // Feed the header badge: an auth failure means "no model"; a turn that
+  // ends without error after streaming means the model is live.
+  const wasStreamingRef = useRef(false);
+  useEffect(() => {
+    const ui = useUiStore.getState();
+    if (isNoModelError(error)) ui.setModelStatus('missing');
+    else if (wasStreamingRef.current && !isStreaming && !error) ui.setModelStatus('ok');
+    wasStreamingRef.current = isStreaming;
+  }, [error, isStreaming]);
+
   useEffect(() => {
     if (error && error !== errorShownRef.current) {
       errorShownRef.current = error;

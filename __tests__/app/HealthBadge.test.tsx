@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { HealthBadge } from '../../app/src/components/HealthBadge';
+import { useUiStore } from '../../app/src/state/ui-store';
 
 describe('HealthBadge', () => {
   beforeEach(() => {
@@ -56,5 +57,16 @@ describe('HealthBadge', () => {
     await waitFor(() => {
       expect(screen.getAllByText(/connection refused|backend down|fail/i).length).toBeGreaterThan(0);
     });
+  });
+
+  it('turns amber and says "not connected" after the model rejected a turn', async () => {
+    useUiStore.getState().setModelStatus('missing');
+    render(<HealthBadge />);
+    await waitFor(() => expect(screen.getByTestId('health-no-model')).toBeInTheDocument());
+    expect(screen.getByText(/not connected/)).toBeInTheDocument();
+    // Closing Settings forgets the stale verdict.
+    useUiStore.getState().setSettingsOpen(true);
+    useUiStore.getState().setSettingsOpen(false);
+    expect(useUiStore.getState().modelStatus).toBe('unknown');
   });
 });
