@@ -7,6 +7,8 @@ import { Chat } from './Chat';
 import { ChatStatusBar } from './ChatStatusBar';
 import { ChatOptionsMenu } from './ChatOptionsMenu';
 import { useUiStore } from '../state/ui-store';
+import { useIsNarrow } from '../lib/narrow-viewport';
+import { useCanvasStats } from '../state/canvas-stats-store';
 
 /**
  * Draggable floating chat shell. Hosts the existing <Chat /> body —
@@ -32,6 +34,8 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
   const [dragging, setDragging] = useState(false);
   const titlebarParallax = useParallax({ maxTilt: 2, lift: false });
   const asideRef = useRef<HTMLElement | null>(null);
+  // Phones: docked bottom sheet, no drag, no translate offset.
+  const narrow = useIsNarrow();
 
   // Measure the chat's actual rect and nudge x/y just enough to bring
   // any off-viewport edge back in. Bottom-anchored layout means a
@@ -39,7 +43,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
   // top edge; this is the canonical fix-up.
   const clampToViewport = useCallback(() => {
     const el = asideRef.current;
-    if (!el) return;
+    if (!el || narrow) return;
     const rect = el.getBoundingClientRect();
     const margin = 20;
     let dx = 0;
@@ -66,7 +70,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
     x.set(nx);
     y.set(ny);
     setChatWindow({ dragX: nx, dragY: ny });
-  }, [x, y, setChatWindow]);
+  }, [x, y, setChatWindow, narrow]);
 
   // Toggle fullMode. The clamp effect below handles bringing the
   // larger variant back into view if the previous drag offset would
@@ -94,6 +98,32 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
     return () => window.removeEventListener('resize', onResize);
   }, [clampToViewport]);
 
+  useEffect(() => {
+    if (!narrow) {
+      x.set(chatWindow.dragX);
+      y.set(chatWindow.dragY);
+      return;
+    }
+    x.set(0);
+    y.set(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [narrow]);
+
+  // Phones: when a new widget lands, drop the sheet to its composer-only
+  // peek so the widget is actually visible. Restore is one tap.
+  const widgetCount = useCanvasStats((st) => st.widgetCount);
+  const prevWidgets = useRef(widgetCount);
+  // Ignore the hydration burst (snapshot / sample widgets load on mount).
+  const armedAt = useRef(Date.now() + 2500);
+  useEffect(() => {
+    const grew = widgetCount > prevWidgets.current;
+    prevWidgets.current = widgetCount;
+    if (Date.now() < armedAt.current) return;
+    if (narrow && grew && useUiStore.getState().chatWindow.mode === 'open') {
+      setChatWindow({ mode: 'minimized' });
+    }
+  }, [widgetCount, narrow, setChatWindow]);
+
   if (chatWindow.mode === 'collapsed') {
     return null;
   }
@@ -101,7 +131,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
   return (
     <motion.aside
       ref={asideRef as React.RefObject<HTMLElement>}
-      drag
+      drag={!narrow}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}
@@ -129,7 +159,8 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
         // technically partly off-screen — bring it back.
         requestAnimationFrame(() => clampToViewport());
       }}
-      style={{ x, y, right: 24, bottom: 24 }}
+      style={narrow ? { x, y } : { x, y, right: 24, bottom: 24 }}
+      data-narrow={narrow ? 'true' : 'false'}
       data-mode={chatWindow.mode}
       data-fullmode={chatWindow.fullMode}
       data-dragging={dragging ? 'true' : 'false'}
@@ -144,6 +175,7 @@ export function FloatingChat({ chatKey }: { chatKey: string }) {
           // Only start a drag if the pointer isn't on a button —
           // otherwise the close/minimize buttons require a steady hand.
           if ((e.target as HTMLElement).closest('button')) return;
+          if (narrow) return;
           dragControls.start(e);
         }}
         onDoubleClick={(e) => {

@@ -309,3 +309,33 @@ live Railway demo and local `pnpm start` still diverge on auth/demo mode.
   `25 min focus` / `remind me…` / `12 km in miles` — **click places immediately** (no Enter).
 - Onboarding step-1 hint names the no-key prompt.
 - README "What you get" bullet for auto-tidy / clickable widget count / full-row tables.
+
+## Round: small screens (2026-10-16)
+
+**Before, at 390px:** the page was 1253px wide (header toolbar overflowed), the floating chat
+was anchored off-screen to the right, and you could not reach the composer. Every glass
+surface (chat, menus, drawers) was also see-through on all screen sizes:
+`rgb(var(--color-glass-rgb) / a)` is invalid CSS with a comma-separated variable, so the
+background was dropped and only the blur was left.
+
+**Built:**
+- At ≤640px (`app/src/lib/narrow-viewport.ts` matches the CSS media block), the chat docks as a
+  bottom sheet (58dvh, near-opaque, safe-area aware, no drag). Full mode fills the screen
+  under the header. Minimize gives a one-line composer peek.
+- When a widget lands on a phone, the sheet drops to the peek so you can see the result.
+  Restore takes one tap. The hydration burst at load is ignored.
+- Header on phone: history, wordmark, the widget/tidy chip, share, settings and new chat, all
+  40px targets. Draw tools, zoom, history scrubber, clear, plugins, schedules, MCP, recall,
+  screenshot, theme, KB and health are hidden.
+- The tour card moves under the header so it doesn't cover the chips. The minimap is hidden.
+  Inputs use 16px so iOS doesn't zoom. `viewport-fit=cover`, `interactive-widget=resizes-content`
+  and `theme-color` are set.
+- Glass backgrounds fixed everywhere (`rgba(var(--color-glass-rgb), a)`).
+- README shows two 390px screenshots under the demo GIF.
+
+**Remaining mobile gaps:**
+- The hidden header tools have no phone entry point yet, apart from MCP/history in the chat ⋯ menu.
+  This needs a "more" sheet.
+- A newly placed widget can land off-screen on a phone. The canvas doesn't pan to it yet.
+- Drawers/modals were only capped at 100vw. They haven't been redesigned for phones.
+- The hosted demo still runs the older deploy until Railway is redeployed.

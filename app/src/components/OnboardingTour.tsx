@@ -118,6 +118,7 @@ export function OnboardingTour() {
           role="dialog"
           aria-label="OpenCanvas onboarding tour"
           aria-modal="false"
+          className="opencanvas-tour"
           style={{
             position: 'fixed',
             bottom: 24,

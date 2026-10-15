@@ -16,6 +16,14 @@ Ask a question and get a chart, a table and a kanban side by side, each one a re
 ![demo](docs/demo.gif)
 
 <p>
+  <img src="docs/screenshots/mobile-390-after.png" alt="OpenCanvas on a 390px phone: chat docked as a bottom sheet with no-key chips" width="210" />
+  &nbsp;
+  <img src="docs/screenshots/mobile-390-canvas.png" alt="After tapping a chip the sheet drops to a one-line composer and the canvas takes the screen" width="210" />
+</p>
+
+<sub>Works on your phone too: the chat docks as a bottom sheet and gets out of the way when a widget lands. Open the demo link on your phone to try it.</sub>
+
+<p>
   <a href="https://opencanvas-production.up.railway.app"><b>▶︎ Try the live demo</b></a>
   &nbsp;·&nbsp;
   <a href="#start-in-60-seconds"><b>🚀 Run it locally</b></a>

@@ -48,6 +48,7 @@ import { useUiStore } from './state/ui-store';
 import { useCanvasExternalEvents } from './state/canvas-events';
 import { useFileDrop } from './state/file-drop';
 import { CommandPalette } from './components/CommandPalette';
+import { useIsNarrow } from './lib/narrow-viewport';
 
 /**
  * Top-level layout — full-bleed canvas with a glass header on top and a
@@ -62,6 +63,7 @@ import { CommandPalette } from './components/CommandPalette';
  *
  */
 export function App() {
+  const narrowToaster = useIsNarrow();
   const widgetCount = useCanvasStats((s) => s.widgetCount);
   const newChat = useChatActions((s) => s.newChat);
   // activeId drives Canvas + Chat keys: switching conversations re-mounts
@@ -127,8 +129,8 @@ export function App() {
 
   return (
     <div className="flex h-full flex-col relative bg-[var(--color-bg)]">
-      <header className="flex items-center justify-between px-4 h-12 shrink-0 opencanvas-glass relative z-20 border-b border-white/5">
-        <div className="flex items-center gap-3">
+      <header className="opencanvas-app-header flex items-center justify-between px-4 h-12 shrink-0 opencanvas-glass relative z-20 border-b border-white/5">
+        <div className="opencanvas-header-left flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -141,7 +143,7 @@ export function App() {
           {/* Mark — small square with the gradient, then wordmark */}
           <div
             aria-hidden
-            className="size-5 rounded-md bg-gradient-to-br from-violet-400 to-fuchsia-400"
+            className="opencanvas-hide-narrow size-5 rounded-md bg-gradient-to-br from-violet-400 to-fuchsia-400"
             style={{
               boxShadow:
                 '0 0 0 1px rgba(255,255,255,0.06) inset, 0 4px 14px -4px rgba(167,139,250,0.6)',
@@ -173,18 +175,22 @@ export function App() {
           )}
           {conversationCount > 1 && (
             <span
-              className="px-2 py-0.5 rounded-md text-[10.5px] font-medium tracking-wide text-zinc-500 border border-white/5"
+              className="opencanvas-hide-narrow px-2 py-0.5 rounded-md text-[10.5px] font-medium tracking-wide text-zinc-500 border border-white/5"
               style={{ background: 'rgba(255,255,255,0.02)' }}
               title={`${conversationCount} conversations`}
             >
               {conversationCount} chats
             </span>
           )}
-          <span className="opencanvas-header-divider" aria-hidden />
-          <HeaderCanvasControls />
-          <span className="opencanvas-header-divider" aria-hidden />
-          <HeaderDrawTools />
-          <HistoryScrubber />
+          <span className="opencanvas-header-divider opencanvas-hide-narrow" aria-hidden />
+          <span className="opencanvas-hide-narrow contents">
+            <HeaderCanvasControls />
+          </span>
+          <span className="opencanvas-header-divider opencanvas-hide-narrow" aria-hidden />
+          <span className="opencanvas-hide-narrow contents">
+            <HeaderDrawTools />
+            <HistoryScrubber />
+          </span>
           <button
             type="button"
             onClick={async () => {
@@ -220,18 +226,20 @@ export function App() {
             }}
             title="Clear all widgets from the canvas"
             aria-label="Clear canvas"
-            className="opencanvas-header-btn opencanvas-header-btn--danger"
+            className="opencanvas-header-btn opencanvas-header-btn--danger opencanvas-hide-narrow"
           >
             <Trash2 className="size-3.5" />
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          <KbBadge onClick={() => setSourcesOpen(true)} />
+        <div className="opencanvas-header-right flex items-center gap-2">
+          <span className="opencanvas-hide-narrow contents">
+            <KbBadge onClick={() => setSourcesOpen(true)} />
+          </span>
           <button
             type="button"
             onClick={() => setPluginsOpen(true)}
             title="Plugins"
-            className="opencanvas-header-btn"
+            className="opencanvas-header-btn opencanvas-hide-narrow"
             aria-label="Plugins"
           >
             <Boxes className="size-3.5" />
@@ -240,7 +248,7 @@ export function App() {
             type="button"
             onClick={() => setSchedulesOpen(true)}
             title="Scheduled agents"
-            className="opencanvas-header-btn"
+            className="opencanvas-header-btn opencanvas-hide-narrow"
             aria-label="Scheduled agents"
           >
             <CalendarClock className="size-3.5" />
@@ -249,7 +257,7 @@ export function App() {
             type="button"
             onClick={() => setRecallOpen(true)}
             title="Recall — search across all conversations"
-            className="opencanvas-header-btn"
+            className="opencanvas-header-btn opencanvas-hide-narrow"
             aria-label="Recall"
           >
             <Search className="size-3.5" />
@@ -258,12 +266,14 @@ export function App() {
             type="button"
             onClick={() => setMcpOpen(true)}
             title="MCP servers"
-            className="opencanvas-header-btn"
+            className="opencanvas-header-btn opencanvas-hide-narrow"
             aria-label="MCP servers"
           >
             <ServerCog className="size-3.5" />
           </button>
-          <ScreenshotButton />
+          <span className="opencanvas-hide-narrow contents">
+            <ScreenshotButton />
+          </span>
           <ShareButton activeId={activeId} />
           <button
             type="button"
@@ -294,7 +304,9 @@ export function App() {
               />
             )}
           </button>
-          <ThemeToggle />
+          <span className="opencanvas-hide-narrow contents">
+            <ThemeToggle />
+          </span>
           <button
             type="button"
             onClick={() => newChat?.()}
@@ -304,9 +316,11 @@ export function App() {
             style={{ background: 'rgba(255,255,255,0.03)' }}
           >
             <Plus className="size-3" />
-            New
+            <span className="opencanvas-hide-narrow">New</span>
           </button>
-          <HealthBadge />
+          <span className="opencanvas-hide-narrow contents">
+            <HealthBadge />
+          </span>
         </div>
       </header>
       {/* Canvas tabs — one tab per conversation. Lives at the app shell
@@ -356,7 +370,7 @@ export function App() {
       <OnboardingTour />
       <Toaster
         theme="dark"
-        position="top-right"
+        position={narrowToaster ? 'top-center' : 'top-right'}
         toastOptions={{
           style: {
             background: 'rgba(10, 10, 13, 0.85)',

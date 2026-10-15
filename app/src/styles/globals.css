@@ -254,7 +254,7 @@
      from the surface itself, so cards in different roles feel
      genuinely different instead of "violet card with role accent." */
   background:
-    linear-gradient(180deg, rgb(var(--color-glass-rgb) / 0.78) 0%, rgb(var(--color-glass-rgb) / 0.86) 100%),
+    linear-gradient(180deg, rgba(var(--color-glass-rgb), 0.78) 0%, rgba(var(--color-glass-rgb), 0.86) 100%),
     radial-gradient(
       ellipse at top left,
       var(--role-color-soft, var(--role-primary-soft)) 0%,
@@ -664,7 +664,7 @@
    each dark-family theme uses a near-black tint (midnight/sunset/mono
    overrides below; dark uses the default --color-glass-rgb). */
 .opencanvas-glass {
-  background: rgb(var(--color-glass-rgb) / 0.62);
+  background: rgba(var(--color-glass-rgb), 0.62);
   border: 1px solid var(--color-line);
   backdrop-filter: var(--blur-thin);
   -webkit-backdrop-filter: var(--blur-thin);
@@ -768,7 +768,7 @@
   gap: 4px;
   padding: 6px;
   border-radius: 10px;
-  background: rgb(var(--color-glass-rgb) / 0.72);
+  background: rgba(var(--color-glass-rgb), 0.72);
   border: 1px solid var(--color-line);
   backdrop-filter: var(--blur-medium);
   -webkit-backdrop-filter: var(--blur-medium);
@@ -804,7 +804,7 @@
   background:
     radial-gradient(circle at 30% 25%, rgba(167, 139, 250, 0.08), transparent 60%),
     radial-gradient(circle at 75% 80%, rgba(45, 212, 191, 0.06), transparent 60%),
-    rgb(var(--color-glass-rgb) / 0.55);
+    rgba(var(--color-glass-rgb), 0.55);
   cursor: crosshair;
   user-select: none;
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -944,7 +944,7 @@
   display: flex;
   flex-direction: column;
   border-radius: 14px;
-  background: rgb(var(--color-glass-rgb) / 0.82);
+  background: rgba(var(--color-glass-rgb), 0.82);
   border: 1px solid var(--color-line);
   backdrop-filter: var(--blur-heavy);
   -webkit-backdrop-filter: var(--blur-heavy);
@@ -1129,7 +1129,7 @@
   height: min(540px, 80vh);
   display: flex;
   flex-direction: column;
-  background: rgb(var(--color-glass-rgb) / 0.82);
+  background: rgba(var(--color-glass-rgb), 0.82);
   border: 1px solid var(--color-line);
   border-radius: 16px;
   /* `overflow: hidden` so child backgrounds (composer form, status bar,
@@ -1733,7 +1733,7 @@ header [aria-hidden].size-5.rounded-md {
    not a Christmas tree. A subtle hairline border with a soft violet
    glow handles "this is a focused panel" without the conic strobe. */
 .opencanvas-chat-floating {
-  background: rgb(var(--color-glass-rgb) / 0.82);
+  background: rgba(var(--color-glass-rgb), 0.82);
   border: 1px solid var(--color-line);
   backdrop-filter: var(--blur-heavy);
   -webkit-backdrop-filter: var(--blur-heavy);
@@ -3730,4 +3730,107 @@ header button:hover {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* ----------------------------------------------------------------------
+ * Small screens (phones, narrow tablets). Keep in sync with
+ * app/src/lib/narrow-viewport.ts. Pattern: canvas fills the screen,
+ * chat docks as a bottom sheet (minimize = composer-only peek, which
+ * keeps the canvas visible while you type). Secondary header tools
+ * (draw tools, plugins, schedules, MCP, screenshot, theme, health)
+ * hide; they remain reachable from the chat options menu / palette.
+ * ---------------------------------------------------------------------- */
+html,
+body {
+  overflow-x: hidden;
+}
+@media (max-width: 640px) {
+  body {
+    height: 100dvh;
+  }
+  .opencanvas-hide-narrow {
+    display: none !important;
+  }
+  .opencanvas-app-header {
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    height: calc(52px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    gap: 8px;
+  }
+  .opencanvas-app-header h1 {
+    font-size: 14px;
+  }
+  .opencanvas-header-left {
+    gap: 8px;
+  }
+  .opencanvas-header-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .opencanvas-header-btn,
+  .opencanvas-app-header button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .opencanvas-chat-floating[data-narrow='true'] {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: min(58dvh, 560px);
+    border-radius: 18px 18px 0 0;
+    /* Near-opaque: on a phone the sheet overlaps canvas widgets, and a
+       bright card behind 82% glass smears over the chips. */
+    background: rgba(var(--color-glass-rgb), 0.97);
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: none !important;
+  }
+  .opencanvas-chat-floating[data-narrow='true'][data-fullmode='full'] {
+    height: calc(100dvh - 52px - env(safe-area-inset-top));
+  }
+  .opencanvas-chat-floating[data-narrow='true'][data-mode='minimized'] {
+    height: auto;
+  }
+  .opencanvas-chat-floating[data-narrow='true'] .opencanvas-chat-titlebar {
+    cursor: default;
+  }
+  .opencanvas-chat-floating[data-narrow='true'] .opencanvas-chat-titlebar-grip {
+    display: none;
+  }
+  .opencanvas-chat-titlebar-btn {
+    min-width: 44px;
+    min-height: 40px;
+  }
+  /* iOS zooms into inputs under 16px — keep the composer at 16. */
+  .opencanvas-chat-floating textarea,
+  .opencanvas-chat-floating input {
+    font-size: 16px !important;
+  }
+  .opencanvas-chat-launcher {
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    min-height: 48px;
+    padding: 12px 18px;
+    font-size: 14px;
+  }
+  /* Minimap would sit under the sheet; pinch/pan is the phone map. */
+  .opencanvas-canvas-map {
+    display: none !important;
+  }
+  /* Tour card sits under the header so it never covers the chat chips. */
+  .opencanvas-tour {
+    top: calc(60px + env(safe-area-inset-top)) !important;
+    bottom: auto !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+  }
+  /* Drawers / modals: never wider than the screen. */
+  [role='dialog'] {
+    max-width: 100vw;
+  }
 }

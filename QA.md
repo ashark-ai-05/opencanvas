@@ -140,3 +140,16 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   Audit exit 0.
 - Playwright: empty chat title "No API key needed"; click `25 min focus` chip → timer placed +
   "without the model" note; 0 console errors. Screenshot: `/workspace/qa-oc/r12-empty.png`.
+
+## Round: small screens
+- Playwright Chromium, 390×844 mobile emulation (touch, DPR 2), Vite dev, no backend.
+- Before: `documentElement.scrollWidth` **1253** at 390 viewport, chat off-screen.
+  After: **390**, no horizontal scroll.
+- Visible header/titlebar targets all ≥40×40 (titlebar 44×40).
+- Tapping the `25 min focus` chip places the timer (3→4 widgets), and the sheet goes to `minimized` ✅
+- Desktop 1440×900 re-checked: floating chat unchanged apart from the now-opaque glass.
+- New tests: `__tests__/app/narrow-viewport.test.ts` (breakpoint, viewport meta),
+  `__tests__/mobile-css.test.ts` (media block, bottom sheet, safe-area, 16px inputs).
+- Screenshots: `docs/screenshots/mobile-390-{before,after,canvas}.png`.
+- Not tested on a real iOS/Android device. Soft-keyboard behaviour relies on
+  `interactive-widget=resizes-content` + dvh (Chrome Android). iOS Safari is unverified.
