@@ -156,7 +156,7 @@ export function SendWidgetMenu({ shapeId }: { shapeId: string }) {
               overflowY: 'auto',
               padding: 6,
               borderRadius: 10,
-              background: 'rgb(var(--color-glass-rgb) / 0.96)',
+              background: 'rgba(var(--color-glass-rgb), 0.96)',
               border: '1px solid var(--color-line-2)',
               backdropFilter: 'var(--blur-medium)',
               WebkitBackdropFilter: 'var(--blur-medium)',

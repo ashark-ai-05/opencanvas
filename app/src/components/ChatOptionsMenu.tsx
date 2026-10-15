@@ -89,7 +89,7 @@ export function ChatOptionsMenu() {
             padding: 6,
             borderRadius: 10,
             // Near-opaque so anything underneath doesn't bleed through.
-            background: 'rgb(var(--color-glass-rgb) / 0.96)',
+            background: 'rgba(var(--color-glass-rgb), 0.96)',
             border: '1px solid var(--color-line-2)',
             backdropFilter: 'var(--blur-medium)',
             WebkitBackdropFilter: 'var(--blur-medium)',
