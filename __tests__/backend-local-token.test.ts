@@ -2,6 +2,9 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { withLocalToken, isLoopbackHost } from '../src/backend/server.js';
 import { getAuthToken } from '../src/backend/auth.js';
 
+// Hermetic: never touch the real ~/.opencanvas/auth-token from a test.
+process.env['OPENCANVAS_AUTH_TOKEN'] ??= 'test-token-0123456789abcdef';
+
 const HTML = '<!doctype html><html><head><title>x</title></head></html>';
 
 describe('single-port local mode token injection', () => {
@@ -26,5 +29,15 @@ describe('single-port local mode token injection', () => {
     expect(isLoopbackHost('[::1]:3457')).toBe(true);
     expect(isLoopbackHost('LOCALHOST')).toBe(true);
     expect(isLoopbackHost('0.0.0.0:3457')).toBe(false);
+  });
+});
+
+import { shouldWarmUp } from '../src/backend/server.js';
+describe('search warm-up', () => {
+  it('warms only the bundled local embedder, never in tests or when opted out', () => {
+    expect(shouldWarmUp('onnx-bundled:BAAI/bge-small-en-v1.5', {})).toBe(true);
+    expect(shouldWarmUp('openai:text-embedding-3-small', {})).toBe(false);
+    expect(shouldWarmUp('onnx-bundled:x', { NODE_ENV: 'test' })).toBe(false);
+    expect(shouldWarmUp('onnx-bundled:x', { OPENCANVAS_NO_WARMUP: '1' })).toBe(false);
   });
 });

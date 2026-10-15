@@ -119,3 +119,27 @@ clear split from mcp-screen.
   via CDP platform-font inspection, and it was fixed with discrete weights.
 - All 6 app type errors fixed (`Conversation.name` → `title` in the share title, which was a real bug:
   shares with no text always fell back to "Shared OpenCanvas"). `pnpm typecheck:app` is now a CI step.
+
+## Round 5 (2026-10-16): the model you already have, a fast first answer, a sturdy token
+
+**Critique.** The most common new user already has an `OPENAI_API_KEY` exported or Ollama
+running, and we ignored both. We defaulted to `claude-agent-sdk` and showed "not connected" on
+the first question. Meanwhile that first question waited several seconds on "Searching your
+knowledge base" while the ONNX embedder loaded. And the round 2 one-off backend failure was still
+unexplained.
+
+**Built:**
+- `src/config/autodetect.ts`: first boot only, it detects an env key (fixed order) or Ollama via
+  `/api/tags`, skips embedding models, writes an `auto` profile without the key and keeps
+  `claude-sdk` as a second profile. It never touches an existing config, and an explicit
+  `OPENCANVAS_LLM_PROVIDER` wins.
+- Background warm-up of the bundled embedder right after `listen` (local embedders only, so no paid
+  calls; off in tests and with `OPENCANVAS_NO_WARMUP=1`). The boot log says `local search ready (~1.6 s)`.
+- Flaky test investigation: not reproduced in 10 full backend runs (including 6 in parallel alongside a UI
+  build). The one shared mutable resource the suite and a running server both touch is
+  `~/.opencanvas/auth-token`, and `getAuthToken()` was non-atomic: a reader could see a half-written
+  file, judge it invalid and overwrite it, which would silently invalidate a running server's token. It
+  now writes temp → `link()` (no clobber) → re-reads the winner, mode 0600. The new test spawns 6
+  concurrent first boots and checks they agree. The suite no longer touches the real `~/.opencanvas`.
+  Honest status: hardened the likeliest shared-state race; the original failure is unidentified (that run's
+  log wasn't kept).

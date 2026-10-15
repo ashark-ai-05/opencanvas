@@ -33,7 +33,7 @@ function defaultConfigPath(): string {
   return join(homedir(), '.opencanvas', 'config.json');
 }
 
-function resolveConfigPath(): string {
+export function resolveConfigPath(): string {
   return process.env['OPENCANVAS_CONFIG'] ?? defaultConfigPath();
 }
 

@@ -32,6 +32,8 @@ Config lives in `~/.opencanvas/config.json` (written on first run). Profiles hol
 
 Every provider gets the same tool-calling agent, the same widget catalog and the same UX.
 
+**First-run auto-pick.** When `~/.opencanvas/config.json` doesn't exist yet, the backend looks for a model you already have and writes an `auto` profile for it. It checks for an API key in the environment, in this order: Anthropic, OpenAI, Gemini (`GEMINI_API_KEY` / `GOOGLE_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY`), Groq, OpenRouter. If there's none, it tries Ollama at `$OLLAMA_HOST` or `localhost:11434` and prefers a model with good tool calling (qwen, gpt-oss, llama3.x, mistral). Keys are never written to the config. The boot log says what it chose and why. If nothing is found, the default `claude-sdk` profile is used, which works when Claude Code is logged in. `OPENCANVAS_LLM_PROVIDER` always wins.
+
 | Provider | Env var | Notes |
 |---|---|---|
 | Anthropic | `ANTHROPIC_API_KEY` | Claude Sonnet / Opus 4+; extended thinking on automatically |

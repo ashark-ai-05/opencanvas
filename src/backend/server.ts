@@ -550,8 +550,42 @@ export function isLoopbackHost(host: string | undefined): boolean {
   return name === '127.0.0.1' || name === 'localhost' || name === '[::1]';
 }
 
+/**
+ * Load the bundled ONNX embedder in the background right after boot, so
+ * the first question doesn't sit on "Searching your knowledge base" while
+ * a ~100 MB model downloads or initialises. Local embedders only (no paid API
+ * call); skipped in tests and with OPENCANVAS_NO_WARMUP=1. Exported for tests.
+ */
+export function shouldWarmUp(embedderId: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env['NODE_ENV'] === 'test' || env['OPENCANVAS_NO_WARMUP'] === '1') return false;
+  return embedderId.startsWith('onnx-bundled');
+}
+
+function warmUpLocalSearch(s: BackendState): void {
+  const embedder = s.getEmbedder();
+  if (!shouldWarmUp(embedder.id)) return;
+  const t0 = Date.now();
+  // Let the listener come up first, then warm in the background.
+  setTimeout(() => {
+    embedder
+      .embed(['warm up'])
+      .then(() => console.log(`[opencanvas backend] local search ready (${Date.now() - t0} ms)`))
+      .catch((e) => console.warn('[opencanvas backend] search warm-up failed (will retry on first use):', e));
+  }, 250);
+}
+
 export async function start(port: number): Promise<void> {
   const { serve } = await import('@hono/node-server');
+  // First boot only: pick up a model the user already has (env key or a
+  // running Ollama) before the config is written with the default.
+  if (!isDemoMode()) {
+    const { ensureFirstRunConfig } = await import('../config/autodetect.js');
+    const { resolveConfigPath } = await import('../config/loader.js');
+    const found = await ensureFirstRunConfig(resolveConfigPath());
+    if (found) {
+      console.log(`[opencanvas backend] first run: using ${found.llm.provider} (${found.llm.model}) because ${found.reason}`);
+    }
+  }
   const s = await getState();
   // Prime the auth token before we begin accepting requests. Reads/creates
   // ~/.opencanvas/auth-token. The path is logged (but never the token) so
@@ -563,6 +597,7 @@ export async function start(port: number): Promise<void> {
   // Local dev keeps 127.0.0.1 so loopback-only binding still holds.
   const hostname = isDemoMode() || process.env['HOST'] === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
   serve({ fetch: app.fetch, port, hostname });
+  warmUpLocalSearch(s);
   console.log(`[opencanvas backend] listening on http://${hostname}:${port}`);
   console.log(`[opencanvas backend] profile: ${s.profileName}`);
   console.log(`[opencanvas backend] llm:     ${s.getLLMProvider().id}`);

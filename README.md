@@ -46,7 +46,7 @@ git clone https://github.com/ashark-ai-05/opencanvas.git && cd opencanvas
 pnpm install && pnpm start      # builds once, opens http://127.0.0.1:3457
 ```
 
-One process, one port, no `.env` needed. Connect a model later in **Settings**, or follow [Pick a model](./docs/guide.md#pick-a-model) for env keys and fully-offline Ollama. Prefer the desktop app? `pnpm electron:dev`. Hacking on the UI with hot reload? `pnpm dev`.
+One process, one port, no `.env` needed. **Already have a model?** On first run OpenCanvas picks it up automatically: an `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY` or `OPENROUTER_API_KEY` in your environment, or a running Ollama. Otherwise connect one later in **Settings** ([Pick a model](./docs/guide.md#pick-a-model)). Prefer the desktop app? `pnpm electron:dev`. Hacking on the UI with hot reload? `pnpm dev`.
 
 **No API key? Start typing anyway.** Timers, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter, with no model call at all. This is an unedited recording of a fresh install:
 
