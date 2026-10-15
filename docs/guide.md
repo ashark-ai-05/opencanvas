@@ -21,11 +21,10 @@ Everything the front-page README leaves out. For contributing, see [CONTRIBUTING
 ```bash
 git clone https://github.com/ashark-ai-05/opencanvas.git && cd opencanvas
 pnpm install
-cp .env.example .env       # one provider key, or none for local-only
-pnpm electron:dev          # backend + Vite + Electron
+pnpm start                 # builds the UI once, serves UI + API on 127.0.0.1:3457
 ```
 
-Without Electron: `pnpm dev`, then open http://127.0.0.1:3458. The backend listens on `127.0.0.1:3457`.
+`pnpm start` is one process on one port and needs no `.env`. Flags: `--no-open` (don't launch a browser), `--rebuild` (rebuild the UI after pulling). Other modes: `pnpm electron:dev` for the desktop app, `pnpm dev` for hot reload on http://127.0.0.1:3458. Provider keys can go in `.env` (`cp .env.example .env`) or in Settings.
 
 Config lives in `~/.opencanvas/config.json` (written on first run). Profiles hold the LLM, the embedder and your MCP sources; switch the active profile or override provider, model and key from Settings in the app.
 

@@ -36,6 +36,7 @@
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
+    "start": "node scripts/start.mjs",
     "cli": "tsx src/cli.ts",
     "mcp": "tsx src/mcp-server/index.ts",
     "test": "vitest run",

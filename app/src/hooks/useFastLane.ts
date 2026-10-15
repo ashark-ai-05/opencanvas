@@ -42,6 +42,13 @@ export type FastLaneView = {
    * check this, not just `ui.kind === 'committed'`.
    */
   placeable: boolean;
+  /**
+   * Synchronous classify of the current text, for an Enter that lands
+   * before the debounce fires (paste + Enter, fast typists). Returns a
+   * placeable resolution only when the fresh classify is a clean commit;
+   * anything ambiguous stays on the model path.
+   */
+  resolveNow: () => FastLaneResolved | null;
   promote: () => void;
   choose: (i: 0 | 1) => void;
   dismiss: () => void;
@@ -58,6 +65,7 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
   const ref = opts.ref ?? (() => new Date());
   const [mem, setMem] = useState<DecideMemory>(initialMemory);
   const [lastResult, setLastResult] = useState<IntentResult | null>(null);
+  const [lastText, setLastText] = useState<string | null>(null);
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +92,7 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
     const id = setTimeout(() => {
       const result = classify(text, { ref: ref() });
       setLastResult(result);
+      setLastText(text);
       setMem((m) => decide(m, result, text));
     }, FAST_LANE_DEBOUNCE_MS);
     return () => clearTimeout(id);
@@ -167,5 +176,28 @@ export function useFastLane(text: string, opts: UseFastLaneOptions): FastLaneVie
     setMem(initialMemory);
   }, [text]);
 
-  return { ui, resolved, options, placeable, promote, choose, dismiss };
+  const resolveNow = useCallback((): FastLaneResolved | null => {
+    // Only meaningful when the debounced classify hasn't caught up.
+    if (!enabled || isEscaped(text) || lastText === text) return null;
+    if (dismissedFor !== null && !changedSubstantially(dismissedFor, text)) return null;
+    try {
+      const now = ref();
+      const st = rawState(classify(text, { ref: now }));
+      if (st.kind !== 'committed') return null;
+      const r = resolve(st.intent, text, now);
+      return {
+        intent: st.intent,
+        kind: r.entry.kind,
+        label: r.entry.label,
+        icon: r.entry.icon,
+        summary: r.summary,
+        payload: r.payload,
+      };
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, enabled, lastText, dismissedFor]);
+
+  return { ui, resolved, options, placeable, resolveNow, promote, choose, dismiss };
 }

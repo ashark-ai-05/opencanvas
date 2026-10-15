@@ -30,6 +30,7 @@ import {
 import { useAnonUsage } from '../state/anon-usage-store';
 import { useUiStore } from '../state/ui-store';
 import { VoiceInputButton } from './VoiceInputButton';
+import { NoModelNotice, isNoModelError } from './NoModelNotice';
 import { ByoNudge } from './ByoNudge';
 import {
   ChatCapacityNotice,
@@ -458,7 +459,7 @@ export function Chat() {
   useEffect(() => {
     if (error && error !== errorShownRef.current) {
       errorShownRef.current = error;
-      if (isCapacityError(error)) return;
+      if (isCapacityError(error) || isNoModelError(error)) return;
       const message = error instanceof Error ? error.message : String(error);
       toast.error('Chat error', { description: message });
     }
@@ -561,8 +562,8 @@ export function Chat() {
    * rejected by the schema) so the caller falls through to the model path.
    */
   const placeFastLane = (): boolean => {
-    const r = fastLane.resolved;
-    if (!r || !r.payload || !fastLane.placeable) return false;
+    const r = fastLane.placeable ? fastLane.resolved : fastLane.resolveNow();
+    if (!r || !r.payload) return false;
     const editor = getEditor();
     if (!editor) return false;
     let payload: Record<string, unknown>;
@@ -1005,6 +1006,12 @@ export function Chat() {
       <ChatCapacityNotice
         visible={isCapacityError(error)}
         onOpenSettings={() => useUiStore.getState().setSettingsOpen(true)}
+      />
+
+      <NoModelNotice
+        visible={isNoModelError(error)}
+        onOpenSettings={() => useUiStore.getState().setSettingsOpen(true)}
+        onTry={(t) => setInput(t)}
       />
 
       <ByoNudge

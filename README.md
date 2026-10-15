@@ -9,7 +9,7 @@
 Ask a question and get a chart, a table and a kanban side by side, each one a real widget you can drag, pin and keep. Any model, including local, running on your machine under MIT.
 
 [![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/tests-775%20passing-2dd4bf)](./docs/guide.md#develop)
+[![tests](https://img.shields.io/badge/tests-783%20passing-2dd4bf)](./docs/guide.md#develop)
 [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE)
 [![stars](https://img.shields.io/github/stars/ashark-ai-05/opencanvas?style=flat&color=a78bfa)](https://github.com/ashark-ai-05/opencanvas/stargazers)
 
@@ -43,9 +43,10 @@ The model never prints the answer. It calls `place_widget` with a typed payload,
 
 ```bash
 git clone https://github.com/ashark-ai-05/opencanvas.git && cd opencanvas
-pnpm install && cp .env.example .env    # add one provider key, or none
-pnpm electron:dev                       # or `pnpm dev` → http://127.0.0.1:3458
+pnpm install && pnpm start      # builds once, opens http://127.0.0.1:3457
 ```
+
+One process, one port, no `.env` needed. Connect a model later in **Settings**, or follow [Pick a model](./docs/guide.md#pick-a-model) for env keys and fully-offline Ollama. Prefer the desktop app? `pnpm electron:dev`. Hacking on the UI with hot reload? `pnpm dev`.
 
 **No API key? Start typing anyway.** Timers, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter, with no model call at all.
 

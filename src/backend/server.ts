@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { cors } from 'hono/cors';
 import { BackendState } from './state.js';
@@ -499,18 +500,45 @@ async function maybeWireStaticSpa(): Promise<void> {
     return;
   }
   const { serveStatic } = await import('@hono/node-server/serve-static');
-  // Files at the root of dist (assets/*, favicons, og-image)
-  app.use('/*', serveStatic({ root, precompressed: true }));
   // SPA fallback: any unmatched GET that wasn't a /v1/* route → index.html
   // so deep-link reloads don't 404. Hono's app.get('*') runs after the
   // static middleware misses.
-  app.get('*', async (c) => {
+  const serveIndex = async (c: Context) => {
     if (c.req.path.startsWith('/v1/')) return c.notFound();
     const indexPath = join(root, 'index.html');
     const { readFileSync } = await import('node:fs');
-    return c.html(readFileSync(indexPath, 'utf8'));
-  });
+    return c.html(withLocalToken(readFileSync(indexPath, 'utf8'), c.req.header('host')));
+  };
+  // `/` must render through serveIndex (not serveStatic) so the local
+  // single-port mode can hand the SPA its auth token.
+  app.get('/', serveIndex);
+  app.get('/index.html', serveIndex);
+  app.use('/*', serveStatic({ root, precompressed: true }));
+  app.get('*', serveIndex);
   console.log(`[opencanvas backend] serving SPA from ${root}`);
+}
+
+/**
+ * Single-port local mode (`pnpm start`): the backend serves the built SPA
+ * itself, so there is no Vite proxy to add the X-OpenCanvas-Token header.
+ * Hand the token to the page in a <meta> tag instead — but only when the
+ * request's Host is loopback, which stops a DNS-rebinding page from
+ * reading it. Demo mode has no auth, so nothing is injected there.
+ * Exported for tests.
+ */
+export function withLocalToken(html: string, host: string | undefined): string {
+  if (isDemoMode() || !isLoopbackHost(host)) return html;
+  const token = getAuthToken();
+  return html.replace(
+    '<head>',
+    `<head>\n    <meta name="opencanvas-token" content="${token}" />`,
+  );
+}
+
+export function isLoopbackHost(host: string | undefined): boolean {
+  if (!host) return false;
+  const name = host.replace(/:\d+$/, '').toLowerCase();
+  return name === '127.0.0.1' || name === 'localhost' || name === '[::1]';
 }
 
 export async function start(port: number): Promise<void> {

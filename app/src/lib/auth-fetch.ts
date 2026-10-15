@@ -5,6 +5,8 @@
  * Runtime matrix:
  *   - Vite dev / Electron dev → proxy injects header server-side; this
  *     wrapper is a no-op. `window.opencanvasAuth` is undefined.
+ *   - `pnpm start`            → backend injects a <meta> token into the
+ *     served index.html; the wrapper reads it once at boot.
  *   - Packaged Electron       → preload sets `window.opencanvasAuth`
  *     via contextBridge; this wrapper resolves it once at boot, caches
  *     it, and attaches `X-OpenCanvas-Token` to every backend request.
@@ -19,8 +21,15 @@ export function installAuthFetch(): void {
   if (installed) return;
   installed = true;
 
-  const bridge = (globalThis as unknown as { opencanvasAuth?: AuthBridge })
-    .opencanvasAuth;
+  // Single-port local mode (`pnpm start`): the backend serves the SPA
+  // and injects the token as <meta name="opencanvas-token"> (loopback only).
+  const metaToken =
+    typeof document !== 'undefined'
+      ? document.querySelector('meta[name="opencanvas-token"]')?.getAttribute('content')
+      : null;
+  const bridge =
+    (globalThis as unknown as { opencanvasAuth?: AuthBridge }).opencanvasAuth ??
+    (metaToken ? { getToken: async () => metaToken } : undefined);
   if (!bridge) return; // dev / browser path — proxy handles auth
 
   let tokenPromise: Promise<string> | null = null;

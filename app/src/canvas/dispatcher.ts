@@ -311,7 +311,13 @@ export function applyToolDirective(
 
       const totalOpenCanvas = editor
         .getCurrentPageShapes()
-        .filter((s) => s.type.startsWith('opencanvas:')).length;
+        .filter(
+          (s) =>
+            s.type.startsWith('opencanvas:') &&
+            // Welcome samples don't count: the first widget a new user
+            // places must open expanded, not as a 44px stub.
+            (s.meta as { seed?: unknown } | undefined)?.seed !== true,
+        ).length;
       const startCollapsed = totalOpenCanvas >= COLLAPSE_THRESHOLD;
 
       // sources / sourceLabel: peeled into `meta` so the shape props stay

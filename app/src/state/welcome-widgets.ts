@@ -116,15 +116,26 @@ export function seedWelcomeWidgetsIfFirstVisit(
     // exactly like agent-placed widgets — same shape types, same
     // role-driven slot resolution, same metadata.
     for (const seed of SEEDS) {
+      const seedId = crypto.randomUUID();
       const directive = {
         type: 'place' as const,
-        id: crypto.randomUUID(),
+        id: seedId,
         kind: seed.kind,
         role: seed.role,
         payload: seed.payload,
       } as ToolDirective;
       try {
         applyToolDirective(editor, directive, templateId);
+        // Tag as a sample so the dispatcher's auto-collapse ignores it.
+        const sid = ('shape:' + seedId) as never;
+        const placed = editor.getShape(sid);
+        if (placed) {
+          editor.updateShape({
+            id: sid,
+            type: placed.type,
+            meta: { ...placed.meta, seed: true },
+          } as never);
+        }
       } catch (e) {
         // One widget failing shouldn't block the rest.
         console.warn('[welcome-widgets] failed to place', seed.kind, e);

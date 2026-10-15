@@ -94,7 +94,7 @@ export function ChatCapacityNotice({
               <ExternalLink className="size-3" />
             </a>
             <a
-              href="https://github.com/ashark-ai-05/opencanvas#install"
+              href="https://github.com/ashark-ai-05/opencanvas#start-in-60-seconds"
               target="_blank"
               rel="noreferrer noopener"
               style={{
