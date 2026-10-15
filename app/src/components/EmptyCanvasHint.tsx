@@ -113,8 +113,8 @@ export function EmptyCanvasHint() {
             >
               <Suggestion
                 icon={<Timer className="size-3" />}
-                label="Build a Pomodoro timer"
-                prompt="Build a Pomodoro timer widget with a 25 minute focus block and a 5 minute break."
+                label="25 min focus"
+                prompt="25 min focus"
                 onClick={sendChat}
               />
               <Suggestion
@@ -125,8 +125,8 @@ export function EmptyCanvasHint() {
               />
               <Suggestion
                 icon={<BookOpen className="size-3" />}
-                label="Explain CAP theorem"
-                prompt="Explain the CAP theorem with concrete examples of CP, AP, and CA systems."
+                label="12 km in miles"
+                prompt="12 km in miles"
                 onClick={sendChat}
               />
             </div>

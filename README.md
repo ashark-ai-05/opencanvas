@@ -81,6 +81,7 @@ The launcher package lives in [`launcher/`](./launcher/) and the local Docker im
 - **Memory that compounds.** Every conversation indexes into a local SQLite + sqlite-vec store. `⌘K` finds any widget from any chat, weeks later.
 - **Drive it from anywhere.** A REST API and SSE bus let cron jobs, scripts and other agents place widgets on your canvas.
 - **Yours.** Binds to `127.0.0.1`, token-guarded routes, null-origin sandboxes for model-written HTML, no telemetry. [Threat model](./SECURITY.md).
+- **Canvas that keeps itself neat.** After the first few widgets the layout auto-tidies; click the widget count (or `/tidy`) anytime. Wide tables get a full row.
 
 <p align="center">
   <img src="docs/widgets.png" alt="Six OpenCanvas widgets: a Vega-Lite bar chart, a kanban board, a table, a running pomodoro timer, a TypeScript code block and a sandboxed HTML embed, all rendered on the dark canvas." width="100%">

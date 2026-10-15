@@ -288,3 +288,24 @@ Publishing still needs OK.
   (up to 8 × 400ms) instead of running under the cursor.
 - `StarNudge`: once-per-browser bar after first auto-tidy (2.2s delay) or successful share;
   links to `github.com/ashark-ai-05/opencanvas`. Hidden while ByoNudge is showing.
+
+## Round 12 (2026-10-16): the empty state sold the wrong first ask
+
+**Critique after round 11.** Drag-guard and star nudge closed the interruption and the
+"how do I support this" gaps. The remaining first-60-seconds miss: the empty chat still
+suggested **"Build a Pomodoro timer widget"** and **"Explain the CAP theorem"** — prompts that
+need a model — while the product's actual no-key superpower (`25 min focus`, reminders,
+conversions) was buried in the README GIF. A skeptic with no key who clicked the chip got
+the "No model connected" card and bounced before discovering the fast lane.
+
+**Reasons to share now:** empty chat leads with fast-lane chips; onboarding hint names the
+no-key prompt; README lists auto-tidy as a first-class feature.
+
+**Weakest part:** publishing still needs OK; the star nudge is easy to dismiss forever; the
+live Railway demo and local `pnpm start` still diverge on auth/demo mode.
+
+**Built this round:**
+- Empty chat (no KB): title "No API key needed — try a chip below…"; suggestions
+  `25 min focus` / `remind me…` / `12 km in miles` — **click places immediately** (no Enter).
+- Onboarding step-1 hint names the no-key prompt.
+- README "What you get" bullet for auto-tidy / clickable widget count / full-row tables.

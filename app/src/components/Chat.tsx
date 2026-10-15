@@ -41,6 +41,9 @@ import { useConversationsStore } from '../state/conversations-store';
 import { useKbStats } from '../state/kb-stats-store';
 import { usePreferences } from '../state/preferences-store';
 import { useFastLane } from '../hooks/useFastLane';
+import { classify, isEscaped } from '../intent/classify';
+import { rawState } from '../intent/decide';
+import { resolve as resolveIntent } from '../intent/registry';
 import { FastLaneChip } from './FastLaneChip';
 import { FastLaneNote, isLocalNote, outboundMessages } from './FastLaneNote';
 import { useAppStore } from '../state/app-store';
@@ -588,8 +591,36 @@ export function Chat() {
    * anything is off (not committed, incomplete parse, no editor, payload
    * rejected by the schema) so the caller falls through to the model path.
    */
-  const placeFastLane = (): boolean => {
-    const r = fastLane.placeable ? fastLane.resolved : fastLane.resolveNow();
+  const placeFastLane = (textOverride?: string): boolean => {
+    if (!resolveFastLaneEnabled(fastLaneSetting, isDemo) || isStreaming) return false;
+    const originalText = (textOverride ?? input).trim();
+    if (!originalText) return false;
+    let r = textOverride
+      ? null
+      : fastLane.placeable
+        ? fastLane.resolved
+        : fastLane.resolveNow();
+    // Chip clicks pass the text directly — resolve synchronously so we
+    // don't wait a render for useFastLane to catch up.
+    if (!r || !r.payload) {
+      if (isEscaped(originalText)) return false;
+      try {
+        const now = new Date();
+        const st = rawState(classify(originalText, { ref: now }));
+        if (st.kind !== 'committed') return false;
+        const resolved = resolveIntent(st.intent, originalText, now);
+        r = {
+          intent: st.intent,
+          kind: resolved.entry.kind,
+          label: resolved.entry.label,
+          icon: resolved.entry.icon,
+          summary: resolved.summary,
+          payload: resolved.payload,
+        };
+      } catch {
+        return false;
+      }
+    }
     if (!r || !r.payload) return false;
     const editor = getEditor();
     if (!editor) return false;
@@ -625,13 +656,12 @@ export function Chat() {
       return false;
     }
     usePreferences.getState().record(activeId, r.kind, 'placed');
-    const originalText = input;
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         role: 'assistant' as const,
-        parts: [{ type: 'text' as const, text: `Placed ${r.summary} without the model.` }],
+        parts: [{ type: 'text' as const, text: `Placed ${r!.summary} without the model.` }],
         metadata: { local: 'fast-lane', originalText },
       },
     ]);
@@ -764,7 +794,15 @@ export function Chat() {
         className="opencanvas-chat-scroll flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-5"
       >
         {messages.length === 0 && (
-          <EmptyChatBanner onSuggestion={(s) => setInput(s)} />
+          <EmptyChatBanner
+            onSuggestion={(s) => {
+              if (placeFastLane(s)) {
+                setInput('');
+                return;
+              }
+              setInput(s);
+            }}
+          />
         )}
 
         <AnimatePresence initial={false}>

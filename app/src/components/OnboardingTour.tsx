@@ -43,12 +43,12 @@ const STEPS: Step[] = [
     title: '👋 Welcome to OpenCanvas',
     body:
       "Talk to an AI on an infinite canvas. Whatever you ask, the agent renders typed widgets in the background — charts, diagrams, code, kanbans, anything.",
-    hint: 'The three widgets visible are samples — drag them around or delete them.',
+    hint: 'Samples on the canvas — drag them, or type `25 min focus` with no API key.',
   },
   {
     title: '✨ Ask anything',
     body:
-      "Type in the chat (bottom right). The agent will place widgets on the canvas as it answers. Try \"Build a Pomodoro timer\" or \"Show me a flowchart for OAuth\".",
+      "Type in the chat (bottom right). No key? Try \"25 min focus\" — it places a live timer instantly. With a model, try \"Build a Pomodoro timer\" or \"Show me a flowchart for OAuth\".",
     hint: 'Click the mic icon to speak instead of typing.',
   },
   {

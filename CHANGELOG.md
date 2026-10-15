@@ -27,6 +27,7 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - gzip and immutable caching for `/assets` when the backend serves the UI (2.5 MB → 0.77 MB on the wire).
 
 ### Fixed
+- Empty chat no longer leads with model-only prompts; chips are fast-lane no-key examples.
 - Soft re-tidy no longer runs while you are dragging, pointing-with-selection, or editing a widget.
 - First chat turn no longer shows "Searching your knowledge base…" when nothing is indexed.
 - Welcome sticky no longer lands under the floating chat after settle.

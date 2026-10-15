@@ -17,7 +17,7 @@ describe('Chat (smoke)', () => {
     // renders the "get started" variant.
     expect(
       screen.getByText(
-        /Ask anything to get started|Pick up where you left off/i,
+        /No API key needed|Ask anything to get started|Pick up where you left off/i,
       ),
     ).toBeInTheDocument();
   });

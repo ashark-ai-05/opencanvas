@@ -32,9 +32,10 @@ export function EmptyChatBanner({
         'Compare two ideas I have notes on',
       ]
     : [
-        'Build a Pomodoro timer widget',
-        'Compare React vs Vue in a table',
-        'Explain the CAP theorem with examples',
+        // Fast-lane first: the no-key wow is the star moment.
+        '25 min focus',
+        'remind me to call mom tomorrow',
+        '12 km in miles',
       ];
 
   return (
@@ -57,7 +58,7 @@ export function EmptyChatBanner({
       </div>
 
       <div className="opencanvas-empty-banner-title">
-        {indexed ? 'Pick up where you left off.' : 'Ask anything to get started.'}
+        {indexed ? 'Pick up where you left off.' : 'No API key needed — try a chip below, or ask anything.'}
       </div>
 
       <div className="opencanvas-empty-banner-stats">

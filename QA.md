@@ -134,3 +134,9 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
 - Exact CI: typecheck ✅, typecheck:app ✅, backend 411 / 2 skipped, app **403** → **814**. Audit exit 0.
 - Playwright `/workspace/qa-oc/r11.mjs`: after two fast-lane places + wait → ★ Star link visible, copy mentions GitHub, 0 console errors.
   Screenshot: `/workspace/qa-oc/r11-star.png`.
+
+## Round 12
+- Round 11 CI on main (`f2cd88d`): **success**. Local CI: backend 411 / 2 skipped, app **405** → **816**.
+  Audit exit 0.
+- Playwright: empty chat title "No API key needed"; click `25 min focus` chip → timer placed +
+  "without the model" note; 0 console errors. Screenshot: `/workspace/qa-oc/r12-empty.png`.
