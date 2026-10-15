@@ -71,6 +71,10 @@ pnpm electron:dev                       # or `pnpm dev` → http://127.0.0.1:345
 
 *Six of the 15 built-in widget kinds. Each is a schema plus a React component; the model learns them from the tool description.*
 
+### Sibling project: mcp-screen
+
+Already living in Claude Code, Codex or opencode? **[mcp-screen](https://github.com/ashark-ai-05/mcp-screen)** brings a lighter version of this idea to terminal agents. It's an MCP server that opens a local canvas next to your terminal, with typed widgets, click-to-answer questions, MCP Apps rendering and a live map of which files your agents are touching. It reuses OpenCanvas's event bus, widget-registry and null-origin sandbox designs, without tldraw or a chat UI of its own.
+
 ---
 
 ## Go deeper
