@@ -1,0 +1,14 @@
+{
+  "name": "opencanvas",
+  "version": "0.1.0",
+  "description": "One-command launcher for OpenCanvas: `npx opencanvas` installs (or updates) the app and runs it on http://127.0.0.1:3457.",
+  "license": "MIT",
+  "author": "Krunal Ashar <krunal.ashar@gmail.com>",
+  "homepage": "https://github.com/ashark-ai-05/opencanvas",
+  "repository": { "type": "git", "url": "git+https://github.com/ashark-ai-05/opencanvas.git", "directory": "launcher" },
+  "type": "module",
+  "bin": { "opencanvas": "bin/opencanvas.mjs" },
+  "files": ["bin", "README.md"],
+  "engines": { "node": ">=24" },
+  "keywords": ["opencanvas", "infinite-canvas", "llm", "agent", "mcp", "launcher"]
+}

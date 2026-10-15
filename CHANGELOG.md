@@ -7,6 +7,12 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- First-run model auto-pick: an env API key or a running Ollama becomes the active profile (keys never written to disk).
+- Background warm-up of the local search embedder so the first question doesn't stall.
+- `remind me …` / `reminder: …` place on Enter without a model.
+- Tables and task lists size to their content; wide cards stay left of the chat.
+- Self-hosted Inter arrows subset so `→` renders in titles.
+- Prepared (unpublished) `npx opencanvas` launcher and `Dockerfile.local` for a one-command install.
 - `pnpm start`: one process on one port (127.0.0.1:3457) with no `.env`. It builds the UI on first run and opens the browser.
 - A "No model connected yet" inline card with one-click instant-widget chips, replacing the raw `authentication_failed` toast.
 - The header badge turns amber and reads "not connected" after the model rejects a turn.
@@ -14,6 +20,8 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - gzip and immutable caching for `/assets` when the backend serves the UI (2.5 MB → 0.77 MB on the wire).
 
 ### Fixed
+- App TypeScript: 6 errors fixed and `pnpm typecheck:app` added to CI (including a ShareButton that always fell back to "Shared OpenCanvas").
+- Auth token write is atomic so concurrent first boots can't clobber each other.
 - The first widget placed on a fresh canvas started collapsed, because welcome samples counted toward auto-collapse.
 - Auto-collapse kicked in at the 4th widget (threshold raised 3 → 8).
 - Pressing Enter before the fast-lane debounce fired sent instant widgets to the model.

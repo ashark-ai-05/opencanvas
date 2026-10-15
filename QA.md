@@ -56,3 +56,32 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   amber ✅. Screenshot: /workspace/qa-oc/r3-badge.png.
 - Observed: the first question in a brand-new HOME spends several seconds on "Searching your
   knowledge base" while the bundled ONNX embedder warms up. Not fixed yet.
+
+## Round 4
+- Exact CI sequence: `typecheck` ✅ + **new** `typecheck:app` ✅ → backend → app. Tests:
+  backend 401+ (grew with later rounds) / app **397** with the new contentSize + remind-me cases.
+- Playwright: `remind me to call mom tomorrow` and `remind me to stretch at 3pm` place on Enter ✅
+- REST 6-row table: height 306, `scrollHeight - clientHeight = 0` (no clipping) ✅. One-item reminder
+  is 116px tall (was 260).
+- Arrow glyph (CDP platform fonts): after the discrete-weight fix, the conversion title is Inter
+  for all 10 glyphs including U+2192. The earlier weight-range attempt had hijacked to Noto Sans.
+- CI on main after push: **success**.
+
+## Round 5
+- Autodetect unit tests: 5 cases (env order, Ollama pick, skip-existing, no-key-in-file, explicit
+  env wins). Auth race: 6 concurrent first boots → one token, mode 0600, no `.tmp` left.
+- Flake hunt: 10 full backend suite runs (6 parallel + UI build) → 410/410 each time. No flake
+  reproduced; the auth-token race was hardened anyway.
+- Fresh `HOME=/tmp/nu3 pnpm start --rebuild`: boot log shows `local search ready (1677 ms)`.
+  First keyless question → "No model" notice in **889–1402 ms** (was multi-second KB stall before).
+- Docker (from round 6 prep) with `GEMINI_API_KEY=…`: boot log
+  `first run: using gemini (gemini-flash-lite-latest) because GEMINI_API_KEY is set`.
+
+## Round 6
+- `npx`-style launcher dry-run plan unit-tested (2 cases). Live run: clone → install → start on
+  :3460, `/v1/health` 200.
+- `Dockerfile.local` build success on second try (first hit a transient Debian 500). Run:
+  auth on, no demo, loopback token meta present, POST without token → 401, search warm-up
+  1462 ms, Playwright load 356 ms / 0 console errors. Image 3.02 GB.
+- Round 5 push CI: **success**. Local exact CI sequence for this round: typecheck ✅, typecheck:app ✅, backend 410 passed / 2 skipped, app 397 → **807** ✅, audit exit 0.
+- Not published: no `npm publish`, no `docker push`, Railway demo not redeployed.

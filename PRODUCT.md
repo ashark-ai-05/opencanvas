@@ -143,3 +143,29 @@ unexplained.
   concurrent first boots and checks they agree. The suite no longer touches the real `~/.opencanvas`.
   Honest status: hardened the likeliest shared-state race; the original failure is unidentified (that run's
   log wasn't kept).
+
+## Round 6 (2026-10-16): one-command install, ready but not published
+
+**Critique.** The product still asks for clone + pnpm. Cate and friends win the install race.
+The research lesson was "turn opencanvas into the screen your agents draw on"; the complementary
+lesson for install is "make trying it one command". Publishing is irreversible and needs Krunal's OK,
+so everything is prepared and verified, not shipped.
+
+**Built (not published):**
+- `launcher/` — a zero-dependency npm package named `opencanvas`. `npx opencanvas` clones into
+  `~/.opencanvas/app`, installs via corepack pnpm and runs `pnpm start`. Flags: `--update`
+  (fast-forward + rebuild), `--dir`, `--dry-run`, and any `pnpm start` flag. Verified end-to-end
+  against a real clone of this repo (health 200 on :3460). Dry-run plan is unit-tested.
+- `Dockerfile.local` — a separate file from the Railway demo Dockerfile, so the public demo is
+  untouched. Auth ON, no demo mode, volume for `~/.opencanvas`, Ollama via `host.docker.internal`,
+  healthcheck. Built and run: first-run auto-pick with `GEMINI_API_KEY`, search warm-up, token
+  meta for loopback, 401 on mutating routes without a token, Playwright load with 0 console errors.
+  Image size ≈ 3 GB (better-sqlite3 + onnxruntime + the SPA).
+- README has a "Coming soon" disclosure with the exact commands; CHANGELOG notes them as unpublished.
+
+**Highest-impact next (still open):**
+1. **Publish** `npx opencanvas` to npm and `ghcr.io/ashark-ai-05/opencanvas` (needs OK).
+2. **Auto-tidy after the first 3–4 widgets** so a fresh canvas doesn't look scattered (the GIF
+   still needs a manual fit-to-canvas).
+3. **Defer the KB search until the embedder is ready**, so the first chat turn doesn't show
+   "Searching your knowledge base…" while nothing is indexed yet.

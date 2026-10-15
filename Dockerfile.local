@@ -1,0 +1,68 @@
+# Local single-user OpenCanvas image. Kept separate from ./Dockerfile
+# (the public Railway demo) so the demo build is never affected.
+#
+#   docker build -f Dockerfile.local -t opencanvas .
+#   docker run --rm -p 127.0.0.1:3457:3457 -v opencanvas:/root/.opencanvas \
+#     -e GEMINI_API_KEY=...            # optional: any provider key is auto-picked on first run
+#     opencanvas
+#   # then open http://127.0.0.1:3457
+#
+# Or build straight from GitHub with no clone:
+#   docker build -f Dockerfile.local -t opencanvas https://github.com/ashark-ai-05/opencanvas.git
+#
+# Ollama on the host: Docker Desktop resolves host.docker.internal; on Linux
+# add --add-host=host.docker.internal:host-gateway.
+#
+# Security: auth is ON (no demo mode). HOST=0.0.0.0 is required inside the
+# container, so publish the port on 127.0.0.1 only, as above. The UI gets
+# its token only for loopback Host headers.
+
+# ─── 1. Base ───────────────────────────────────────────────────────────
+FROM node:24-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
+RUN corepack enable && corepack prepare pnpm@10.34.5 --activate
+WORKDIR /app
+
+# ─── 2. Install deps (with dev for build) ──────────────────────────────
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# better-sqlite3 + onnxruntime build native bindings — they need build
+# tools at install time. Keep them in this stage; we drop them in the
+# runtime image.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+RUN pnpm install --frozen-lockfile --prod=false
+
+# ─── 3. Build SPA + transpile backend ─────────────────────────────────
+FROM deps AS builder
+COPY . .
+# 3a. Frontend: Vite production bundle → app/dist
+RUN pnpm app:build
+# 3b. Backend: emit JS into dist-backend/ (no rootDir constraints; we
+#     run via tsx-equivalent + .ts→.js extension stripping at import).
+#     Easier path: ship the .ts files and run via tsx at runtime.
+#     We'll go with tsx-at-runtime because the codebase relies on
+#     extensionless imports that tsc rewrites awkwardly.
+
+# ─── 4. Runtime (local) ───────────────────────────────────────────────
+FROM base AS runtime
+ENV NODE_ENV=production OPENCANVAS_DEMO=0 HOST=0.0.0.0 \
+    OLLAMA_HOST=http://host.docker.internal:11434
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 make g++ \
+    && rm -rf /var/lib/apt/lists/* \
+    && pnpm install --frozen-lockfile --prod \
+    && apt-get purge -y python3 make g++ \
+    && apt-get autoremove -y
+RUN pnpm add tsx@latest
+COPY --from=builder /app/app/dist        ./app/dist
+COPY --from=builder /app/src             ./src
+COPY --from=builder /app/docs/openapi.yaml ./docs/openapi.yaml
+COPY --from=builder /app/tsconfig.json   ./tsconfig.json
+VOLUME ["/root/.opencanvas"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s \
+  CMD node -e "fetch('http://127.0.0.1:3457/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+EXPOSE 3457
+CMD ["pnpm", "tsx", "src/backend/server.ts"]
