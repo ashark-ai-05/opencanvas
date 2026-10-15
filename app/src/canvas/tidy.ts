@@ -1,10 +1,10 @@
 /**
- * Shared canvas tidy. Used by `/tidy`, the welcome-seed settle, and the
- * once-per-fresh-canvas auto-tidy after the first few user widgets.
+ * Shared canvas tidy. Used by `/tidy`, the welcome-seed settle, the
+ * once-per-fresh-canvas auto-tidy after the first few user widgets, and
+ * soft re-tidy when the canvas grows again after that.
  *
- * Places every opencanvas widget into the active template's role slots,
- * using the chat-aware placementBounds so nothing ends up under the
- * floating panel. Optionally zooms to fit afterwards.
+ * Places every opencanvas widget into a chat-aware wrap grid (or the
+ * active template's role slots as a fallback). Optionally zooms to fit.
  */
 import type { Editor } from 'tldraw';
 import { TEMPLATES_BY_ID } from './templates';
@@ -21,6 +21,18 @@ const ROLE_ORDER = [
 ] as const;
 
 const AUTO_TIDY_FLAG = 'opencanvas:auto-tidied:v1';
+const LAST_TIDY_COUNT_KEY = 'opencanvas:last-tidy-count:v1';
+/** After the first auto-tidy, re-tidy when the canvas grows by this many. */
+export const SOFT_RETIDY_GROWTH = 4;
+
+/** Kinds that need a full grid row so columns/headers stay readable. */
+const WIDE_TYPES = new Set([
+  'opencanvas:table',
+  'opencanvas:kanban',
+  'opencanvas:composite',
+  'opencanvas:code-block',
+  'opencanvas:file-tree',
+]);
 
 export type TidyOptions = {
   /** Animate into slots (default true). */
@@ -31,7 +43,88 @@ export type TidyOptions = {
   onlyIds?: Set<string>;
   /** Force the wrap-grid layout even when role columns would fit. */
   forceGrid?: boolean;
+  /** Zoom to fit only if the tidied grid overflows the viewport. */
+  fitIfOverflow?: boolean;
 };
+
+function usableScreenWidth(editor: Editor): number {
+  let usableScreenW = 1000;
+  try {
+    if (typeof document === 'undefined') return usableScreenW;
+    const screen = (
+      editor as unknown as {
+        getViewportScreenBounds?: () => { w: number };
+      }
+    ).getViewportScreenBounds?.();
+    if (screen && screen.w > 0) {
+      usableScreenW = screen.w;
+      const chat = document.querySelector('.opencanvas-chat-floating');
+      if (chat && chat.getAttribute('data-mode') !== 'minimized') {
+        const left = chat.getBoundingClientRect().left;
+        if (left > screen.w * 0.45) usableScreenW = left - 24;
+      }
+    }
+  } catch {
+    /* probing must never break tidy */
+  }
+  return usableScreenW;
+}
+
+/**
+ * zoomToFit, but framed into the area left of the floating chat so the
+ * right-hand column isn't hidden under the panel. Falls back to plain
+ * zoomToFit when there's no chat or bounds aren't available.
+ */
+function fitLeftOfChat(editor: Editor): void {
+  try {
+    const ed = editor as unknown as {
+      getCurrentPageBounds?: () => { x: number; y: number; w: number; h: number } | undefined;
+      getViewportScreenBounds?: () => { w: number };
+      zoomToBounds?: (
+        b: { x: number; y: number; w: number; h: number },
+        o: { animation: { duration: number }; inset?: number; targetZoom?: number },
+      ) => void;
+      zoomToFit?: (o: { animation: { duration: number } }) => void;
+    };
+    const bounds = ed.getCurrentPageBounds?.();
+    const screen = ed.getViewportScreenBounds?.();
+    const usable = usableScreenWidth(editor);
+    if (!bounds || !screen || !ed.zoomToBounds || screen.w <= 0) {
+      ed.zoomToFit?.({ animation: { duration: 280 } });
+      return;
+    }
+    const ratio = Math.min(1, Math.max(0.45, usable / screen.w));
+    // Widen the target box on the right by the chat's share of the
+    // screen; the real content then lands in the usable left part.
+    const padded = {
+      x: bounds.x,
+      y: bounds.y,
+      w: bounds.w / ratio,
+      h: bounds.h,
+    };
+    ed.zoomToBounds(padded, { animation: { duration: 280 }, inset: 48 });
+  } catch {
+    /* editor torn down */
+  }
+}
+
+function readLastTidyCount(): number {
+  try {
+    if (typeof localStorage === 'undefined') return 0;
+    const n = Number(localStorage.getItem(LAST_TIDY_COUNT_KEY) ?? '0');
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeTidyBookmark(count: number): void {
+  try {
+    localStorage.setItem(LAST_TIDY_COUNT_KEY, String(count));
+  } catch {
+    /* private browsing */
+  }
+}
 
 export function tidyCanvas(editor: Editor, opts: TidyOptions = {}): number {
   const animate = opts.animate !== false;
@@ -56,51 +149,34 @@ export function tidyCanvas(editor: Editor, opts: TidyOptions = {}): number {
   );
   if (shapes.length === 0) return 0;
 
-  // Prefer the template's role columns when they fit in the usable
-  // area (left of the chat). When the chat has squeezed the viewport
-  // so columns would clamp on top of each other, fall back to a
-  // left-to-right wrap grid — that's what makes a fresh canvas look
-  // intentional instead of a pile under the panel.
   const colGap = 28;
   const rowGap = 20;
-  // Column count must come from SCREEN pixels, not the current page
-  // viewport. After welcome zoomToFit the page-space width collapses
-  // (~600px at 150%), which would force a single-column stack — the
-  // exact "scattered pile" look we're trying to avoid. Screen width
-  // stays ~1000px with the chat open, so we keep 2–3 columns and let
-  // zoomToFit frame the result.
-  const colW = 320;
-  let usableScreenW = 1000;
-  try {
-    if (typeof document !== 'undefined') {
-      const screen = (
-        editor as unknown as {
-          getViewportScreenBounds?: () => { w: number };
-        }
-      ).getViewportScreenBounds?.();
-      if (screen && screen.w > 0) {
-        usableScreenW = screen.w;
-        const chat = document.querySelector('.opencanvas-chat-floating');
-        if (chat && chat.getAttribute('data-mode') !== 'minimized') {
-          const left = chat.getBoundingClientRect().left;
-          if (left > screen.w * 0.45) usableScreenW = left - 24;
-        }
-      }
-    }
-  } catch {
-    /* probing must never break tidy */
-  }
-  const colsFromScreen = Math.max(
-    1,
-    Math.min(3, Math.floor((usableScreenW - 48) / (colW + colGap))),
-  );
-  // Content-aware target. Prefer 2 columns once there are a few
-  // widgets so the rightmost card doesn't sit under the floating
-  // chat (welcome's sticky used to). Denser canvases go to 3.
+  const usableScreenW = usableScreenWidth(editor);
+
+  // Prefer 2 columns for a handful of cards (avoids the sticky-under-chat
+  // problem); denser canvases go to 3. Card width grows with the screen so
+  // a 2-col layout on a 1440px window gets ~400px cards, not a squeezed 320.
   const desiredCols =
     shapes.length <= 2 ? Math.max(1, shapes.length) : shapes.length <= 6 ? 2 : 3;
+  const targetColW = desiredCols <= 2 ? 400 : 320;
+  // Screen only caps columns on genuinely narrow windows; on desktop the
+  // grid is framed by zoomToFit, so a 10-widget canvas goes 3-wide (a
+  // squat block that frames at ~70%) instead of a 2-wide tower at ~48%.
+  const colsFromScreen =
+    usableScreenW < 560 ? 1 : usableScreenW < 820 ? 2 : 3;
+  void targetColW;
   const colsThatFit = Math.max(1, Math.min(desiredCols, colsFromScreen));
+  const colW = colsThatFit <= 2 ? 400 : 340;
+  const gridTotalW = colsThatFit * colW + (colsThatFit - 1) * colGap;
   const useGrid = opts.forceGrid === true || colsFromScreen < 2;
+
+  // Wide widgets (tables, kanban…) after regular cards so a full-row
+  // table doesn't leave a hole in the first columns.
+  const ordered = [...shapes].sort((a, b) => {
+    const aw = WIDE_TYPES.has(a.type) ? 1 : 0;
+    const bw = WIDE_TYPES.has(b.type) ? 1 : 0;
+    return aw - bw;
+  });
 
   const positions = new Map<string, { x: number; y: number; w?: number }>();
   if (useGrid) {
@@ -108,11 +184,12 @@ export function tidyCanvas(editor: Editor, opts: TidyOptions = {}): number {
     let row = 0;
     const originX = viewport.x + 24;
     const originY = viewport.y + 24;
-    // Use each card's real height so a short reminder doesn't leave a gap.
     const rowHeights: number[] = [];
-    for (const shape of shapes) {
+    for (const shape of ordered) {
       const h = shape.props?.h ?? 200;
-      if (col >= colsThatFit) {
+      const wide = WIDE_TYPES.has(shape.type);
+      const span = wide ? colsThatFit : 1;
+      if (col + span > colsThatFit) {
         col = 0;
         row += 1;
       }
@@ -120,12 +197,16 @@ export function tidyCanvas(editor: Editor, opts: TidyOptions = {}): number {
       const y =
         originY +
         rowHeights.slice(0, row).reduce((a, b) => a + b + rowGap, 0);
+      const natural = shape.props?.w ?? (wide ? 520 : colW);
+      // Wide cards take the whole row so table columns get real room.
+      void natural;
+      const w = wide ? gridTotalW : colW;
       positions.set(shape.id, {
         x: originX + col * (colW + colGap),
         y,
-        w: colW,
+        w,
       });
-      col += 1;
+      col += span;
     }
   } else {
     const byRole = new Map<string, typeof shapes>();
@@ -152,16 +233,6 @@ export function tidyCanvas(editor: Editor, opts: TidyOptions = {}): number {
     for (const shape of shapes) {
       const pos = positions.get(shape.id);
       if (!pos) continue;
-      const next: { id: string; type: string; x: number; y: number; props?: { w: number } } = {
-        id: shape.id,
-        type: shape.type,
-        x: pos.x,
-        y: pos.y,
-      };
-      if (pos.w != null) {
-        next.props = { w: pos.w };
-      }
-      // Width changes go through updateShape; position can animate.
       if (pos.w != null) {
         const cur = shapes.find((sh) => sh.id === shape.id);
         editor.updateShape({
@@ -183,32 +254,40 @@ export function tidyCanvas(editor: Editor, opts: TidyOptions = {}): number {
           { animation: { duration: 280 } },
         );
       } else {
-        editor.updateShape({ id: shape.id, type: shape.type, x: pos.x, y: pos.y } as never);
+        editor.updateShape({
+          id: shape.id,
+          type: shape.type,
+          x: pos.x,
+          y: pos.y,
+        } as never);
       }
     }
   });
 
-  if (opts.zoomToFit) {
-    // Let the animate settle a beat before framing.
+  let shouldFit = !!opts.zoomToFit;
+  if (!shouldFit && opts.fitIfOverflow && useGrid) {
+    let maxY = 0;
+    let maxX = 0;
+    for (const sh of shapes) {
+      const pos = positions.get(sh.id);
+      if (!pos) continue;
+      maxY = Math.max(maxY, pos.y + (sh.props?.h ?? 200));
+      maxX = Math.max(maxX, pos.x + (pos.w ?? sh.props?.w ?? 320));
+    }
+    shouldFit = maxY > viewport.y + viewport.h || maxX > viewport.x + viewport.w;
+  }
+  if (shouldFit) {
     const delay = animate ? 320 : 0;
-    setTimeout(() => {
-      try {
-        (
-          editor as unknown as {
-            zoomToFit?: (o: { animation: { duration: number } }) => void;
-          }
-        ).zoomToFit?.({ animation: { duration: 280 } });
-      } catch {
-        /* editor torn down */
-      }
-    }, delay);
+    setTimeout(() => fitLeftOfChat(editor), delay);
   }
 
+  // Bookmark so soft re-tidy knows how far we've grown since.
+  writeTidyBookmark(shapes.length);
   return shapes.length;
 }
 
 /**
- * After welcome seeds land, settle them into role slots and frame the
+ * After welcome seeds land, settle them into a grid and frame the
  * canvas so the first impression isn't three overlapping cards.
  */
 export function settleWelcomeLayout(editor: Editor): void {
@@ -222,49 +301,66 @@ export function settleWelcomeLayout(editor: Editor): void {
 }
 
 /**
- * Once per fresh canvas: after a few real (non-seed) widgets have been
- * placed, tidy everything so timers, reminders and REST tables don't
- * pile up under the chat. Seeds don't count toward the trigger, but
- * they do get rearranged with everything else.
+ * Auto-tidy after the first few real widgets, then soft-re-tidy whenever
+ * the canvas grows by SOFT_RETIDY_GROWTH more widgets. Soft re-tidy does
+ * not yank the camera (no zoomToFit) so an in-progress reading session
+ * isn't interrupted — it just pulls stragglers into the grid.
  */
 let autoTidyTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function maybeAutoTidyAfterPlace(editor: Editor): void {
-  try {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(AUTO_TIDY_FLAG)) {
-      return;
-    }
-  } catch {
-    /* private browsing */
-  }
-
   const shapes = (
     editor.getCurrentPageShapes() as Array<{
       type: string;
       meta?: Record<string, unknown>;
     }>
   ).filter((s) => s.type.startsWith('opencanvas:'));
+  const count = shapes.length;
   const userCount = shapes.filter((s) => s.meta?.['seed'] !== true).length;
-  // Trigger once the user has placed a couple of their own widgets, or
-  // the canvas has grown past the welcome set.
-  if (userCount < 2 && shapes.length < 5) return;
 
-  // Debounce: every new placement inside the window pushes the tidy
-  // back, so a burst ("25 min focus", "remind me…", "12 km in miles")
-  // is arranged once, after the last card lands.
+  let alreadyTidied = false;
+  try {
+    alreadyTidied =
+      typeof localStorage !== 'undefined' &&
+      !!localStorage.getItem(AUTO_TIDY_FLAG);
+  } catch {
+    /* private browsing */
+  }
+
+  if (!alreadyTidied) {
+    // First tidy: need a couple of user widgets (or past the welcome set).
+    if (userCount < 2 && count < 5) return;
+  } else {
+    // Soft re-tidy: only when we've grown enough since the last tidy.
+    const last = readLastTidyCount();
+    if (count < last + SOFT_RETIDY_GROWTH) return;
+  }
+
   if (autoTidyTimer) clearTimeout(autoTidyTimer);
   autoTidyTimer = setTimeout(() => {
     autoTidyTimer = null;
+    // Re-read count — more widgets may have landed during the debounce.
+    const now = (
+      editor.getCurrentPageShapes() as Array<{ type: string }>
+    ).filter((s) => s.type.startsWith('opencanvas:')).length;
+    const soft = alreadyTidied;
     try {
       localStorage.setItem(AUTO_TIDY_FLAG, '1');
     } catch {
       /* ignore */
     }
-    tidyCanvas(editor, { animate: true, zoomToFit: true, forceGrid: true });
+    tidyCanvas(editor, {
+      animate: true,
+      zoomToFit: !soft,
+      // Soft re-tidy keeps the camera unless new cards fell off-screen.
+      fitIfOverflow: soft,
+      forceGrid: true,
+    });
+    void now;
   }, 1200);
 }
 
-/** Test helper — clear the once-flag. */
+/** Test helper — clear the once-flag and last-count bookmark. */
 export function resetAutoTidyFlag(): void {
   if (autoTidyTimer) {
     clearTimeout(autoTidyTimer);
@@ -272,6 +368,7 @@ export function resetAutoTidyFlag(): void {
   }
   try {
     localStorage.removeItem(AUTO_TIDY_FLAG);
+    localStorage.removeItem(LAST_TIDY_COUNT_KEY);
   } catch {
     /* ignore */
   }

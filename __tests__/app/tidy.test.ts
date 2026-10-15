@@ -37,6 +37,9 @@ function fakeEditor(shapes: Array<{ id: string; type: string; meta?: Record<stri
     updateShape: (s: unknown) => moves.push(['update', s]),
     animateShape: (s: unknown) => moves.push(['animate', s]),
     zoomToFit: vi.fn(),
+    zoomToBounds: vi.fn(),
+    getCurrentPageBounds: () => ({ x: 0, y: 0, w: 800, h: 1400 }),
+    getViewportScreenBounds: () => ({ w: 1000 }),
   };
 }
 
@@ -57,6 +60,33 @@ describe('tidyCanvas', () => {
       .filter((x): x is number => typeof x === 'number');
     expect(xs[0]).toBe(24);
     expect(xs[1]).toBeGreaterThan(24);
+  });
+});
+
+describe('wide widgets', () => {
+  beforeEach(() => resetAutoTidyFlag());
+  it('gives tables a full grid row after the regular cards', () => {
+    const editor = fakeEditor([
+      { id: 'shape:t', type: 'opencanvas:table', props: { w: 520, h: 300 } },
+      { id: 'shape:a', type: 'opencanvas:markdown', props: { h: 180 } },
+      { id: 'shape:b', type: 'opencanvas:time', props: { h: 180 } },
+    ]);
+    tidyCanvas(editor as never, { animate: false, forceGrid: true });
+    const pos = new Map<string, { x?: number; y?: number; w?: number }>();
+    for (const [, s] of editor.moves as Array<[string, { id: string; x?: number; y?: number; props?: { w?: number } }]>) {
+      const cur = pos.get(s.id) ?? {};
+      if (s.x != null) Object.assign(cur, { x: s.x, y: s.y });
+      if (s.props?.w != null) cur.w = s.props.w;
+      pos.set(s.id, cur);
+    }
+    const t = pos.get('shape:t')!;
+    const a = pos.get('shape:a')!;
+    const b = pos.get('shape:b')!;
+    expect(a.y).toBe(b.y);
+    expect(t.x).toBe(a.x);
+    expect(t.y!).toBeGreaterThan(a.y!);
+    // Spans both columns: wider than a single card.
+    expect(t.w!).toBeGreaterThan(a.w!);
   });
 });
 
@@ -81,6 +111,31 @@ describe('maybeAutoTidyAfterPlace', () => {
     maybeAutoTidyAfterPlace(editor as never);
     vi.runAllTimers();
     expect(editor.moves.length).toBe(afterFirst);
+  });
+  it('soft re-tidies once the canvas grows by SOFT_RETIDY_GROWTH', () => {
+    const shapes: Array<{ id: string; type: string; meta?: Record<string, unknown> }> = [
+      { id: 'shape:u1', type: 'opencanvas:time', meta: {} },
+      { id: 'shape:u2', type: 'opencanvas:tasks', meta: {} },
+    ];
+    const editor = fakeEditor(shapes);
+    maybeAutoTidyAfterPlace(editor as never);
+    vi.runAllTimers();
+    const first = editor.moves.length;
+    expect(first).toBeGreaterThan(0);
+    vi.advanceTimersByTime(1000);
+    editor.zoomToFit.mockClear();
+    // Grow by 3: below threshold → no re-tidy.
+    for (let i = 3; i <= 5; i++) shapes.push({ id: `shape:u${i}`, type: 'opencanvas:markdown' });
+    maybeAutoTidyAfterPlace(editor as never);
+    vi.runAllTimers();
+    expect(editor.moves.length).toBe(first);
+    // 4th new widget crosses the threshold.
+    shapes.push({ id: 'shape:u6', type: 'opencanvas:markdown' });
+    maybeAutoTidyAfterPlace(editor as never);
+    vi.runAllTimers();
+    expect(editor.moves.length).toBeGreaterThan(first);
+    // Six 200px cards in 2 cols overflow the 600px mock viewport → fit.
+    expect(editor.zoomToBounds).toHaveBeenCalled();
   });
   it('does not fire for welcome seeds alone', () => {
     const editor = fakeEditor([

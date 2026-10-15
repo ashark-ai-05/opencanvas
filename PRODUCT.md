@@ -220,3 +220,28 @@ long messy session still needs `/tidy`.
 - Re-recorded `docs/first-run.gif` / `.mp4` with welcome settle, auto-tidy after the fast-lane
   burst, `/tidy` after the REST table, and a README caption that names the behaviour.
 - `/tidy` now always uses `forceGrid` so it matches auto-tidy and welcome settle.
+
+## Round 9 (2026-10-16): soft re-tidy + wide tables
+
+**Critique after round 8.** Auto-tidy fires once and then stops caring. Drop a REST table and
+four more chips after the first tidy and the new cards land wherever — the once-flag made the
+canvas look intentional for thirty seconds and scattered again. Meanwhile `/tidy` and auto-tidy
+forced every card (including 520px tables) down to a single column width, so the git-log table
+in the first-run GIF had truncated commit messages — the one widget a developer would actually
+read.
+
+**Reasons to share now:** the canvas keeps itself tidy as it grows (soft re-tidy every +4
+widgets, camera only moves if content overflows), and tables/kanban get a full grid row so
+columns stay readable.
+
+**Weakest part:** soft re-tidy is silent (no toast), so a user mid-drag could still feel a
+ghost rearrange; publishing still needs OK; the share/star path from the app itself is thin.
+
+**Built this round:**
+- Soft re-tidy: after the first auto-tidy bookmark, growing by `SOFT_RETIDY_GROWTH` (4) triggers
+  another force-grid tidy. No camera yank unless the new grid overflows the viewport
+  (`fitIfOverflow`).
+- Wider dense grids: 3 columns at 340px once there are 7+ widgets; 2 columns at 400px before
+  that. Tables/kanban/composite/code-block/file-tree take a full row at `gridTotalW`.
+- `fitLeftOfChat`: frames into the area left of the floating panel so the right column isn't
+  hidden under chat after zoom.

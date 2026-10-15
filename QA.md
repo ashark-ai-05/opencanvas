@@ -111,3 +111,13 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   final beat. GIF ≈ 2.6 MB / ~48s. Frame check: `/tmp/fr/end.png` (box-local).
 - `/tidy` forceGrid verified via recording toast "Tidied 8 widgets" and end-frame layout.
 - Not published: no npm / Docker / Railway changes.
+
+## Round 9
+- Exact CI sequence local (pre-push): typecheck, typecheck:app, backend, app tidy tests (5),
+  full app suite. Counts updated in push notes.
+- Playwright `/workspace/qa-oc/r9.mjs`: after timer+reminder → first tidy (count bookmark 5 with
+  seeds); REST git-log table; then 4 more chips → soft re-tidy, `last-tidy-count=10`, **0 overlaps**,
+  table screen width ≈822px (full row), **0 truncated titles**, **0 console errors**.
+  Screenshot: `/workspace/qa-oc/r9-grown.png`. Zoom ~60–70% (was ~48% as a 2-col tower).
+- Regression: `/workspace/qa-oc/r7.mjs` still 0 search POSTs / 0 Searching labels / 0 errors;
+  welcome 2-col; post-place 2-col.

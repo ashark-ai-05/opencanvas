@@ -7,6 +7,8 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Soft re-tidy: after the first auto-tidy, the canvas re-arranges again every time it grows by 4 more widgets.
+- Wide widgets (tables, kanban, …) take a full grid row so columns stay readable.
 - Auto-tidy: after the first few widgets on a fresh canvas, cards arrange into a readable grid (also powers `/tidy` and welcome settle).
 - `/v1/health` reports `searchReady`; the chat skips KB search until the embedder is ready or when the index is empty.
 - First-run model auto-pick: an env API key or a running Ollama becomes the active profile (keys never written to disk).

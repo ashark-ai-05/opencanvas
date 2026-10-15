@@ -9,7 +9,7 @@
 Ask a question and get a chart, a table and a kanban side by side, each one a real widget you can drag, pin and keep. Any model, including local, running on your machine under MIT.
 
 [![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/tests-811%20passing-2dd4bf)](./docs/guide.md#develop)
+[![tests](https://img.shields.io/badge/tests-813%20passing-2dd4bf)](./docs/guide.md#develop)
 [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE)
 [![stars](https://img.shields.io/github/stars/ashark-ai-05/opencanvas?style=flat&color=a78bfa)](https://github.com/ashark-ai-05/opencanvas/stargazers)
 
