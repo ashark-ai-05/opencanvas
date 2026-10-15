@@ -22,10 +22,17 @@ export class BundledOnnxEmbedder implements EmbeddingProvider {
   private readonly modelId: string;
   private extractorPromise: Promise<Pipeline | null> | null = null;
   private fallbackWarned = false;
+  /** True once getExtractor has settled (model loaded or fallen back). */
+  private settled = false;
 
   constructor(options: BundledOnnxOptions = {}) {
     this.modelId = options.model ?? 'BAAI/bge-small-en-v1.5';
     this.id = `onnx-bundled:${this.modelId}`;
+  }
+
+  /** Whether the model has finished loading (or fallen back). Sync. */
+  isReady(): boolean {
+    return this.settled;
   }
 
   private async getExtractor(): Promise<Pipeline | null> {
@@ -39,6 +46,7 @@ export class BundledOnnxEmbedder implements EmbeddingProvider {
             'feature-extraction',
             this.modelId,
           );
+          this.settled = true;
           return extractor as unknown as Pipeline;
         } catch (err) {
           // Loading the bundled ONNX model can fail when:
@@ -54,6 +62,7 @@ export class BundledOnnxEmbedder implements EmbeddingProvider {
             '[bundled-onnx] failed to load embedder model — falling back to zero-vector mode (FTS5 keyword search still works):',
             err instanceof Error ? err.message : err,
           );
+          this.settled = true;
           return null;
         }
       })();

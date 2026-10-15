@@ -85,3 +85,19 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   1462 ms, Playwright load 356 ms / 0 console errors. Image 3.02 GB.
 - Round 5 push CI: **success**. Local exact CI sequence for this round: typecheck ✅, typecheck:app ✅, backend 410 passed / 2 skipped, app 397 → **807** ✅, audit exit 0.
 - Not published: no `npm publish`, no `docker push`, Railway demo not redeployed.
+
+## Round 7
+- Exact CI sequence: `typecheck` ✅ → `typecheck:app` ✅ → backend **411** passed / 2 skipped →
+  app **400** passed → **811** ✅. `pnpm audit --prod --audit-level=moderate` exit 0
+  (2 moderate ignored, same as prior rounds).
+- Playwright `/workspace/qa-oc/r7.mjs` (fresh context, flags cleared, :3457 production bundle):
+  - Welcome settle → 2-column grid (Welcome + sticky | Try these); sticky no longer under chat.
+    Screenshot: `/workspace/qa-oc/r7-welcome.png`.
+  - After `25 min focus`, `remind me to call mom tomorrow`, `12 km in miles` → auto-tidy into
+    a 2×3 grid at zoom ≈101%. All six cards share two x-columns; 12 km card stays in grid.
+    Screenshot: `/workspace/qa-oc/r7-tidied.png`.
+  - `explain the CAP theorem`: **0** `/v1/search` POSTs, **0** "Searching your knowledge base"
+    labels, **0** console errors. Screenshot: `/workspace/qa-oc/r7-ask.png`.
+- New unit tests: `__tests__/app/tidy.test.ts` (3), `__tests__/embedder-ready.test.ts` (1).
+- Known: auto-tidy is once per canvas (`opencanvas:auto-tidied:v1`); later mess still needs `/tidy`.
+  First-run GIF not yet re-recorded with the new tidy behaviour.

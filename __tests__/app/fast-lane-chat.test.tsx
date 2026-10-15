@@ -72,7 +72,7 @@ describe('fast lane in Chat', () => {
     expect(directive).toMatchObject({
       type: 'place',
       kind: 'time',
-      role: 'primary',
+      role: 'detail',
       payload: { mode: 'timer', durationSec: 1500 },
     });
     expect(sendMessage).not.toHaveBeenCalled();

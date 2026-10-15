@@ -7,6 +7,8 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Auto-tidy: after the first few widgets on a fresh canvas, cards arrange into a readable grid (also powers `/tidy` and welcome settle).
+- `/v1/health` reports `searchReady`; the chat skips KB search until the embedder is ready or when the index is empty.
 - First-run model auto-pick: an env API key or a running Ollama becomes the active profile (keys never written to disk).
 - Background warm-up of the local search embedder so the first question doesn't stall.
 - `remind me …` / `reminder: …` place on Enter without a model.
@@ -20,6 +22,8 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - gzip and immutable caching for `/assets` when the backend serves the UI (2.5 MB → 0.77 MB on the wire).
 
 ### Fixed
+- First chat turn no longer shows "Searching your knowledge base…" when nothing is indexed.
+- Welcome sticky no longer lands under the floating chat after settle.
 - App TypeScript: 6 errors fixed and `pnpm typecheck:app` added to CI (including a ShareButton that always fell back to "Shared OpenCanvas").
 - Auth token write is atomic so concurrent first boots can't clobber each other.
 - The first widget placed on a fresh canvas started collapsed, because welcome samples counted toward auto-collapse.

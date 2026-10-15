@@ -421,6 +421,22 @@ export function Chat() {
   const kbSearch = (query: string) => {
     const q = query.trim();
     if (!q) return;
+    // Skip the parallel KB search when there's nothing to find, or when
+    // the local embedder is still warming up. Otherwise the first chat
+    // turn sits on "Searching your knowledge base…" for seconds while
+    // a ~100 MB ONNX model loads — and on a fresh install the index is
+    // empty anyway. The agent's own search_kb tool still runs later if
+    // the model asks for it (by then the warm-up has usually finished).
+    const chunks = useKbStats.getState().totalChunks;
+    const health = useAppStore.getState().health;
+    const searchReady =
+      health.status !== 'ok' || health.data.searchReady !== false;
+    if (chunks === 0 || !searchReady) {
+      setKbHits(null);
+      setKbQuery(null);
+      setKbBusy(false);
+      return;
+    }
     setKbBusy(true);
     setKbQuery(q);
     searchKb(q, 5)
@@ -587,7 +603,20 @@ export function Chat() {
     try {
       applyToolDirective(
         editor,
-        { type: 'place', id, kind: r.kind, role: 'primary', payload },
+        {
+          type: 'place',
+          id,
+          kind: r.kind,
+          // Spread instant widgets across columns so a no-key session
+          // doesn't stack every timer/reminder/convert in "primary".
+          role:
+            r.kind === 'time' || r.kind === 'tasks'
+              ? 'detail'
+              : r.kind === 'key-value-card' || r.kind === 'sticky-note'
+                ? 'related'
+                : 'primary',
+          payload,
+        },
         useTemplateStore.getState().activeTemplateId,
       );
     } catch (e) {

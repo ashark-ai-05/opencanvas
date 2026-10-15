@@ -101,13 +101,18 @@ app.get('/v1/health', async (c) => {
   // profile NAME can be misleading: a profile named 'claude-sdk' can
   // have its llm env-overridden to gemini (which is the demo's case).
   const llmConfig = state.profile.llm as { provider: string; model?: string };
+  const embedder = state.getEmbedder();
+  // API embedders have no load step; bundled ONNX reports via isReady().
+  const searchReady =
+    typeof embedder.isReady === 'function' ? embedder.isReady() : true;
   return c.json({
     ok: true,
     profile: state.profileName,
     llm: state.getLLMProvider().id,
     model: llmConfig.model ?? null,
-    embedder: state.getEmbedder().id,
+    embedder: embedder.id,
     demo: isDemoMode(),
+    searchReady,
   });
 });
 

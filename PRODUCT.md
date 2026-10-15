@@ -169,3 +169,34 @@ so everything is prepared and verified, not shipped.
    still needs a manual fit-to-canvas).
 3. **Defer the KB search until the embedder is ready**, so the first chat turn doesn't show
    "Searching your knowledge base…" while nothing is indexed yet.
+
+## Round 7 (2026-10-16): auto-tidy + no more "Searching…" on an empty KB
+
+**Critique after round 6.** The first minute still has two visible papercuts:
+1. Place a timer, a reminder and a conversion in quick succession and the canvas looks
+   like a pile — the welcome seeds stayed in role slots, new cards landed wherever the
+   template put them, and nothing ever arranged them. The "watch it assemble" moment
+   ends with a mess that needs a manual `/tidy` or fit-to-canvas.
+2. Ask anything on a fresh install and the chat spends a beat on **"Searching your
+   knowledge base…"** even when KB = 0 chunks and the embedder isn't ready yet. That
+   spinner is a lie: there is nothing to search.
+
+**Reasons to share now:** a fresh canvas tidies itself after the first couple of widgets
+into a readable 2-column grid (titles stay whole at 320px), and the first chat turn no
+longer pretends to search an empty index.
+
+**Weakest part:** the first-run GIF still shows the pre-tidy scattered layout, and
+publishing (`npx` / Docker) is still waiting on OK. The auto-tidy flag is once-per-canvas,
+so a long session that later gets messy still needs `/tidy`.
+
+**Built this round:**
+- `app/src/canvas/tidy.ts`: shared tidy used by `/tidy`, welcome settle, and a once-per-
+  canvas auto-tidy. Grid columns are decided from **screen** width (not the zoomed page
+  viewport — that was collapsing to one column after welcome zoomToFit). Cards stay at
+  320px so titles don't truncate. Welcome settle waits past the dispatcher's 700ms burst
+  so role-slot relayout can't undo the grid; later bursts reuse the same grid once the
+  auto-tidy flag is set.
+- KB search skipped when `totalChunks === 0` or `/v1/health.searchReady === false`.
+  Bundled ONNX embedder exposes `isReady()`; health reports `searchReady`.
+- Fast-lane roles: time/tasks → `detail`, key-value/sticky → `related`, else `primary`
+  (spreads the grid instead of stacking every chip in `primary`).

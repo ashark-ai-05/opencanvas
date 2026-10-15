@@ -11,6 +11,7 @@ import type {
   WidgetStreamOp,
 } from '../../../src/agent/types';
 import { applyOps } from './stream-mutator';
+import { maybeAutoTidyAfterPlace, tidyCanvas } from './tidy';
 import { logger } from '../lib/logger';
 
 /**
@@ -260,7 +261,26 @@ function flushBurstTidy(editor: Editor, templateId: TemplateId): void {
     return;
   }
 
-  const all = editor.getCurrentPageShapes() as Array<{
+  // Once the canvas has been auto-tidied (or has enough widgets),
+  // reuse the shared grid tidy so a later burst doesn't yank cards
+  // back into role slots and undo the layout.
+  try {
+    const flagged =
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem('opencanvas:auto-tidied:v1');
+    const total = (
+      editor.getCurrentPageShapes() as Array<{ type: string }>
+    ).filter((sh) => sh.type.startsWith('opencanvas:')).length;
+    if (flagged || total >= 5) {
+      recentPlaceIds.clear();
+      tidyCanvas(editor, { animate: true, forceGrid: true });
+      return;
+    }
+  } catch {
+    /* fall through to role-slot burst */
+  }
+
+    const all = editor.getCurrentPageShapes() as Array<{
     id: string;
     type: string;
     meta?: Record<string, unknown>;
@@ -413,6 +433,7 @@ export function applyToolDirective(
         } as never,
       } as never);
       noteBurstPlace(editor, templateId, 'shape:' + directive.id);
+      maybeAutoTidyAfterPlace(editor);
       return;
     }
     case 'update': {

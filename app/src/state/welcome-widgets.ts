@@ -20,6 +20,7 @@
  */
 import type { Editor } from 'tldraw';
 import { applyToolDirective } from '../canvas/dispatcher';
+import { settleWelcomeLayout } from '../canvas/tidy';
 import type { ToolDirective, WidgetKind } from '../../../src/agent/types';
 
 const FLAG_KEY = 'opencanvas:welcome-seeded:v1';
@@ -149,6 +150,7 @@ export function seedWelcomeWidgetsIfFirstVisit(
     } catch {
       /* ignore */
     }
+    settleWelcomeLayout(editor);
   } catch (e) {
     // First impression must never be a JS error.
     console.warn('[welcome-widgets] seed failed:', e);

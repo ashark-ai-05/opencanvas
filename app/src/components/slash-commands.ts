@@ -4,6 +4,7 @@ import { useTemplateStore } from '../state/template-store';
 import { TEMPLATES_BY_ID } from '../canvas/templates';
 import type { CanvasTemplate } from '../canvas/templates';
 import { getEditor } from '../state/editor-ref';
+import { tidyCanvas } from '../canvas/tidy';
 import { applyToolDirective } from '../canvas/dispatcher';
 import {
   exportCanvasAsPng,
@@ -174,7 +175,7 @@ export const COMMANDS: SlashCommand[] = [
   // ────────────────────────────────────────────────────────────────
   // Layout
   // ────────────────────────────────────────────────────────────────
-  {
+    {
     name: 'tidy',
     description: 'Re-layout existing widgets using the active template.',
     run: () => {
@@ -183,66 +184,9 @@ export const COMMANDS: SlashCommand[] = [
         toast.error('Canvas not ready');
         return true;
       }
-      const tplId = useTemplateStore.getState().activeTemplateId;
-      const tpl = TEMPLATES_BY_ID[tplId];
-      const viewport = editor.getViewportPageBounds();
-
-      // Group widgets by role; for each role re-call slotForRole with
-      // increasing occupancy. Animate to the new positions.
-      const shapes = (editor.getCurrentPageShapes() as Array<{
-        id: string;
-        type: string;
-        meta?: Record<string, unknown>;
-        x: number;
-        y: number;
-      }>).filter((s) => s.type.startsWith('opencanvas:'));
-
-      if (shapes.length === 0) {
-        toast('Nothing to tidy — canvas is empty');
-        return true;
-      }
-
-      // Process roles in a stable order so the layout is reproducible.
-      const ROLE_ORDER = [
-        'primary',
-        'detail',
-        'related',
-        'reference',
-        'timeline',
-        'node',
-      ] as const;
-      const byRole = new Map<string, typeof shapes>();
-      for (const s of shapes) {
-        const role = ((s.meta?.['role'] as string) ?? 'primary');
-        if (!byRole.has(role)) byRole.set(role, []);
-        byRole.get(role)!.push(s);
-      }
-
-      editor.batch(() => {
-        for (const role of ROLE_ORDER) {
-          const list = byRole.get(role) ?? [];
-          list.forEach((shape, i) => {
-            const slot = tpl.slotForRole(role as never, i, viewport);
-            (
-              editor as unknown as {
-                animateShape: (
-                  shape: { id: string; type: string; x: number; y: number },
-                  opts: { animation: { duration: number } },
-                ) => void;
-              }
-            ).animateShape(
-              {
-                id: shape.id,
-                type: shape.type,
-                x: slot.x,
-                y: slot.y,
-              },
-              { animation: { duration: 280 } },
-            );
-          });
-        }
-      });
-      toast(`Tidied ${shapes.length} widget${shapes.length === 1 ? '' : 's'}`);
+      const n = tidyCanvas(editor, { animate: true, zoomToFit: true });
+      if (n === 0) toast('Nothing to tidy — canvas is empty');
+      else toast(`Tidied ${n} widget${n === 1 ? '' : 's'}`);
       return true;
     },
   },

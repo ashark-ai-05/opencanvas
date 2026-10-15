@@ -9,6 +9,12 @@ export type HealthResponse = {
   embedder: string;
   /** True when the backend runs with OPENCANVAS_DEMO=1. Optional for older backends. */
   demo?: boolean;
+  /**
+   * False while the local ONNX embedder is still loading. The chat skips
+   * KB search until this is true so the first turn never waits on
+   * "Searching your knowledge base…". Optional for older backends (treat as true).
+   */
+  searchReady?: boolean;
 };
 
 export async function fetchHealth(): Promise<HealthResponse> {
