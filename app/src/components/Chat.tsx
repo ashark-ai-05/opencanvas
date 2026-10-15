@@ -32,6 +32,7 @@ import { useUiStore } from '../state/ui-store';
 import { VoiceInputButton } from './VoiceInputButton';
 import { NoModelNotice, isNoModelError } from './NoModelNotice';
 import { ByoNudge } from './ByoNudge';
+import { StarNudge } from './StarNudge';
 import {
   ChatCapacityNotice,
   isCapacityError,
@@ -1053,6 +1054,7 @@ export function Chat() {
         onTry={(t) => setInput(t)}
       />
 
+      <StarNudge />
       <ByoNudge
         onOpenSettings={() => useUiStore.getState().setSettingsOpen(true)}
       />

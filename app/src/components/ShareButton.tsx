@@ -5,6 +5,7 @@ import { Share2, Copy, ExternalLink, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useConversationsStore } from '../state/conversations-store';
 import { getEditor } from '../state/editor-ref';
+import { useStarNudge } from '../state/star-nudge-store';
 
 /**
  * Share button + result modal.
@@ -95,6 +96,8 @@ export function ShareButton({ activeId }: { activeId: string }) {
       const full = `${window.location.origin}/share/${data.id}`;
       setShareUrl(full);
       setOpen(true);
+      // Strong moment: they shared a canvas — tasteful star nudge.
+      setTimeout(() => useStarNudge.getState().offer(), 800);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       toast.error(`Share failed: ${message}`);

@@ -128,3 +128,9 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   widgets" visible, 0 console errors. Screenshot: `/workspace/qa-oc/r10-tidy-click.png`.
 - Share path: canvas-only gate verified by code review (hasWidgets via getCurrentPageShapes);
   Copy as post button present in Share modal.
+
+## Round 11
+- Tidy unit tests: **7** (busy detection + deferred soft re-tidy while dragging). Star-nudge store: 1.
+- Exact CI: typecheck ✅, typecheck:app ✅, backend 411 / 2 skipped, app **403** → **814**. Audit exit 0.
+- Playwright `/workspace/qa-oc/r11.mjs`: after two fast-lane places + wait → ★ Star link visible, copy mentions GitHub, 0 console errors.
+  Screenshot: `/workspace/qa-oc/r11-star.png`.

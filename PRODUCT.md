@@ -267,3 +267,24 @@ product still doesn't ask you to star it from inside the app.
 - Header widget-count is a button → force-grid tidy + toast (same as `/tidy`).
 - Soft re-tidy shows a quiet "Arranged N widgets" toast (first auto-tidy stays silent).
 - Share accepts canvas-only snapshots (instant widgets, no chat) and adds **Copy as post**.
+
+## Round 11 (2026-10-16): don't yank the card you're holding
+
+**Critique after round 10.** Soft re-tidy is a gift until it isn't: if it fires while you're
+dragging a sticky aside, the card teleports into the grid and the gesture feels broken. Selection
++ pointing (pre-drag) had the same footgun. Separately, after the first tidy — the strongest
+no-key moment we have — the app said nothing about GitHub. Share had a "Copy as post" pitch, but
+a user who never shares never sees a path to star the repo.
+
+**Reasons to share now:** tidy waits for you to finish dragging/editing (retries up to ~3s), then
+a quiet star nudge appears once per browser after that first tidy (or after a share).
+
+**Weakest part:** the star nudge competes for attention with ByoNudge on the public demo; we
+suppress it while BYO is visible, but a self-hosted user with a key still only sees it once.
+Publishing still needs OK.
+
+**Built this round:**
+- `isCanvasBusy()`: editing, dragging, or pointing-with-selection → soft/first auto-tidy defers
+  (up to 8 × 400ms) instead of running under the cursor.
+- `StarNudge`: once-per-browser bar after first auto-tidy (2.2s delay) or successful share;
+  links to `github.com/ashark-ai-05/opencanvas`. Hidden while ByoNudge is showing.

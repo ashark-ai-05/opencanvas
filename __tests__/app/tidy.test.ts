@@ -3,6 +3,7 @@ import {
   tidyCanvas,
   maybeAutoTidyAfterPlace,
   resetAutoTidyFlag,
+  isCanvasBusy,
 } from '../../app/src/canvas/tidy';
 
 vi.mock('../../app/src/state/template-store', () => ({
@@ -28,7 +29,10 @@ vi.mock('../../app/src/canvas/dispatcher', () => ({
   placementBounds: () => ({ x: 0, y: 0, w: 800, h: 600 }),
 }));
 
-function fakeEditor(shapes: Array<{ id: string; type: string; meta?: Record<string, unknown>; x?: number; y?: number; props?: { w?: number; h?: number } }>) {
+function fakeEditor(
+  shapes: Array<{ id: string; type: string; meta?: Record<string, unknown>; x?: number; y?: number; props?: { w?: number; h?: number } }>,
+  opts: { editing?: string | null; dragging?: boolean; pointing?: boolean; selected?: string[] } = {},
+) {
   const moves: unknown[] = [];
   return {
     moves,
@@ -40,6 +44,9 @@ function fakeEditor(shapes: Array<{ id: string; type: string; meta?: Record<stri
     zoomToBounds: vi.fn(),
     getCurrentPageBounds: () => ({ x: 0, y: 0, w: 800, h: 1400 }),
     getViewportScreenBounds: () => ({ w: 1000 }),
+    getEditingShapeId: () => opts.editing ?? null,
+    getSelectedShapeIds: () => opts.selected ?? [],
+    inputs: { isDragging: !!opts.dragging, isPointing: !!opts.pointing },
   };
 }
 
@@ -146,5 +153,38 @@ describe('maybeAutoTidyAfterPlace', () => {
     maybeAutoTidyAfterPlace(editor as never);
     vi.runAllTimers();
     expect(editor.moves).toHaveLength(0);
+  });
+});
+
+describe('isCanvasBusy / soft re-tidy guard', () => {
+  beforeEach(() => {
+    resetAutoTidyFlag();
+    vi.useFakeTimers();
+  });
+  it('reports busy when dragging or editing', () => {
+    expect(isCanvasBusy(fakeEditor([], { dragging: true }) as never)).toBe(true);
+    expect(isCanvasBusy(fakeEditor([], { editing: 'shape:x' }) as never)).toBe(true);
+    expect(
+      isCanvasBusy(fakeEditor([], { pointing: true, selected: ['shape:a'] }) as never),
+    ).toBe(true);
+    expect(isCanvasBusy(fakeEditor([]) as never)).toBe(false);
+  });
+  it('defers soft re-tidy while dragging, then runs after release', () => {
+    const shapes: Array<{ id: string; type: string; meta?: Record<string, unknown> }> = [
+      { id: 'shape:u1', type: 'opencanvas:time' },
+      { id: 'shape:u2', type: 'opencanvas:tasks' },
+    ];
+    const editor = fakeEditor(shapes, { dragging: true });
+    // First tidy while "dragging" — defer.
+    maybeAutoTidyAfterPlace(editor as never);
+    vi.advanceTimersByTime(1200);
+    expect(editor.moves.length).toBe(0);
+    // Still dragging on retries.
+    for (let i = 0; i < 3; i++) vi.advanceTimersByTime(400);
+    expect(editor.moves.length).toBe(0);
+    // Release.
+    editor.inputs.isDragging = false;
+    vi.advanceTimersByTime(400);
+    expect(editor.moves.length).toBeGreaterThan(0);
   });
 });

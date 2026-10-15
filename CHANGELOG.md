@@ -7,6 +7,7 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Star nudge: a once-per-browser GitHub CTA after the first auto-tidy or a successful share.
 - Click the header widget count to tidy the canvas; soft re-tidy shows a quiet toast.
 - Share works for canvas-only sessions and offers a ready-to-paste "Copy as post" pitch.
 - Soft re-tidy: after the first auto-tidy, the canvas re-arranges again every time it grows by 4 more widgets.
@@ -26,6 +27,7 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - gzip and immutable caching for `/assets` when the backend serves the UI (2.5 MB → 0.77 MB on the wire).
 
 ### Fixed
+- Soft re-tidy no longer runs while you are dragging, pointing-with-selection, or editing a widget.
 - First chat turn no longer shows "Searching your knowledge base…" when nothing is indexed.
 - Welcome sticky no longer lands under the floating chat after settle.
 - `/tidy` always uses the same force-grid layout as auto-tidy (no more role-slot fallback).
