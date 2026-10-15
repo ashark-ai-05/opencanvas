@@ -7,6 +7,8 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Click the header widget count to tidy the canvas; soft re-tidy shows a quiet toast.
+- Share works for canvas-only sessions and offers a ready-to-paste "Copy as post" pitch.
 - Soft re-tidy: after the first auto-tidy, the canvas re-arranges again every time it grows by 4 more widgets.
 - Wide widgets (tables, kanban, …) take a full grid row so columns stay readable.
 - Auto-tidy: after the first few widgets on a fresh canvas, cards arrange into a readable grid (also powers `/tidy` and welcome settle).

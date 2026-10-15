@@ -121,3 +121,10 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
   Screenshot: `/workspace/qa-oc/r9-grown.png`. Zoom ~60–70% (was ~48% as a 2-col tower).
 - Regression: `/workspace/qa-oc/r7.mjs` still 0 search POSTs / 0 Searching labels / 0 errors;
   welcome 2-col; post-place 2-col.
+
+## Round 10
+- Local CI sequence before push (counts in commit). Round 9 CI confirmed in push notes.
+- Playwright `/workspace/qa-oc/r10.mjs`: place 2 chips → click "N widgets" → toast "Tidied N
+  widgets" visible, 0 console errors. Screenshot: `/workspace/qa-oc/r10-tidy-click.png`.
+- Share path: canvas-only gate verified by code review (hasWidgets via getCurrentPageShapes);
+  Copy as post button present in Share modal.

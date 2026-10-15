@@ -7,6 +7,7 @@
  * active template's role slots as a fallback). Optionally zooms to fit.
  */
 import type { Editor } from 'tldraw';
+import { toast } from 'sonner';
 import { TEMPLATES_BY_ID } from './templates';
 import { placementBounds } from './dispatcher';
 import { useTemplateStore } from '../state/template-store';
@@ -349,13 +350,16 @@ export function maybeAutoTidyAfterPlace(editor: Editor): void {
     } catch {
       /* ignore */
     }
-    tidyCanvas(editor, {
+    const n = tidyCanvas(editor, {
       animate: true,
       zoomToFit: !soft,
       // Soft re-tidy keeps the camera unless new cards fell off-screen.
       fitIfOverflow: soft,
       forceGrid: true,
     });
+    if (soft && n > 0) {
+      toast.message(`Arranged ${n} widgets`, { duration: 1600 });
+    }
     void now;
   }, 1200);
 }

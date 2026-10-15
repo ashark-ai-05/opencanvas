@@ -45,8 +45,13 @@ export function ShareButton({ activeId }: { activeId: string }) {
         .conversations.find((c) => c.id === activeId);
       const messages = conv?.messages ?? [];
 
-      if (!snapshot || messages.length === 0) {
-        toast.error('Nothing to share yet — start a conversation first.');
+      const hasWidgets = editor
+        ? (
+            editor.getCurrentPageShapes() as Array<{ type: string }>
+          ).some((sh) => sh.type.startsWith('opencanvas:'))
+        : false;
+      if (!snapshot || (messages.length === 0 && !hasWidgets)) {
+        toast.error('Nothing to share yet — place a widget or start a chat first.');
         setCreating(false);
         return;
       }
@@ -304,6 +309,38 @@ export function ShareButton({ activeId }: { activeId: string }) {
                   justifyContent: 'flex-end',
                 }}
               >
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const pitch =
+                      `Built this on an infinite canvas with OpenCanvas — no model needed for timers, checklists and conversions.
+
+${shareUrl}
+
+https://github.com/ashark-ai-05/opencanvas`;
+                    try {
+                      await navigator.clipboard.writeText(pitch);
+                      toast.success('Post copied — paste anywhere');
+                    } catch {
+                      toast.error('Could not copy');
+                    }
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    background: 'rgba(167, 139, 250, 0.14)',
+                    border: '1px solid rgba(167, 139, 250, 0.4)',
+                    color: '#ddd6fe',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Copy className="size-3.5" /> Copy as post
+                </button>
                 <a
                   href={shareUrl}
                   target="_blank"

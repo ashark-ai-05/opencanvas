@@ -245,3 +245,25 @@ ghost rearrange; publishing still needs OK; the share/star path from the app its
   that. Tables/kanban/composite/code-block/file-tree take a full row at `gridTotalW`.
 - `fitLeftOfChat`: frames into the area left of the floating panel so the right column isn't
   hidden under chat after zoom.
+
+## Round 10 (2026-10-16): make tidy discoverable, make share star-able
+
+**Critique after round 9.** Soft re-tidy works, but it's invisible — a user who never
+types `/tidy` still doesn't know the canvas can arrange itself on demand. The header's
+"N widgets" badge was a dead count. Share also refused anything without a chat transcript,
+so a no-key demo of timers and conversions (the whole first-run story) couldn't produce a
+link — and the share modal had no "post this" affordance, so even a great canvas died in the
+clipboard as a bare URL.
+
+**Reasons to share now:** click the widget count to tidy; soft re-tidy whispers "Arranged N
+widgets"; share works from a canvas-only session and offers **Copy as post** with a ready
+pitch + GitHub link.
+
+**Weakest part:** publishing still needs OK; share still depends on the Railway/demo host for
+public links when self-hosted; the green model badge honesty gap from round 3 is fine but the
+product still doesn't ask you to star it from inside the app.
+
+**Built this round:**
+- Header widget-count is a button → force-grid tidy + toast (same as `/tidy`).
+- Soft re-tidy shows a quiet "Arranged N widgets" toast (first auto-tidy stays silent).
+- Share accepts canvas-only snapshots (instant widgets, no chat) and adds **Copy as post**.

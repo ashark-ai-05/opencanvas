@@ -177,7 +177,7 @@ export const COMMANDS: SlashCommand[] = [
   // ────────────────────────────────────────────────────────────────
     {
     name: 'tidy',
-    description: 'Re-layout existing widgets using the active template.',
+    description: 'Arrange widgets into a readable grid (same as clicking the widget count).',
     run: () => {
       const editor = getEditor();
       if (!editor) {

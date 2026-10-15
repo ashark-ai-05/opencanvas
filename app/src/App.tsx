@@ -6,6 +6,7 @@ import { Canvas } from './canvas/Canvas';
 import { ChatTabs } from './components/ChatTabs';
 import { FloatingChat, FloatingChatLauncher } from './components/FloatingChat';
 import { getEditor } from './state/editor-ref';
+import { tidyCanvas } from './canvas/tidy';
 import { useTemplateStore } from './state/template-store';
 import { HealthBadge } from './components/HealthBadge';
 import { SettingsModal } from './components/SettingsModal';
@@ -150,13 +151,25 @@ export function App() {
             OpenCanvas
           </h1>
           {widgetCount > 0 && (
-            <span
-              className="ml-1 px-2 py-0.5 rounded-md text-[10.5px] font-medium tracking-wide text-zinc-400 border border-white/5"
+            <button
+              type="button"
+              className="ml-1 px-2 py-0.5 rounded-md text-[10.5px] font-medium tracking-wide text-zinc-400 border border-white/5 hover:text-zinc-200 hover:border-white/15 transition-colors"
               style={{ background: 'rgba(255,255,255,0.03)' }}
-              title={`${widgetCount} widget${widgetCount === 1 ? '' : 's'} on canvas`}
+              title={`Tidies the canvas · ${widgetCount} widget${widgetCount === 1 ? '' : 's'} (same as /tidy)`}
+              aria-label={`Tidy ${widgetCount} widgets`}
+              onClick={() => {
+                const editor = getEditor();
+                if (!editor) return;
+                const n = tidyCanvas(editor, {
+                  animate: true,
+                  zoomToFit: true,
+                  forceGrid: true,
+                });
+                if (n > 0) toast(`Tidied ${n} widget${n === 1 ? '' : 's'}`);
+              }}
             >
               {widgetCount} {widgetCount === 1 ? 'widget' : 'widgets'}
-            </span>
+            </button>
           )}
           {conversationCount > 1 && (
             <span
