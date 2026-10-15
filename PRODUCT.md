@@ -200,3 +200,23 @@ so a long session that later gets messy still needs `/tidy`.
   Bundled ONNX embedder exposes `isReady()`; health reports `searchReady`.
 - Fast-lane roles: time/tasks → `detail`, key-value/sticky → `related`, else `primary`
   (spreads the grid instead of stacking every chip in `primary`).
+
+## Round 8 (2026-10-16): first-run GIF shows the tidy
+
+**Critique after round 7.** Auto-tidy and the empty-KB skip are real, but the README still
+sold yesterday's experience: the first-run GIF ended with a manual fit-to-canvas and never
+showed the canvas arranging itself. A skeptic watching the GIF wouldn't see the two highest-
+impact fixes from round 7. `/tidy` also quietly fell back to role slots (no `forceGrid`), so
+typing `/tidy` after a REST burst could undo the grid the auto-tidy had just made.
+
+**Reasons to share now:** the honest first-run recording ends on a tidied 2-column canvas with
+this repo's live `git log` as a table, and the caption names auto-tidy.
+
+**Weakest part:** publishing is still blocked on OK; the GIF is ~48s / ~2.6 MB and still
+overlays captions rather than letting the UI speak alone; once-per-canvas auto-tidy means a
+long messy session still needs `/tidy`.
+
+**Built this round:**
+- Re-recorded `docs/first-run.gif` / `.mp4` with welcome settle, auto-tidy after the fast-lane
+  burst, `/tidy` after the REST table, and a README caption that names the behaviour.
+- `/tidy` now always uses `forceGrid` so it matches auto-tidy and welcome settle.

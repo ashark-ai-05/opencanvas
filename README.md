@@ -68,7 +68,7 @@ The launcher package lives in [`launcher/`](./launcher/) and the local Docker im
   <img src="docs/first-run.gif" alt="A fresh OpenCanvas with no API key. Typing '25 min focus', 'standup tomorrow 9am', '12 km in miles' and a checklist places a live timer, an event card, a conversion and a checklist on the canvas. Then a script POSTs this repo's real git log to /v1/canvas/widgets and it appears as a table." width="100%">
 </p>
 
-<sub>Recorded with <code>node scripts/record-first-run.mjs</code> against <code>pnpm start</code>. The captions are an overlay and the table is this repo's real <code>git log</code>. The hero GIF above is a scripted dashboard streamed in over the same REST API (<code>scripts/record-demo.mjs</code>), not a live model run.</sub>
+<sub>Recorded with <code>node scripts/record-first-run.mjs</code> against <code>pnpm start</code>. No API key — the fast lane places widgets, the canvas auto-tidies after the first few, and a script POSTs this repo's real <code>git log</code> to <code>/v1/canvas/widgets</code>. The hero GIF above is a scripted dashboard streamed in over the same REST API (<code>scripts/record-demo.mjs</code>), not a live model run.</sub>
 
 ---
 

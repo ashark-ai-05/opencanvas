@@ -101,3 +101,13 @@ The scripts live outside the repo in `/workspace/qa-oc/` (`qa.mjs`, `t.mjs`, `ch
 - New unit tests: `__tests__/app/tidy.test.ts` (3), `__tests__/embedder-ready.test.ts` (1).
 - Known: auto-tidy is once per canvas (`opencanvas:auto-tidied:v1`); later mess still needs `/tidy`.
   First-run GIF not yet re-recorded with the new tidy behaviour.
+
+## Round 8
+- Exact CI sequence local: typecheck ✅, typecheck:app ✅, backend **411** / 2 skipped, app **400**
+  → **811** ✅, audit exit 0.
+- Round 7 CI on main (`b5a6608`): **success**.
+- Re-recorded first-run with Playwright + ffmpeg against `pnpm start` on :3457. End frame shows
+  "Tidied 8 widgets", 2-column grid including the live `git log` table, chat minimized for the
+  final beat. GIF ≈ 2.6 MB / ~48s. Frame check: `/tmp/fr/end.png` (box-local).
+- `/tidy` forceGrid verified via recording toast "Tidied 8 widgets" and end-frame layout.
+- Not published: no npm / Docker / Railway changes.

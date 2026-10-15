@@ -184,7 +184,7 @@ export const COMMANDS: SlashCommand[] = [
         toast.error('Canvas not ready');
         return true;
       }
-      const n = tidyCanvas(editor, { animate: true, zoomToFit: true });
+      const n = tidyCanvas(editor, { animate: true, zoomToFit: true, forceGrid: true });
       if (n === 0) toast('Nothing to tidy — canvas is empty');
       else toast(`Tidied ${n} widget${n === 1 ? '' : 's'}`);
       return true;

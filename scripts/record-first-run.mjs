@@ -33,10 +33,16 @@ const ctx = await browser.newContext({
   colorScheme: 'dark',
   recordVideo: { dir: videoDir, size: { width: W, height: H } },
 });
+await ctx.addInitScript(() => {
+  try {
+    localStorage.removeItem('opencanvas:welcome-seeded:v1');
+    localStorage.removeItem('opencanvas:auto-tidied:v1');
+  } catch {}
+});
 const page = await ctx.newPage();
 await page.goto(BASE + '/');
 await page.waitForSelector('textarea');
-await sleep(1200);
+await sleep(4500); // welcome settle (900ms) + tidy animation
 await page.getByRole('button', { name: 'Dismiss tour' }).click().catch(() => {});
 
 async function caption(text) {
@@ -73,6 +79,8 @@ await instant('standup tomorrow 9am');
 await caption('Every reply is a typed widget you can drag, edit and keep.');
 await instant('12 km in miles');
 await instant('checklist: record the GIF, write the README, ship');
+await caption('Canvas tidies itself after the first few widgets.');
+await sleep(1600); // auto-tidy debounce (1200ms) + settle
 
 await caption('Scripts and agents draw here too: <code>POST /v1/canvas/widgets</code>');
 await sleep(1200);
@@ -101,13 +109,17 @@ const res = await fetch(BASE + '/v1/canvas/widgets', {
   }),
 });
 if (!res.ok) throw new Error('POST failed ' + res.status + ' ' + (await res.text()));
-await sleep(1800);
+await sleep(1200);
+// Re-tidy so the REST table joins the grid the fast-lane already made.
+await ta.fill('/tidy');
+await ta.press('Enter');
+await sleep(1600);
 await caption('Connect any model (Claude, GPT, Gemini, Ollama) and it places them for you.');
 await sleep(1200);
 await page.locator('[title="Minimize"]').first().click().catch(() => {});
 await sleep(400);
 await page.locator('[title="Fit to canvas"]').first().click().catch(() => {});
-await sleep(3200);
+await sleep(2800);
 
 const video = page.video();
 await ctx.close();

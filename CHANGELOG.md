@@ -24,6 +24,8 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - First chat turn no longer shows "Searching your knowledge base…" when nothing is indexed.
 - Welcome sticky no longer lands under the floating chat after settle.
+- `/tidy` always uses the same force-grid layout as auto-tidy (no more role-slot fallback).
+- Re-recorded `docs/first-run.gif` to show auto-tidy and the live git-log REST table.
 - App TypeScript: 6 errors fixed and `pnpm typecheck:app` added to CI (including a ShareButton that always fell back to "Shared OpenCanvas").
 - Auth token write is atomic so concurrent first boots can't clobber each other.
 - The first widget placed on a fresh canvas started collapsed, because welcome samples counted toward auto-collapse.
