@@ -58,7 +58,7 @@ importers:
         specifier: ^0.3.304
         version: 0.3.304(@anthropic-ai/sdk@0.95.2(zod@4.6.7))(@modelcontextprotocol/sdk@1.32.1(zod@4.6.7))(zod@4.6.7)
       '@anthropic-ai/sdk':
-        specifier: ^0.95.2
+        specifier: ^0.95.1
         version: 0.95.2(zod@4.6.7)
       '@hono/node-server':
         specifier: ^2.1.5
