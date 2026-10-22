@@ -1,0 +1,150 @@
+{
+  "date": "2026-10-22",
+  "stars": 15,
+  "forks": 3,
+  "watchers": 1,
+  "views14d": {
+    "count": 87,
+    "uniques": 33
+  },
+  "clones14d": {
+    "count": 516,
+    "uniques": 188
+  },
+  "referrers": [
+    {
+      "referrer": "chatgpt.com",
+      "count": 4,
+      "uniques": 1
+    },
+    {
+      "referrer": "Google",
+      "count": 1,
+      "uniques": 1
+    }
+  ],
+  "paths": [
+    {
+      "path": "/ashark-ai-05/opencanvas",
+      "count": 45,
+      "uniques": 30
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/pulse",
+      "count": 13,
+      "uniques": 2
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/graphs/traffic",
+      "count": 11,
+      "uniques": 1
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/pulls",
+      "count": 10,
+      "uniques": 5
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/actions/runs/37870084845/job/113625910876",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/blob/main/docs/demo.gif",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/blob/main/docs/demo.mp4",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/blob/main/docs/widgets.png",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/fork",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "path": "/ashark-ai-05/opencanvas/issues",
+      "count": 1,
+      "uniques": 1
+    }
+  ],
+  "viewsDaily": [
+    {
+      "date": "2026-10-08",
+      "count": 5,
+      "uniques": 3
+    },
+    {
+      "date": "2026-10-09",
+      "count": 14,
+      "uniques": 5
+    },
+    {
+      "date": "2026-10-10",
+      "count": 6,
+      "uniques": 4
+    },
+    {
+      "date": "2026-10-11",
+      "count": 8,
+      "uniques": 3
+    },
+    {
+      "date": "2026-10-12",
+      "count": 7,
+      "uniques": 5
+    },
+    {
+      "date": "2026-10-13",
+      "count": 8,
+      "uniques": 5
+    },
+    {
+      "date": "2026-10-14",
+      "count": 6,
+      "uniques": 3
+    },
+    {
+      "date": "2026-10-15",
+      "count": 4,
+      "uniques": 2
+    },
+    {
+      "date": "2026-10-16",
+      "count": 10,
+      "uniques": 8
+    },
+    {
+      "date": "2026-10-17",
+      "count": 5,
+      "uniques": 3
+    },
+    {
+      "date": "2026-10-18",
+      "count": 2,
+      "uniques": 1
+    },
+    {
+      "date": "2026-10-19",
+      "count": 8,
+      "uniques": 5
+    },
+    {
+      "date": "2026-10-20",
+      "count": 3,
+      "uniques": 3
+    },
+    {
+      "date": "2026-10-21",
+      "count": 1,
+      "uniques": 1
+    }
+  ]
+}
