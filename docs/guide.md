@@ -19,6 +19,21 @@ Everything the front-page README leaves out. For contributing, see [CONTRIBUTING
 ## Run it
 
 ```bash
+npx opencanvas             # Node 24+: clones to ~/.opencanvas/app, builds once, opens 127.0.0.1:3457
+npx opencanvas --update    # later: pull the latest main and rebuild
+```
+
+Other ways in:
+
+```bash
+# Docker (auth on; publish the port on loopback only)
+docker run --rm -p 127.0.0.1:3457:3457 -v opencanvas:/root/.opencanvas ghcr.io/ashark-ai-05/opencanvas
+
+# Desktop installers for macOS, Windows and Linux
+# https://github.com/ashark-ai-05/opencanvas/releases/latest
+# (unsigned: on macOS run `xattr -dr com.apple.quarantine /Applications/OpenCanvas.app` once)
+
+# From source
 git clone https://github.com/ashark-ai-05/opencanvas.git && cd opencanvas
 pnpm install
 pnpm start                 # builds the UI once, serves UI + API on 127.0.0.1:3457

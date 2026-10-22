@@ -9,9 +9,7 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
-permissions:
-  contents: write
-  packages: write
+permissions: {}
 
 concurrency:
   group: release-${{ github.ref }}
@@ -21,6 +19,8 @@ jobs:
   desktop:
     name: desktop (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write   # gh release upload
     strategy:
       fail-fast: false
       matrix:
@@ -45,7 +45,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          npm install -g node-gyp@latest
+          npm install -g node-gyp@13.1.0
           echo "npm_config_node_gyp=$(npm prefix -g)/node_modules/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
           echo "npm_config_msvs_version=2022" >> "$GITHUB_ENV"
 
@@ -83,6 +83,9 @@ jobs:
   docker:
     name: ghcr image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # push to ghcr.io
     steps:
       - uses: actions/checkout@v7
 

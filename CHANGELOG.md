@@ -6,7 +6,22 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-22
+
 ### Added
+- One-command install: `npx opencanvas` (launcher package on npm) clones, builds and runs the app.
+- Desktop installers for macOS, Windows and Linux attached to every tagged release (unsigned for now).
+- Docker image `ghcr.io/ashark-ai-05/opencanvas` built from `Dockerfile.local` on every tag.
+- `pnpm backend:build` bundles the backend into `dist-backend/server.js` so the packaged Electron app can start it; `dist*` scripts run it first.
+- Weekly GitHub traffic snapshot workflow writing to the `metrics` branch.
+- `llms.txt` at the repo root and on the docs site.
+
+### Fixed
+- The local embedding model could never be downloaded on a fresh install: Hono's Node adapter replaced the global `Response` class, which made transformers.js skip its file cache. The server now keeps Node's own `Request`/`Response`.
+
+### Changed
+- The local embedding model is cached in `~/.opencanvas/models` (override with `OPENCANVAS_MODELS_DIR`) instead of inside `node_modules`, so it survives `npx opencanvas --update` and loads from the packaged desktop app. First run downloads the model (about 130 MB) once; keyword search works without it.
+- Desktop packages exclude the Claude Agent SDK and Sourcegraph Amp CLIs (legacy provider paths), frontend-only libraries already compiled into the SPA, and foreign-platform ONNX binaries.
 - Star nudge: a once-per-browser GitHub CTA after the first auto-tidy or a successful share.
 - Click the header widget count to tidy the canvas; soft re-tidy shows a quiet toast.
 - Share works for canvas-only sessions and offers a ready-to-paste "Copy as post" pitch.

@@ -1,0 +1,20 @@
+# OpenCanvas
+
+> An infinite canvas your LLM draws on. Instead of printing markdown, the model calls `place_widget` with a typed payload and a chart, table, kanban, code block or live timer lands on a tldraw canvas next to a one-line chat. Any model (Anthropic, OpenAI, Gemini, Groq, OpenRouter, local Ollama), MCP-native, local-first, MIT. Not related to langchain-ai/open-canvas (an archived writing app) or Gravitee OpenCanvas (an enterprise agent gateway).
+
+Install: `npx opencanvas` (Node 24+), `docker run ghcr.io/ashark-ai-05/opencanvas`, or desktop installers for macOS, Windows and Linux. No API key is needed for instant widgets (timers, checklists, reminders, unit conversions); add a provider key or a running Ollama for the model-driven ones.
+
+## Docs
+
+- [README](https://github.com/ashark-ai-05/opencanvas#readme): what it is, install, widget gallery
+- [Guide](https://github.com/ashark-ai-05/opencanvas/blob/main/docs/guide.md): run it, pick a model, instant widgets, widget kinds, runtime plugins, MCP servers, REST API, knowledge base, security
+- [API reference](https://ashark-ai-05.github.io/opencanvas/api.html): OpenAPI 3.1 spec rendered with Scalar
+- [OpenAPI spec (YAML)](https://raw.githubusercontent.com/ashark-ai-05/opencanvas/main/docs/openapi.yaml)
+- [Security model](https://github.com/ashark-ai-05/opencanvas/blob/main/SECURITY.md): token auth, sandboxed widget iframes, what it does not defend against
+- [Changelog](https://github.com/ashark-ai-05/opencanvas/blob/main/CHANGELOG.md)
+
+## Try
+
+- [Live demo](https://opencanvas-production.up.railway.app): free tier, Gemini Flash Lite, 5 messages per hour per IP
+- [Latest release](https://github.com/ashark-ai-05/opencanvas/releases/latest): desktop installers and release notes
+- [Source](https://github.com/ashark-ai-05/opencanvas): TypeScript, tldraw v3, Hono, better-sqlite3, Vercel AI SDK, Electron

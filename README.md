@@ -9,7 +9,7 @@
 Ask a question and get a chart, a table and a kanban side by side, each one a real widget you can drag, pin and keep. Any model, including local, running on your machine under MIT.
 
 [![ci](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml/badge.svg)](https://github.com/ashark-ai-05/opencanvas/actions/workflows/ci.yml)
-[![tests](https://img.shields.io/badge/tests-816%20passing-2dd4bf)](./docs/guide.md#develop)
+[![tests](https://img.shields.io/badge/tests-822%20passing-2dd4bf)](./docs/guide.md#develop)
 [![license](https://img.shields.io/badge/license-MIT-fbbf24)](./LICENSE)
 [![stars](https://img.shields.io/github/stars/ashark-ai-05/opencanvas?style=flat&color=a78bfa)](https://github.com/ashark-ai-05/opencanvas/stargazers)
 
@@ -50,25 +50,16 @@ The model never prints the answer. It calls `place_widget` with a typed payload,
 ## Start in 60 seconds
 
 ```bash
-git clone https://github.com/ashark-ai-05/opencanvas.git && cd opencanvas
-pnpm install && pnpm start      # builds once, opens http://127.0.0.1:3457
+npx opencanvas      # Node 24+. Installs to ~/.opencanvas/app and opens http://127.0.0.1:3457
 ```
+
+| Other ways in | |
+|---|---|
+| **Docker** | `docker run --rm -p 127.0.0.1:3457:3457 -v opencanvas:/root/.opencanvas ghcr.io/ashark-ai-05/opencanvas` |
+| **Desktop app** | macOS, Windows and Linux installers on the [latest release](https://github.com/ashark-ai-05/opencanvas/releases/latest). Unsigned for now: on macOS run `xattr -dr com.apple.quarantine /Applications/OpenCanvas.app` once. |
+| **From source** | `git clone https://github.com/ashark-ai-05/opencanvas.git && cd opencanvas && pnpm install && pnpm start` |
 
 One process, one port, no `.env` needed. **Already have a model?** On first run OpenCanvas picks it up automatically: an `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY` or `OPENROUTER_API_KEY` in your environment, or a running Ollama. Otherwise connect one later in **Settings** ([Pick a model](./docs/guide.md#pick-a-model)). Prefer the desktop app? `pnpm electron:dev`. Hacking on the UI with hot reload? `pnpm dev`.
-
-<details>
-<summary>Coming soon (not published yet): one-command install</summary>
-
-```bash
-npx opencanvas
-# or
-docker build -f Dockerfile.local -t opencanvas https://github.com/ashark-ai-05/opencanvas.git
-docker run --rm -p 127.0.0.1:3457:3457 -v opencanvas:/root/.opencanvas opencanvas
-```
-
-The launcher package lives in [`launcher/`](./launcher/) and the local Docker image in [`Dockerfile.local`](./Dockerfile.local). Neither is published yet — waiting on an OK to push `opencanvas` to npm and a `ghcr.io/ashark-ai-05/opencanvas` image. The public Railway demo image (`Dockerfile`) is unchanged.
-
-</details>
 
 **No API key? Start typing anyway.** Timers, checklists, reminders, events, notes, arithmetic and unit conversions are recognised as you type and placed on Enter, with no model call at all. This is an unedited recording of a fresh install:
 
