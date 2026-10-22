@@ -1,0 +1,48 @@
+name: traffic
+
+# Weekly GitHub traffic snapshot into the `metrics` branch (never main).
+# GitHub only keeps 14 days of traffic; this is how we judge launch channels.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: traffic
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/checkout@v7
+        with:
+          ref: metrics
+          path: out
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: snapshot
+        run: node scripts/traffic-snapshot.mjs out/metrics
+        env:
+          # Traffic endpoints need push access. TRAFFIC_TOKEN is a fine-grained
+          # PAT (Administration: read) for when GITHUB_TOKEN is refused.
+          GITHUB_TOKEN: ${{ secrets.TRAFFIC_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: commit
+        working-directory: out
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && { echo 'no change'; exit 0; }
+          git commit -m "metrics: $(date -u +%F)"
+          git push origin metrics
