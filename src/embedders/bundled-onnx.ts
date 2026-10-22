@@ -2,6 +2,8 @@ import type {
   EmbeddingProvider,
   EmbeddingProbeResult,
 } from '../core/embedding-provider.js';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 type Pipeline = (
   text: string,
@@ -40,8 +42,13 @@ export class BundledOnnxEmbedder implements EmbeddingProvider {
       this.extractorPromise = (async () => {
         try {
           const transformers = await import('@huggingface/transformers');
-          // Cache models locally; allow remote fetch on first run.
+          // Cache models locally; allow remote fetch on first run. The cache
+          // lives outside node_modules so it survives `npx opencanvas --update`
+          // and so the packaged Electron app (read-only asar) has a writable,
+          // real-path directory that onnxruntime can open.
           transformers.env.allowRemoteModels = true;
+          transformers.env.cacheDir =
+            process.env['OPENCANVAS_MODELS_DIR'] ?? join(homedir(), '.opencanvas', 'models');
           const extractor = await transformers.pipeline(
             'feature-extraction',
             this.modelId,

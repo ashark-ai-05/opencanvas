@@ -27,7 +27,7 @@ jobs:
         include:
           - os: macos-latest
             script: dist:mac
-          - os: windows-latest
+          - os: windows-2022
             script: dist:win
           - os: ubuntu-latest
             script: dist:linux
@@ -40,6 +40,14 @@ jobs:
         with:
           node-version: '24'
           cache: pnpm
+
+      - name: node-gyp that can find Visual Studio 2022
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          npm install -g node-gyp@latest
+          echo "npm_config_node_gyp=$(npm prefix -g)/node_modules/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
+          echo "npm_config_msvs_version=2022" >> "$GITHUB_ENV"
 
       - name: install
         run: pnpm install --frozen-lockfile

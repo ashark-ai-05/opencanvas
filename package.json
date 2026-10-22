@@ -1,6 +1,6 @@
 {
   "name": "opencanvas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An infinite canvas that your local LLM draws typed widgets on. BYO model (Claude / OpenAI / OpenRouter / Ollama / Amp), MCP-native, self-improving knowledge base, single-user, runs entirely on your machine.",
   "author": {
     "name": "Krunal Ashar",
@@ -144,7 +144,17 @@
       "electron/**/*",
       "app/dist/**/*",
       "dist-backend/**/*",
-      "package.json"
+      "package.json",
+      "!{src,docs,__tests__,spikes,scripts,examples,launcher,build,release,.github,.remember}/**",
+      "!*.{md,toml,yaml,yml,ts,lock}",
+      "!**/node_modules/@anthropic-ai/claude-agent-sdk*/**",
+      "!**/node_modules/@ampcode/**",
+      "!**/node_modules/@sourcegraph/**",
+      "!**/node_modules/{tldraw,@tldraw,vega,vega-lite,vega-embed,mermaid,react,react-dom,react-markdown,remark-gfm,sonner,lucide-react,framer-motion,zustand,@ai-sdk/react}/**",
+      "!**/node_modules/onnxruntime-web/dist/*.wasm",
+      "!**/node_modules/@huggingface/transformers/.cache/**",
+      "!**/node_modules/**/*.{md,map,ts,d.ts}",
+      "!**/node_modules/**/{test,tests,__tests__,docs,example,examples}/**"
     ],
     "asarUnpack": [
       "**/node_modules/{better-sqlite3,onnxruntime-node,sqlite-vec,web-tree-sitter,tree-sitter-typescript,sharp,@img}/**"
@@ -160,7 +170,10 @@
           ]
         }
       ],
-      "category": "public.app-category.developer-tools"
+      "category": "public.app-category.developer-tools",
+      "files": [
+        "!**/node_modules/onnxruntime-node/bin/napi-v*/{linux,win32}/**"
+      ]
     },
     "win": {
       "icon": "build/icon.ico",
@@ -171,6 +184,9 @@
             "x64"
           ]
         }
+      ],
+      "files": [
+        "!**/node_modules/onnxruntime-node/bin/napi-v*/{darwin,linux}/**"
       ]
     },
     "linux": {
@@ -189,7 +205,10 @@
           ]
         }
       ],
-      "category": "Development"
+      "category": "Development",
+      "files": [
+        "!**/node_modules/onnxruntime-node/bin/napi-v*/{darwin,win32}/**"
+      ]
     }
   }
 }

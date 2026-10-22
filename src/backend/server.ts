@@ -601,7 +601,11 @@ export async function start(port: number): Promise<void> {
   // Railway / containers expect us to listen on 0.0.0.0 + read $PORT.
   // Local dev keeps 127.0.0.1 so loopback-only binding still holds.
   const hostname = isDemoMode() || process.env['HOST'] === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
-  serve({ fetch: app.fetch, port, hostname });
+  // Keep Node's own Request/Response. The adapter's lightweight replacements
+  // break @huggingface/transformers' download cache (`response instanceof
+  // Response` fails), so the embedding model could never be fetched on a
+  // fresh install.
+  serve({ fetch: app.fetch, port, hostname, overrideGlobalObjects: false });
   warmUpLocalSearch(s);
   console.log(`[opencanvas backend] listening on http://${hostname}:${port}`);
   console.log(`[opencanvas backend] profile: ${s.profileName}`);
