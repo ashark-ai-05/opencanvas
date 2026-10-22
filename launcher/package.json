@@ -5,10 +5,31 @@
   "license": "MIT",
   "author": "Krunal Ashar <krunal.ashar@gmail.com>",
   "homepage": "https://github.com/ashark-ai-05/opencanvas",
-  "repository": { "type": "git", "url": "git+https://github.com/ashark-ai-05/opencanvas.git", "directory": "launcher" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashark-ai-05/opencanvas.git",
+    "directory": "launcher"
+  },
   "type": "module",
-  "bin": { "opencanvas": "bin/opencanvas.mjs" },
-  "files": ["bin", "README.md"],
-  "engines": { "node": ">=24" },
-  "keywords": ["opencanvas", "infinite-canvas", "llm", "agent", "mcp", "launcher"]
+  "bin": {
+    "opencanvas": "bin/opencanvas.mjs"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "keywords": [
+    "opencanvas",
+    "infinite-canvas",
+    "llm",
+    "agent",
+    "mcp",
+    "launcher"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

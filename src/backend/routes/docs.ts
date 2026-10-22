@@ -21,6 +21,7 @@ export function docsRoute(r: Hono): void {
       join(here, '../../../docs/openapi.yaml'),  // dev (tsx)
       join(here, '../../docs/openapi.yaml'),     // bundled backend (one level less)
       join(here, '../openapi.yaml'),             // bundled into dist-backend root
+      join(here, 'openapi.yaml'),                // flat esbuild bundle (scripts/build-backend.mjs)
     ];
   })();
 

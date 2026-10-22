@@ -54,12 +54,13 @@
     "electron": "electron .",
     "electron:dev": "concurrently --names 'dev,electron' --kill-others --kill-others-on-fail 'pnpm dev' 'electron --no-sandbox .'",
     "electron:rebuild": "electron-builder install-app-deps",
-    "dist": "pnpm app:build && electron-builder",
-    "dist:mac": "pnpm app:build && electron-builder --mac",
-    "dist:win": "pnpm app:build && electron-builder --win",
-    "dist:linux": "pnpm app:build && electron-builder --linux",
+    "dist": "pnpm app:build && pnpm backend:build && electron-builder",
+    "dist:mac": "pnpm app:build && pnpm backend:build && electron-builder --mac",
+    "dist:win": "pnpm app:build && pnpm backend:build && electron-builder --win",
+    "dist:linux": "pnpm app:build && pnpm backend:build && electron-builder --linux",
     "icons:build": "node scripts/build-icons.mjs",
-    "icons:og": "node scripts/build-og-image.mjs"
+    "icons:og": "node scripts/build-og-image.mjs",
+    "backend:build": "node scripts/build-backend.mjs"
   },
   "engines": {
     "node": ">=24"
@@ -123,6 +124,7 @@
     "concurrently": "^10.0.6",
     "electron": "^42.11.17",
     "electron-builder": "^26.15.3",
+    "esbuild": "0.28.2",
     "jsdom": "^25.0.1",
     "playwright": "^1.64.1",
     "png-to-ico": "^3.0.2",
@@ -145,7 +147,7 @@
       "package.json"
     ],
     "asarUnpack": [
-      "**/node_modules/{better-sqlite3,onnxruntime-node,sqlite-vec,web-tree-sitter,tree-sitter-typescript}/**"
+      "**/node_modules/{better-sqlite3,onnxruntime-node,sqlite-vec,web-tree-sitter,tree-sitter-typescript,sharp,@img}/**"
     ],
     "mac": {
       "icon": "build/icon.icns",
