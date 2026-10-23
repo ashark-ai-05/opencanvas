@@ -19,8 +19,8 @@ Everything the front-page README leaves out. For contributing, see [CONTRIBUTING
 ## Run it
 
 ```bash
-npx opencanvas             # Node 24+: clones to ~/.opencanvas/app, builds once, opens 127.0.0.1:3457
-npx opencanvas --update    # later: pull the latest main and rebuild
+npx @ashark/opencanvas             # Node 24+: clones to ~/.opencanvas/app, builds once, opens 127.0.0.1:3457
+npx @ashark/opencanvas --update    # later: pull the latest main and rebuild
 ```
 
 Other ways in:

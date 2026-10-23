@@ -43,7 +43,7 @@ export class BundledOnnxEmbedder implements EmbeddingProvider {
         try {
           const transformers = await import('@huggingface/transformers');
           // Cache models locally; allow remote fetch on first run. The cache
-          // lives outside node_modules so it survives `npx opencanvas --update`
+          // lives outside node_modules so it survives `npx @ashark/opencanvas --update`
           // and so the packaged Electron app (read-only asar) has a writable,
           // real-path directory that onnxruntime can open.
           transformers.env.allowRemoteModels = true;

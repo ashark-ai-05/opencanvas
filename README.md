@@ -50,7 +50,7 @@ The model never prints the answer. It calls `place_widget` with a typed payload,
 ## Start in 60 seconds
 
 ```bash
-npx opencanvas      # Node 24+. Installs to ~/.opencanvas/app and opens http://127.0.0.1:3457
+npx @ashark/opencanvas      # Node 24+. Installs to ~/.opencanvas/app and opens http://127.0.0.1:3457
 ```
 
 | Other ways in | |

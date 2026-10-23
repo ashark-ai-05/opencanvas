@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * npx opencanvas: install or update OpenCanvas, then run `pnpm start`.
+ * npx @ashark/opencanvas: install or update OpenCanvas, then run `pnpm start`.
  *
- *   npx opencanvas            install to ~/.opencanvas/app (first run) and start
- *   npx opencanvas --update   pull the latest main (fast-forward only), reinstall, rebuild, start
- *   npx opencanvas --dir P    use P instead of ~/.opencanvas/app
- *   npx opencanvas --dry-run  print what would run, change nothing
+ *   npx @ashark/opencanvas            install to ~/.opencanvas/app (first run) and start
+ *   npx @ashark/opencanvas --update   pull the latest main (fast-forward only), reinstall, rebuild, start
+ *   npx @ashark/opencanvas --dir P    use P instead of ~/.opencanvas/app
+ *   npx @ashark/opencanvas --dry-run  print what would run, change nothing
  *   (any other flag, e.g. --no-open, is passed through to `pnpm start`)
  *
  * Needs Node 24+ and git. pnpm is used through corepack (bundled with
@@ -51,7 +51,7 @@ export function plan({ dir, update, pass }, exists = existsSync) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log('Usage: npx opencanvas [--update] [--dir PATH] [--dry-run] [--no-open]');
+    console.log('Usage: npx @ashark/opencanvas [--update] [--dir PATH] [--dry-run] [--no-open]');
     return 0;
   }
   const [major] = process.versions.node.split('.').map(Number);

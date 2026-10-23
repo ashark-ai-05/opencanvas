@@ -2,7 +2,7 @@
 
 > An infinite canvas your LLM draws on. Instead of printing markdown, the model calls `place_widget` with a typed payload and a chart, table, kanban, code block or live timer lands on a tldraw canvas next to a one-line chat. Any model (Anthropic, OpenAI, Gemini, Groq, OpenRouter, local Ollama), MCP-native, local-first, MIT. Not related to langchain-ai/open-canvas (an archived writing app) or Gravitee OpenCanvas (an enterprise agent gateway).
 
-Install: `npx opencanvas` (Node 24+), `docker run ghcr.io/ashark-ai-05/opencanvas`, or desktop installers for macOS, Windows and Linux. No API key is needed for instant widgets (timers, checklists, reminders, unit conversions); add a provider key or a running Ollama for the model-driven ones.
+Install: `npx @ashark/opencanvas` (Node 24+), `docker run ghcr.io/ashark-ai-05/opencanvas`, or desktop installers for macOS, Windows and Linux. No API key is needed for instant widgets (timers, checklists, reminders, unit conversions); add a provider key or a running Ollama for the model-driven ones.
 
 ## Docs
 

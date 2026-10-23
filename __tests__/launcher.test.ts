@@ -11,7 +11,7 @@ const dry = (...args: string[]) =>
     .filter((l) => l.startsWith('$ '))
     .map((l) => l.replace(/\s+\(in .*\)$/, ''));
 
-describe('npx opencanvas launcher (dry run)', () => {
+describe('npx @ashark/opencanvas launcher (dry run)', () => {
   it('clones, installs and starts on first run, passing flags through', () => {
     const dir = join(mkdtempSync(join(tmpdir(), 'oc-l-')), 'app');
     expect(dry('--dir', dir, '--no-open')).toEqual([

@@ -152,7 +152,7 @@ lesson for install is "make trying it one command". Publishing is irreversible a
 so everything is prepared and verified, not shipped.
 
 **Built (not published):**
-- `launcher/` — a zero-dependency npm package named `opencanvas`. `npx opencanvas` clones into
+- `launcher/` — a zero-dependency npm package named `@ashark/opencanvas` (npm rejects unscoped `opencanvas` as too close to `open-canvas`). `npx @ashark/opencanvas` clones into
   `~/.opencanvas/app`, installs via corepack pnpm and runs `pnpm start`. Flags: `--update`
   (fast-forward + rebuild), `--dir`, `--dry-run`, and any `pnpm start` flag. Verified end-to-end
   against a real clone of this repo (health 200 on :3460). Dry-run plan is unit-tested.
@@ -164,7 +164,7 @@ so everything is prepared and verified, not shipped.
 - README has a "Coming soon" disclosure with the exact commands; CHANGELOG notes them as unpublished.
 
 **Highest-impact next (still open):**
-1. **Publish** `npx opencanvas` to npm and `ghcr.io/ashark-ai-05/opencanvas` (needs OK).
+1. **Publish** `npx @ashark/opencanvas` to npm and `ghcr.io/ashark-ai-05/opencanvas` (needs OK).
 2. **Auto-tidy after the first 3–4 widgets** so a fresh canvas doesn't look scattered (the GIF
    still needs a manual fit-to-canvas).
 3. **Defer the KB search until the embedder is ready**, so the first chat turn doesn't show
