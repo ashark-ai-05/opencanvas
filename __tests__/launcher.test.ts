@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -30,5 +30,17 @@ describe('npx @ashark/opencanvas launcher (dry run)', () => {
       '$ corepack pnpm install --frozen-lockfile',
       '$ corepack pnpm start --rebuild',
     ]);
+  });
+  it('runs when invoked through an extensionless bin symlink, as npx does', () => {
+    // npm links node_modules/.bin/opencanvas -> ../@ashark/opencanvas/bin/opencanvas.mjs
+    // and node then sees argv[1] = ".../.bin/opencanvas". The entry-point guard
+    // must still recognise itself, or `npx @ashark/opencanvas` exits 0 silently.
+    const binDir = join(mkdtempSync(join(tmpdir(), 'oc-l-')), '.bin');
+    mkdirSync(binDir);
+    const link = join(binDir, 'opencanvas');
+    symlinkSync(BIN, link);
+    const r = spawnSync(process.execPath, [link, '--help'], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('Usage: npx @ashark/opencanvas');
   });
 });

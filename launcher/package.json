@@ -1,6 +1,6 @@
 {
   "name": "@ashark/opencanvas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One-command launcher for OpenCanvas: `npx opencanvas` installs (or updates) the app and runs it on http://127.0.0.1:3457.",
   "license": "MIT",
   "author": "Krunal Ashar <krunal.ashar@gmail.com>",

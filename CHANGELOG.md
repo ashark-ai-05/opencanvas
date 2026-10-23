@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Launcher 0.1.1: `npx @ashark/opencanvas` exited 0 without doing anything. The entry-point guard compared basenames, and npm invokes the bin through an extensionless `.bin/opencanvas` symlink; it now compares real paths. Covered by a symlink test.
+- Linux AppImage and deb were twice the size of the macOS DMG because onnxruntime-node's postinstall downloads a 272 MB CUDA provider on linux-x64. Release builds and both Dockerfiles now set `ONNXRUNTIME_NODE_INSTALL=skip` (AppImage 457 → 234 MB, deb 357 → 179 MB).
+
+### Changed
+- The launcher is published as `@ashark/opencanvas`; npm rejects the unscoped name as too close to `open-canvas`.
+
 ## [0.2.0] - 2026-10-22
 
 ### Added

@@ -12,9 +12,10 @@
  * Node), so nothing global is installed. Zero dependencies on purpose.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const REPO = 'https://github.com/ashark-ai-05/opencanvas.git';
 
@@ -79,5 +80,14 @@ function main() {
   return 0;
 }
 
-const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop());
-if (isMain) process.exit(main());
+// npm runs this through node_modules/.bin/opencanvas, a symlink with no
+// extension, so compare real paths rather than basenames. (A basename check
+// made `npx @ashark/opencanvas` exit 0 without doing anything.)
+function isMain() {
+  try {
+    return !!process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+if (isMain()) process.exit(main());
