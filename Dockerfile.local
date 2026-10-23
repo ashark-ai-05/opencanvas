@@ -20,6 +20,8 @@
 # ─── 1. Base ───────────────────────────────────────────────────────────
 FROM node:24-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
+# Skip onnxruntime-node's 272 MB CUDA provider download; CPU inference only.
+ENV ONNXRUNTIME_NODE_INSTALL=skip
 RUN corepack enable && corepack prepare pnpm@10.34.5 --activate
 WORKDIR /app
 

@@ -51,6 +51,10 @@ jobs:
 
       - name: install
         run: pnpm install --frozen-lockfile
+        env:
+          # onnxruntime-node's postinstall downloads a 272 MB CUDA execution
+          # provider on linux-x64. The desktop app runs the CPU provider only.
+          ONNXRUNTIME_NODE_INSTALL: skip
 
       - name: build installers
         run: pnpm ${{ matrix.script }}

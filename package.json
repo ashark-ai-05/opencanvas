@@ -207,7 +207,9 @@
       ],
       "category": "Development",
       "files": [
-        "!**/node_modules/onnxruntime-node/bin/napi-v*/{darwin,win32}/**"
+        "!**/node_modules/onnxruntime-node/bin/napi-v*/{darwin,win32}/**",
+        "!**/node_modules/onnxruntime-node/bin/napi-v*/linux/arm64/**",
+        "!**/node_modules/onnxruntime-node/bin/napi-v*/linux/x64/libonnxruntime_providers_{cuda,tensorrt}*"
       ]
     }
   }
