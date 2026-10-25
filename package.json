@@ -99,7 +99,7 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
     "sqlite-vec": "^0.1.9",
-    "tldraw": "^3.15.6",
+    "tldraw": "^5.5.2",
     "tree-sitter-typescript": "^0.23.2",
     "vega": "^6.4.0",
     "vega-embed": "^7.3.0",
