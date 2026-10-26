@@ -24,6 +24,12 @@ updates:
       - dependency-name: "protobufjs"
       - dependency-name: "qs"
       - dependency-name: "ws"
+      # tldraw 4+ requires a production licence key; OpenCanvas stays MIT and
+      # free to self-host, so the v3 line is pinned on purpose (see CHANGELOG).
+      - dependency-name: "tldraw"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@tldraw/*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
