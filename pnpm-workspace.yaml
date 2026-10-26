@@ -34,7 +34,7 @@ overrides:
   baseline-browser-mapping: '^2.11.0'
   tmp: '^0.2.6'
   form-data: '^4.0.6'
-  body-parser: '^2.3.0'
+  body-parser: '^2.4.0'   # GHSA-27r3-jxmh-p828 (2026-10)
   '@babel/core': '^7.29.6'
   builder-util-runtime: '^9.7.0'
   'undici@6': '^6.28.0'

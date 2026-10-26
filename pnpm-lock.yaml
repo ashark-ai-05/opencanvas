@@ -26,7 +26,7 @@ overrides:
   baseline-browser-mapping: ^2.11.0
   tmp: ^0.2.6
   form-data: ^4.0.6
-  body-parser: ^2.3.0
+  body-parser: ^2.4.0
   '@babel/core': ^7.29.6
   builder-util-runtime: ^9.7.0
   undici@6: ^6.28.0
@@ -72,9 +72,6 @@ importers:
       '@openrouter/ai-sdk-provider':
         specifier: ^3.1.0
         version: 3.1.0(ai@7.0.147(zod@4.6.7))(zod@4.6.7)
-      '@sourcegraph/amp-sdk':
-        specifier: 0.1.0-20260729105907-g72d5ca3
-        version: 0.1.0-20260729105907-g72d5ca3
       ai:
         specifier: ^7.0.147
         version: 7.0.147(zod@4.6.7)
@@ -289,37 +286,6 @@ packages:
     engines: {node: '>=22'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
-
-  '@ampcode/cli-darwin-arm64@0.0.1792656060-g6af3d5':
-    resolution: {integrity: sha512-XH1iX7CxEFQublxyVEMMeQwx9Q5DrIzoHc0TL7NaK2hyyHRz4+IvajsG5O4GKsT+YdP7W0avuZAW9JLBnJAD2g==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@ampcode/cli-darwin-x64@0.0.1792656060-g6af3d5':
-    resolution: {integrity: sha512-OqKHJM+wCh48XoXmMzH4PjD+yqvJ6Jf1m7s46UC+iG1K4q3DSl7SC0DkJ3n+cuBpOYk865vlpjv5cXfLbto9Hg==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@ampcode/cli-linux-arm64@0.0.1792656060-g6af3d5':
-    resolution: {integrity: sha512-xb+kiTjSZBbuFr46FsVaDR1ZT8Molj6+/RXTffKjmuCyxtK7Sgwd1wCmgUS7JIkAwBIaQJ898IbFw2hXVOJP+w==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@ampcode/cli-linux-x64@0.0.1792656060-g6af3d5':
-    resolution: {integrity: sha512-5LkOIvmIGoSFMTQsNBHDTUz7UsPC9diup2RWko84t7ZYUDEpS+QnB1rmqz1fqrD+ciQOEseZ7SEYUQz4wH747w==}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@ampcode/cli-win32-x64@0.0.1792656060-g6af3d5':
-    resolution: {integrity: sha512-JkYM2g+U3w1hESEIvPtidT3ueKEcRYycanMqUEHOFHS2mxwL+TKpoHnndE3fbI1CW3YqB9Z9uNNWRiUqrZS1Yw==}
-    cpu: [x64]
-    os: [win32]
-
-  '@ampcode/cli@0.0.1792656060-g6af3d5':
-    resolution: {integrity: sha512-Uq3qwLnaLc1xnsEGgE6zER4fTFxUg7tfo4uDYpxF/UsOy3fgDbWK3o9aNb4dP3rVPviqlWLMKlg0y6oyALKLNA==}
-    hasBin: true
 
   '@antfu/install-pkg@2.1.0':
     resolution: {integrity: sha512-sdg9NxU3zR4Mnawfbc/x6GB5Wf17WYud5qOuEuxXjaKpYpMkISSJEjItGebXJ2bQ4DIcly4NYH23mtkGJjvKUw==}
@@ -2109,12 +2075,6 @@ packages:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
-    resolution: {integrity: sha512-2IHl7tBrNI2+hpLTS9TD267FM4T+XOHaS2lqn1OQS656pepaFVHLXULHVmCzdkaXdRC/xM2h6ZerraLftyggFA==}
-    engines: {node: '>=18'}
-    deprecated: Renamed to @ampcode/sdk - see https://ampcode.com/news/npm-package-changes
-    hasBin: true
-
   '@stablelib/base64@1.0.1':
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
 
@@ -2908,8 +2868,8 @@ packages:
   bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
 
-  body-parser@2.3.0:
-    resolution: {integrity: sha512-2cGmJupaNgg+QUwVLAucDuWuoMZ6EX9iHDRswZ5lsNYEmwPaRknMPCLZz07yTzVq/83p4o/wzbDZbBrTvGGTIw==}
+  body-parser@2.4.0:
+    resolution: {integrity: sha512-Ifk1KcLrxaGt1occQagQNFNNOqRt1LFuehEnHHzB8Z6cRgIxRU1TBaiIsUiCdA+gy5PL7Y1IX31DNKkRmxtXjQ==}
     engines: {node: '>=18'}
 
   boolean@3.2.0:
@@ -5697,9 +5657,6 @@ packages:
     peerDependencies:
       zod: ^3.25.28 || ^4
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
@@ -5791,29 +5748,6 @@ snapshots:
       throttleit: 2.1.0
     transitivePeerDependencies:
       - zod
-
-  '@ampcode/cli-darwin-arm64@0.0.1792656060-g6af3d5':
-    optional: true
-
-  '@ampcode/cli-darwin-x64@0.0.1792656060-g6af3d5':
-    optional: true
-
-  '@ampcode/cli-linux-arm64@0.0.1792656060-g6af3d5':
-    optional: true
-
-  '@ampcode/cli-linux-x64@0.0.1792656060-g6af3d5':
-    optional: true
-
-  '@ampcode/cli-win32-x64@0.0.1792656060-g6af3d5':
-    optional: true
-
-  '@ampcode/cli@0.0.1792656060-g6af3d5':
-    optionalDependencies:
-      '@ampcode/cli-darwin-arm64': 0.0.1792656060-g6af3d5
-      '@ampcode/cli-darwin-x64': 0.0.1792656060-g6af3d5
-      '@ampcode/cli-linux-arm64': 0.0.1792656060-g6af3d5
-      '@ampcode/cli-linux-x64': 0.0.1792656060-g6af3d5
-      '@ampcode/cli-win32-x64': 0.0.1792656060-g6af3d5
 
   '@antfu/install-pkg@2.1.0':
     dependencies:
@@ -7439,11 +7373,6 @@ snapshots:
 
   '@sindresorhus/is@4.6.0': {}
 
-  '@sourcegraph/amp-sdk@0.1.0-20260729105907-g72d5ca3':
-    dependencies:
-      '@ampcode/cli': 0.0.1792656060-g6af3d5
-      zod: 3.25.76
-
   '@stablelib/base64@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
@@ -8253,7 +8182,7 @@ snapshots:
 
   bluebird@3.7.2: {}
 
-  body-parser@2.3.0:
+  body-parser@2.4.0:
     dependencies:
       bytes: 3.1.2
       content-type: 2.1.0
@@ -8997,7 +8926,7 @@ snapshots:
   express@5.3.0:
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.3.0
+      body-parser: 2.4.0
       content-disposition: 2.0.1
       content-type: 2.1.0
       cookie: 0.7.2
@@ -11640,8 +11569,6 @@ snapshots:
   zod-to-json-schema@3.25.2(zod@4.6.7):
     dependencies:
       zod: 4.6.7
-
-  zod@3.25.76: {}
 
   zod@4.6.7: {}
 
