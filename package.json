@@ -84,7 +84,7 @@
     "cron-parser": "^5.10.2",
     "framer-motion": "^14.6.0",
     "hono": "^4.13.13",
-    "lucide-react": "^0.460.0",
+    "lucide-react": "^1.64.0",
     "mammoth": "^1.13.0",
     "mermaid": "^12.2.0",
     "ollama": "^0.6.4",
